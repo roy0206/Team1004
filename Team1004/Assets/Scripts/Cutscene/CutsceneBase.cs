@@ -62,6 +62,7 @@ namespace Game.Cutscene
 
         protected virtual float DefaultCharsPerSecond => 30f;
         protected virtual bool RestoreCameraOnFinish => true;
+        protected virtual bool HideActorsOnFinish => true;
 
         protected CutsceneContext Context => context;
         protected Camera StageCamera => context != null ? context.StageCamera : null;
@@ -632,6 +633,9 @@ namespace Game.Cutscene
             if (dialogue != null)
                 dialogue.HideImmediate();
 
+            if (HideActorsOnFinish && mode != CutsceneMode.Cancelled)
+                HideStageActors();
+
             if (RestoreCameraOnFinish && cameraCaptured && mode != CutsceneMode.Cancelled)
             {
                 var rig = Rig;
@@ -655,6 +659,16 @@ namespace Game.Cutscene
             active.Clear();
             mode = CutsceneMode.Idle;
             context = null;
+        }
+
+        private void HideStageActors()
+        {
+            foreach (var id in new[] { CutsceneActorIds.Boss, CutsceneActorIds.Landmark, CutsceneActorIds.Child })
+            {
+                var actor = Actor(id);
+                if (actor != null)
+                    actor.SetVisible(false);
+            }
         }
 
         private void WarnNoCamera()
