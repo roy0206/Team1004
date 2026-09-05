@@ -1,0 +1,452 @@
+{
+  "meta": {
+    "gameId": "salmon_promise",
+    "title": "연어의 약속",
+    "specVersion": "v8",
+    "purpose": "Unity auto-build / implementation source-of-truth",
+    "bossOrder": [
+      "BOSS1_FISHING",
+      "BOSS2_BEAR",
+      "BOSS3_WATERFALL"
+    ],
+    "importantCorrection": "Boss3 remains waterfall. LongRock is ledge/general gimmick only."
+  },
+  "laneSystem": {
+    "lanes": [
+      1,
+      2,
+      3
+    ],
+    "laneNames": {
+      "1": "top",
+      "2": "middle",
+      "3": "bottom"
+    }
+  },
+  "sharedBossPatternLibrary": {
+    "SEQUENTIAL_12": {
+      "category": "sequential",
+      "steps": [
+        [
+          1
+        ],
+        [
+          2
+        ]
+      ]
+    },
+    "ROUND_TRIP_12321": {
+      "category": "round_trip",
+      "steps": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          2
+        ],
+        [
+          1
+        ]
+      ]
+    },
+    "CROSS_132": {
+      "category": "cross",
+      "steps": [
+        [
+          1
+        ],
+        [
+          3
+        ],
+        [
+          2
+        ]
+      ]
+    },
+    "PRESSURE_123": {
+      "category": "pressure",
+      "steps": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ]
+      ],
+      "fixedStepInterval": 0.5
+    },
+    "SAFE_LANE_SHIFT_321": {
+      "category": "safe_lane_shift",
+      "steps": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "safeLaneOrder": [
+        3,
+        2,
+        1
+      ]
+    }
+  },
+  "bossCommon": {
+    "survivalDuration": 30.0,
+    "introDuration": 1.0,
+    "clearDuration": 1.0,
+    "firstStepTelegraph": 1.2,
+    "noImmediateExactRepeat": true,
+    "guaranteeAllSharedComplexPatternsAtLeastOnce": true,
+    "fakePatternEnabled": false,
+    "stopSchedulingAtTimerEnd": true,
+    "finishActivePatternBeforeClear": true
+  },
+  "bosses": {
+    "BOSS1_FISHING": {
+      "displayName": "낚싯줄",
+      "difficulty": 2,
+      "attackExecutor": "FishingLineAttackExecutor",
+      "basicPatterns": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "complexPatterns": [
+        {
+          "id": "FISHING_SEQUENTIAL_12",
+          "template": "SEQUENTIAL_12",
+          "stepInterval": 0.9
+        },
+        {
+          "id": "FISHING_ROUND_TRIP_12321",
+          "template": "ROUND_TRIP_12321",
+          "stepInterval": 0.9
+        },
+        {
+          "id": "FISHING_CROSS_132",
+          "template": "CROSS_132",
+          "stepInterval": 0.9
+        },
+        {
+          "id": "FISHING_PRESSURE_123",
+          "template": "PRESSURE_123",
+          "stepInterval": 0.5
+        },
+        {
+          "id": "FISHING_SAFE_LANE_SHIFT_321",
+          "template": "SAFE_LANE_SHIFT_321",
+          "stepInterval": 1.0
+        }
+      ],
+      "restAfterPattern": 0.8,
+      "phases": [
+        {
+          "start": 0,
+          "end": 10,
+          "allowed": [
+            "BASIC",
+            "FISHING_SEQUENTIAL_12"
+          ]
+        },
+        {
+          "start": 10,
+          "end": 20,
+          "allowed": [
+            "BASIC",
+            "FISHING_SEQUENTIAL_12",
+            "FISHING_CROSS_132",
+            "FISHING_ROUND_TRIP_12321"
+          ]
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "allowed": [
+            "ALL"
+          ]
+        }
+      ]
+    },
+    "BOSS2_BEAR": {
+      "displayName": "곰",
+      "difficulty": 3,
+      "attackExecutor": "BearAttackExecutor",
+      "visual": {
+        "body": "BearShadow",
+        "backArm": "BearArm_Back",
+        "sideArm": "BearArm_Side"
+      },
+      "basicPatterns": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "basicAttackArm": "BearArm_Side",
+      "complexPatterns": [
+        {
+          "id": "BEAR_SEQUENTIAL_12",
+          "template": "SEQUENTIAL_12",
+          "stepInterval": 0.7,
+          "arm": "BearArm_Back"
+        },
+        {
+          "id": "BEAR_ROUND_TRIP_12321",
+          "template": "ROUND_TRIP_12321",
+          "stepInterval": 0.7,
+          "arm": "BearArm_Back"
+        },
+        {
+          "id": "BEAR_CROSS_132",
+          "template": "CROSS_132",
+          "stepInterval": 0.7,
+          "arm": "BearArm_Back"
+        },
+        {
+          "id": "BEAR_PRESSURE_123",
+          "template": "PRESSURE_123",
+          "stepInterval": 0.5,
+          "arm": "BearArm_Back"
+        },
+        {
+          "id": "BEAR_SAFE_LANE_SHIFT_321",
+          "template": "SAFE_LANE_SHIFT_321",
+          "stepInterval": 0.8,
+          "arm": "BearArm_Side",
+          "simultaneousArmsPerStep": 2
+        }
+      ],
+      "restAfterPattern": 0.6,
+      "phases": [
+        {
+          "start": 0,
+          "end": 8,
+          "allowed": [
+            "BASIC",
+            "BEAR_SEQUENTIAL_12"
+          ]
+        },
+        {
+          "start": 8,
+          "end": 18,
+          "allowed": [
+            "BASIC",
+            "BEAR_SEQUENTIAL_12",
+            "BEAR_CROSS_132",
+            "BEAR_ROUND_TRIP_12321"
+          ]
+        },
+        {
+          "start": 18,
+          "end": 30,
+          "allowed": [
+            "ALL"
+          ]
+        }
+      ]
+    },
+    "BOSS3_WATERFALL": {
+      "displayName": "폭포",
+      "difficulty": 5,
+      "attackExecutor": "WaterfallAttackExecutor",
+      "basicPatterns": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "complexPatterns": [
+        {
+          "id": "WATERFALL_SEQUENTIAL_12",
+          "template": "SEQUENTIAL_12",
+          "stepInterval": 0.6
+        },
+        {
+          "id": "WATERFALL_ROUND_TRIP_12321",
+          "template": "ROUND_TRIP_12321",
+          "stepInterval": 0.6
+        },
+        {
+          "id": "WATERFALL_CROSS_132",
+          "template": "CROSS_132",
+          "stepInterval": 0.6
+        },
+        {
+          "id": "WATERFALL_PRESSURE_123",
+          "template": "PRESSURE_123",
+          "stepInterval": 0.5
+        },
+        {
+          "id": "WATERFALL_SAFE_LANE_SHIFT_321",
+          "template": "SAFE_LANE_SHIFT_321",
+          "stepInterval": 0.65
+        }
+      ],
+      "specialPatterns": [
+        {
+          "id": "WATERFALL_FULL_JUMP_123",
+          "lanes": [
+            1,
+            2,
+            3
+          ],
+          "telegraph": 1.5,
+          "requiresJumpReady": true,
+          "avoidMethod": "jump_from_top_lane"
+        }
+      ],
+      "restAfterPattern": 0.45,
+      "phases": [
+        {
+          "start": 0,
+          "end": 8,
+          "allowed": [
+            "BASIC",
+            "WATERFALL_SEQUENTIAL_12",
+            "WATERFALL_CROSS_132"
+          ]
+        },
+        {
+          "start": 8,
+          "end": 20,
+          "allowed": [
+            "ALL_SHARED",
+            "WATERFALL_FULL_JUMP_123"
+          ]
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "allowed": [
+            "ALL",
+            "PATTERN_CHAIN"
+          ]
+        }
+      ],
+      "patternChains": {
+        "enabledFrom": 20.0,
+        "gap": 0.25,
+        "noColliderOverlap": true,
+        "checkJumpReadyBeforeFullJump": true,
+        "chains": [
+          [
+            "WATERFALL_CROSS_132",
+            "WATERFALL_FULL_JUMP_123"
+          ],
+          [
+            "WATERFALL_SEQUENTIAL_12",
+            "WATERFALL_SAFE_LANE_SHIFT_321"
+          ],
+          [
+            "WATERFALL_ROUND_TRIP_12321",
+            "WATERFALL_PRESSURE_123"
+          ]
+        ]
+      }
+    }
+  },
+  "longRock": {
+    "replacesBoss3": false,
+    "spriteId": "LongRock_Tall",
+    "variants": {
+      "ledge": {
+        "prefabId": "LedgeLongRock",
+        "eventTimes": {
+          "GAME_SECTION_1": [
+            5.0,
+            12.5
+          ],
+          "GAME_SECTION_2": [
+            15.0
+          ]
+        },
+        "onFail": {
+          "gameOver": false,
+          "pauseSectionTimer": true,
+          "pauseWorldScroll": true,
+          "pauseSpawning": true,
+          "retryUntilSuccess": true
+        }
+      },
+      "normalGimmick": {
+        "prefabId": "LongRock_Gimmick",
+        "blocksUnderwaterLanes": [
+          1,
+          2,
+          3
+        ],
+        "requiresJump": true,
+        "onCollision": "normal_section_fail"
+      }
+    }
+  }
+}
