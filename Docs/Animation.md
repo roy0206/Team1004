@@ -1,0 +1,219 @@
+# Animation
+
+`Game.Animation`은 `SpriteRenderer.sprite`를 시간에 따라 갈아끼우는 스프라이트 플립북 재생기다. `Assets/Scripts/Animation/`에 있고 asmdef는 `Game.Animation`, 네임스페이스도 같다. 참조는 `Core.Modules` 하나뿐이라 플레이어·컷신·보스 어디서든 순환 참조 없이 쓸 수 있다.
+
+## 규칙
+
+- **Unity `Animator`·`AnimationClip`·`Animation` 컴포넌트를 쓰지 않는다.** 사용자 결정이다. 상태 머신은 이미 `Game.StateMachine`이, 연출 트윈은 DOTween이 맡고 있어서 Animator를 더하면 같은 일을 하는 축이 셋이 된다. 프레임 교체만 필요한 2D 플립북에 Animator Controller·`.anim` 에셋·머신 상태를 얹으면 이진 에셋이 늘어 병합 충돌이 생기고, 재생 길이를 코드에서 `JumpDuration`에 맞추기도 어렵다. 프레임 배열과 fps만 있으면 되는 문제라서 `ScriptableObject` + `Module`로 끝낸다.
+- 씬 오브젝트 코드이므로 `MonoBehaviour`가 아니라 `Module`이다(`Core/Docs/Modules.md`, `Docs/CoreLoop.md` 「팀 규칙」). 런타임에 `GameObject`를 만들지 않는다.
+- 비동기는 `Awaitable`뿐이다. Coroutine·`Task`는 쓰지 않는다.
+- 시간은 기본이 scaled다. `Time.deltaTime`을 쓰므로 `Time.timeScale = 0`이면 애니메이션도 멈춘다. 일시정지 화면 뒤에서 계속 돌아야 하면 모듈을 unscaled로 만든다.
+
+## 파일
+
+| 파일 | 타입 | 하는 일 |
+| --- | --- | --- |
+| `CustomAnimation.cs` | `ScriptableObject` | 클립 데이터. 프레임 배열, fps, 루프, 길이 재정의, 프레임 이벤트 |
+| `CustomAnimationEvent.cs` | `struct` | 프레임 인덱스 + 문자열 id |
+| `FlipbookClock.cs` | 순수 C# | 경과 시간 → 프레임 인덱스·완료·이벤트 범위. `UnityEngine`을 쓰지 않아 EditMode 테스트로 전부 검증한다 |
+| `FlipbookStep.cs` | `readonly struct` | `FlipbookClock.Advance` 한 번의 결과 |
+| `SpriteAnimatorModule.cs` | `Module` (`Ticks = Update`) | 클록을 돌리고 `SpriteRenderer.sprite`에 반영. 이벤트·완료 통지 |
+| `Editor/AnimationAssetGenerator.cs` | 에디터 | 아트 PNG 임포트 설정 + `Design/Animations` 클립 생성 |
+| `Editor/SalmonClipTable.cs` | 에디터 | 클립 표(에셋 이름, 아트 폴더, 프레임 접두사, 프레임 수, fps, loop, duration 출처) |
+| `Editor/SalmonFrameMatcher.cs` | 에디터, 순수 C# | 파일명 → 프레임 번호. 인덱스 앞뒤 공백을 관대하게 읽는다 |
+| `Editor/SalmonArtPostprocessor.cs` | `AssetPostprocessor` | 아트 폴더 PNG를 임포트할 때마다 임포트 설정을 다시 건다 |
+| `Tests/FlipbookClockTests.cs`, `Tests/CustomAnimationTests.cs`, `Tests/SalmonClipTableTests.cs` | EditMode | 클록·클립 데이터 + 파일명 매칭·클립 표·아트 에셋 검증 |
+
+## CustomAnimation
+
+`CreateAssetMenu`는 `Team1004/Custom Animation`이다. 정본은 `Assets/GameAssets/Design/Animations/`에 둔다(기획이 조정할 값이므로 코드 상수가 아니라 데이터다).
+
+| 필드 | 기본값 | 뜻 |
+| --- | --- | --- |
+| `frames` (`Sprite[]`) | 빈 배열 | 재생 순서대로의 프레임. 0번이 첫 프레임 |
+| `framesPerSecond` | `12` | 초당 프레임. `duration`이 0일 때만 길이 계산에 쓰인다 |
+| `loop` | `false` | 끝에서 0번으로 돌아갈지 |
+| `duration` | `0` | 0보다 크면 한 바퀴 길이(초)를 이 값으로 **재정의**한다. fps는 무시된다 |
+| `events` (`CustomAnimationEvent[]`) | 빈 배열 | `Frame`(인덱스)에 들어갈 때 발화할 `Id` 문자열 |
+
+읽기 전용 멤버.
+
+| 멤버 | 설명 |
+| --- | --- |
+| `FrameCount` | 프레임 수 |
+| `Length` | 한 바퀴 길이(초). `duration > 0`이면 `duration`, 아니면 `FrameCount / FramesPerSecond`. 프레임이 없거나 fps가 0 이하면 `0` |
+| `GetFrame(float time)` | 시간 → **프레임 인덱스**. 루프면 한 바퀴를 빼고 나서 나누고(경계에서 정확히 0이 나온다), 원샷이면 마지막 프레임으로 클램프한다. 음수·0은 0 |
+| `GetSprite(int index)` | 인덱스 → `Sprite`. 범위 밖은 클램프, 프레임이 없으면 `null` |
+| `EventCount`, `GetEvent(int)` | 이벤트 목록. 범위 밖이면 `default`(빈 id) |
+| `Validate(out string error)` | 프레임 없음, fps ≤ 0, 음수 duration, 빈 프레임 슬롯, 빈 이벤트 id, 범위 밖 이벤트 프레임을 잡는다. 생성기가 만들 때마다 돌린다 |
+
+`Sprite`는 `[SerializeField] private` 배열이고 public 필드는 없다. 에디터 전용 `EditorInitialize`가 `#if UNITY_EDITOR`로 감싸져 있어 생성기만 값을 넣는다.
+
+## SpriteAnimatorModule
+
+```csharp
+var animator = AddModule(new SpriteAnimatorModule(GetComponent<SpriteRenderer>()));
+var unscaled = AddModule(new SpriteAnimatorModule(renderer, useUnscaledTime: true));
+```
+
+| 멤버 | 동작 |
+| --- | --- |
+| `Play(clip)` | 재생. **이미 그 클립을 같은 길이로 재생 중이면 아무것도 하지 않는다**(매 프레임 호출해도 안전). 다른 클립이면 0프레임부터. 멈춘 상태에서 같은 클립을 다시 넣으면 처음부터 다시 재생한다 |
+| `Play(clip, duration)` | 한 바퀴를 `duration`초에 맞춘다. 클립의 `Length`를 무시한다. 점프 5프레임을 `GameConfig.JumpDuration`(0.8)에 맞출 때 쓴다. `duration ≤ 0`이면 클립 길이 |
+| `PlayAsync(clip)` / `PlayAsync(clip, duration)` | `Awaitable` 반환. **원샷**은 마지막 프레임을 표시한 뒤 완료한다. **루프**는 한 바퀴가 끝나면 완료하되 재생은 계속한다. 이미 같은 클립·같은 길이로 재생 중이면 진행 중인 재생의 완료를 돌려준다 |
+| `Stop()` | 틱만 멈춘다. **현재 프레임은 그대로 남는다.** 대기 중인 `PlayAsync`는 즉시 완료된다 |
+| `SetFrame(clip, index)` | 정지 포즈. 재생을 멈추고 그 프레임을 표시한다. 범위 밖 인덱스는 클램프. 대기 중인 `PlayAsync`는 즉시 완료 |
+| `Speed` | 재생 속도 배수. 음수는 0으로 잘린다(역재생 없음) |
+| `IsPlaying`, `Current`, `CurrentFrame`, `NormalizedTime` | 상태 조회. `NormalizedTime`은 현재 바퀴 안에서 0~1 |
+| `UseUnscaledTime`, `PlaybackLength` | 생성자 옵션과 지금 재생 중인 한 바퀴 길이 |
+| `event Action<string> FrameEvent` | 프레임에 들어갈 때 그 프레임의 이벤트 id를 순서대로 발화 |
+| `event Action<CustomAnimation> Completed` | 원샷 종료, 또는 루프 한 바퀴 완료 |
+
+동작 세부.
+
+- **틱 정지**: 호스트가 `animator.IsEnabled = false`로 두면 모듈이 틱을 받지 않아 프레임이 멈춘다. 떼지 않으므로 다시 켜면 그 자리에서 이어간다.
+- **매 프레임 할당 없음**: `Advance`는 `readonly struct`를 돌려주고, 이벤트 목록은 인덱스로 훑고, `SpriteRenderer.sprite`는 **프레임이 실제로 바뀔 때만** 대입한다.
+- **완료 가드**: `AwaitableCompletionSource`는 `TrySetResult`로만 완료하고, 완료시킨 뒤 필드를 즉시 `null`로 비운다. 두 번 `SetResult`가 되어 예외가 나는 경로는 없다. 모듈이 떼어질 때(`OnDetached`)도 대기 중인 것을 완료시켜 `await`가 영원히 매달리지 않는다.
+- **이벤트 누락 없음**: 클록은 프레임 인덱스가 아니라 단조 증가하는 전역 인덱스로 "어디까지 들어갔는지"를 기억한다. 한 프레임에 dt가 커서 여러 프레임을 건너뛰어도 건너뛴 프레임의 이벤트가 전부, 각각 한 번씩 발화한다. 다만 한 번의 `Advance`에서 발화하는 범위는 **최대 한 바퀴**로 자른다(dt가 몇 초짜리로 튀어도 이벤트 수천 개가 쏟아지지 않게).
+- **재진입**: `FrameEvent` 핸들러가 다른 클립을 `Play`하거나 `Stop`하면 그 자리에서 남은 이벤트 발화와 완료 처리를 멈춘다.
+
+## 스킵과 일시정지
+
+- **스킵**(컷신 Space, 재도전 시 컷신 건너뛰기): `Stop()`을 부르면 대기 중인 `PlayAsync`가 즉시 완료되고 화면에는 마지막으로 그린 프레임이 남는다. 끝 포즈로 맞추고 싶으면 `SetFrame(clip, clip.FrameCount - 1)`을 이어서 부른다. 컷신 헬퍼가 「스킵 시 목표값을 즉시 적용」하는 규약과 같은 모양이다.
+- **일시정지**: 기본 모듈은 `Time.deltaTime`을 쓰므로 `Time.timeScale = 0`이면 자동으로 멈추고 프레임이 유지된다. 일시정지 UI 뒤에서도 돌아야 하는 연출(예: 타이틀 배경 물고기)은 `new SpriteAnimatorModule(renderer, true)`로 unscaled 모듈을 쓴다.
+- 개별 오브젝트만 멈추려면 `IsEnabled = false`가 가장 싸다.
+
+## 생성기
+
+메뉴 두 개다.
+
+- `Team1004/Generate Animation Assets` — 없는 것만 만든다(`Generate(false)`).
+- `Team1004/Regenerate Animation Assets (Overwrite)` — 확인 대화 후 기본값으로 덮어쓴다(`Generate(true)`).
+
+코드에서는 `AnimationAssetGenerator.Generate()`(= `Generate(false)`), `Generate(bool overwrite)`, 배치용 `RegenerateAllBatch()`를 쓴다.
+
+배치 실행:
+
+```
+Unity.exe -batchmode -nographics -projectPath "D:/Unity/Team1004/Team1004" -quit \
+  -executeMethod Game.Animation.Editor.AnimationAssetGenerator.GenerateMissing \
+  -logFile "D:/Unity/Team1004/Team1004/Logs/batch_anim_gen.log"
+```
+
+### (a) 아트 폴더
+
+정본은 `Assets/GameAssets/Art/물고기 애니메이팅/`이고 클립마다 하위 폴더가 하나다. 전부 1920×1080 RGBA다.
+
+| 하위 폴더 | 파일 | 클립 |
+| --- | --- | --- |
+| `기본/` | `물고기 기본-1.png`, `물고기 기본-2.png` | `Player_Swim` |
+| `올라가기/` | `물고기 올라가기 -1.png`, `물고기 올라가기-2.png` | `Player_LaneUp` |
+| `내려가기/` | `물고기 내려가기 -1.png`, `물고기 내려가기-2.png` | `Player_LaneDown` |
+| `점프/` | `물고기 점프-1.png` ~ `-5.png` | `Player_Jump` |
+
+**파일명이 일정하지 않다.** 인덱스 앞에 공백이 있는 것(`물고기 올라가기 -1.png`)과 없는 것(`물고기 올라가기-2.png`)이 섞여 있다. 그래서 경로를 문자열로 조립하지 않고 폴더의 `*.png`를 훑어 `SalmonFrameMatcher`로 고른다. 규칙은 「접두사 → 공백 몇 개든 → `-` → 공백 몇 개든 → 1 이상의 십진수」이고 이름은 NFC로 정규화해 비교한다. 접두사 바로 뒤에 다른 글자가 붙은 이름(`물고기 기본자세-1`)은 걸리지 않는다. 못 찾으면 `접두사-번호.png`를 그대로 쓰고 경고를 남긴다.
+
+옛 경로 `Assets/GameAssets/Art/점프/`는 Drive에서 `물고기 애니메이팅/점프/`로 옮겨졌다. 빈 폴더와 그 `.meta`는 지웠고, `Tools/sync_drive.py`는 이제 이동·삭제 뒤 빈 폴더와 `.meta`를 스스로 정리한다(`prune_empty_dirs`).
+
+### (b) 아트 PNG 임포트 설정
+
+이 경로는 아트 미러라 파일 자체는 건드리지 않고 `.meta`의 임포트 설정만 스크립트로 바꾼다. 손으로 고치지 않는다 — `SalmonArtPostprocessor`가 임포트마다 아래 표를 다시 건다.
+
+| 항목 | 값 | 이유 |
+| --- | --- | --- |
+| `textureType` | Sprite | |
+| `spriteMode` | Single | 원래 Multiple(시트 1장짜리)이었다. 프레임당 파일이 하나라 Single이 맞다 |
+| `spriteAlignment` / `spritePivot` | Custom / 계산값 | 아래 |
+| `spritePixelsPerUnit` | 100 | |
+| `spriteMeshType` | Tight | 캔버스의 90%가 투명이라 FullRect면 오버드로가 크다 |
+| `mipmapEnabled` | false | 2D 고정 화면이라 밉맵이 필요 없다 |
+| `textureCompression` | Uncompressed | 압축 아티팩트 없이. 대신 메모리를 먹는다(아래) |
+| `crunchedCompression` | false | |
+| `maxTextureSize` | 2048 | 1920이 줄어들지 않게 |
+| `alphaIsTransparency` | true, `filterMode` Bilinear, `wrapMode` Clamp | |
+
+**pivot 계산 — 11장이 pivot 하나를 쓴다**: 11장의 PNG를 디스크에서 바이트로 읽어 임시 `Texture2D`에 `LoadImage`하고(임포트 설정의 `isReadable`을 켜지 않아도 된다) 알파 ≥ 8인 픽셀의 바운딩 박스를 **11장 합집합**으로 구한 뒤 그 중심을 정규화한다. 클립마다 pivot이 다르면 수영 → 올라가기 → 점프로 넘어갈 때 연어가 한 프레임씩 튄다. 그래서 클립별이 아니라 **폴더 전체 합집합 하나**를 모든 PNG에 똑같이 건다.
+
+현재 결과: 합집합 바운딩 박스 `x=[756,1282] y=[266,545]`, 크기 **527×280 px**(1920×1080) → pivot **`(0.5309896, 0.3759259)`**. 옛 점프 5장만으로 구한 값과 같다(점프 프레임이 이미 상하좌우 극단을 다 차지한다). 연어 몸통 중심이 오브젝트 원점이 되므로 `transform.position`을 레인 Y에 맞추면 연어 중심이 레인에 온다. 파일을 하나도 못 읽으면 이 값을 상수(`FallbackPivot`)로 쓴다.
+
+프레임별 알파 박스(y는 Unity 기준, 아래가 0):
+
+| 프레임 | x | y |
+| --- | --- | --- |
+| 기본-1 | 756~1277 | 299~521 |
+| 기본-2 / 내려가기-2 / 올라가기-2 / 점프-1 | 756~1277 | 293~515 |
+| 내려가기 -1 / 점프-5 | 764~1265 | 285~545 |
+| 올라가기 -1 / 점프-2 | 759~1282 | 266~511 |
+| 점프-3 | 770~1277 | 284~533 |
+| 점프-4 | 766~1271 | 292~523 |
+
+### (c) 생성되는 클립
+
+`Assets/GameAssets/Design/Animations/`. 표의 정본은 `Editor/SalmonClipTable.cs`이고 값은 **에셋에 굽는다**(런타임 상수가 아니다).
+
+| 에셋 | 아트 폴더 | 프레임 | fps | loop | duration | 비고 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `Player_Swim.asset` | `기본/` | 2 | 6 | **true** | 0 | 길이 = 2/6 ≈ 0.333초. 상시 도는 수영·대기 루프 |
+| `Player_LaneUp.asset` | `올라가기/` | 2 | 10 | false | **`LaneMoveDuration`(0.2)** | 레인 위로 이동 |
+| `Player_LaneDown.asset` | `내려가기/` | 2 | 10 | false | **`LaneMoveDuration`(0.2)** | 레인 아래로 이동 |
+| `Player_Jump.asset` | `점프/` | 5 | 12 | false | **`JumpDuration`(0.8)** | |
+
+duration은 생성기가 `Assets/GameAssets/Design/GameConfig.asset`의 `GameConfigValues`에서 읽어 굽는다(`SalmonClipDuration.LaneMove`/`Jump`). 에셋이 없으면 `GameConfigValues` 기본값(0.2 / 0.8)을 쓴다. 플레이어는 재생할 때 `Play(clip, GameConfig.Current.XxxDuration)`으로 길이를 다시 넘기므로 런타임 config를 바꿔도 어긋나지 않고, 에셋 값은 컷신·미리보기용 기본값이다.
+
+`Player_Idle`은 없앴다. 정지 포즈가 필요하면 `SetFrame(swimClip, 0)`이다. 생성기가 남아 있는 옛 `Player_Idle.asset`을 지운다.
+
+`Generate(false)`는 이미 있는 에셋의 fps·duration·loop를 건드리지 않는다(손으로 조정한 값이 남는다). 다만 **프레임 수가 표와 다르거나 프레임 슬롯이 비면 그 클립만 다시 굽는다**(`NeedsRepair`). 아트가 프레임을 늘려 와도 메뉴 한 번이면 맞고, 여러 번 눌러도 결과가 같다(멱등·배치 안전). 전부 기본값으로 되돌리는 건 별도 메뉴(`Generate(true)`, 배치는 `RegenerateAllBatch()`)다.
+
+### 메모리 비용 — 아트에 요청함
+
+1920×1080 RGBA32 무압축은 **한 장 7.9 MiB**다. 11장이면 **약 87 MiB**가 텍스처로 상주한다. 실제 연어는 캔버스 안에서 약 527×280 px, 즉 전체 픽셀의 **7%**뿐이고 나머지는 투명이다. 캔버스를 연어 크기(예: 560×300)로 잘라 오면 11장이 **약 6.6 MiB**로 줄고 아틀라스에도 들어간다. `Docs/Requests.md`에 「아트: 캐릭터 크기에 맞춘 캔버스로 요청」으로 남겼다(이제 11장 전부에 해당한다). 캔버스가 바뀌면 pivot 계산은 그대로 다시 돌리면 된다(생성기가 알파 바운딩 박스에서 구하므로 값만 바뀐다). **11장이 같은 캔버스·같은 연어 위치**여야 한다는 조건만 지켜지면 된다.
+
+임시로 넘길 방법: 압축을 켜거나(`textureCompression`을 Normal로) `maxTextureSize`를 1024로 내리면 메모리는 1/4씩 줄지만 해상도·품질이 떨어진다. 지금은 무압축·2048로 두었다.
+
+## 통합 절차
+
+**완료(코어루프 통합).** 아래는 실제 붙은 형태다.
+
+### 플레이어 (`Game.Player`)
+
+- `Game.Player.asmdef` → `Game.Animation`, `Game.Water`.
+- `LanePlayer`: `[SerializeField] CustomAnimation swimClip/laneUpClip/laneDownClip/jumpClip`(생성기가 `Design/Animations`의 네 에셋을 연결), `Awake` 끝에서 `animator = AddModule(new SpriteAnimatorModule(spriteRenderer))`. `Start`와 `SnapToLane`이 `PlaySwim()`.
+- **레인 이동 클립**: `LaneMoveModule`이 `MoveStarted(int direction)`(이동 시작, `-1` 위 / `+1` 아래)와 `MoveFinished(int lane)`(이동 끝)를 쏘고 `MoveDirection` 프로퍼티로 진행 방향을 읽을 수 있다. `LanePlayer.OnModuleMoveStarted`가 방향에 맞는 클립을 `Play(clip, GameConfig.Current.LaneMoveDuration)`로 재생하고, `OnModuleMoveFinished`가 `PlaySwim()`으로 돌아온다. 기존 `LaneChanged`는 이동 시작 시점 그대로다(`PlayFlow`가 쓴다).
+- **점프가 이긴다**: 이동 중에 점프가 시작되면(`jump.IsAirborne`) `OnModuleMoveStarted`·`OnModuleMoveFinished`가 둘 다 아무것도 하지 않아 점프 클립이 끊기지 않는다. `OnModuleJumped`가 `Play(jumpClip, GameConfig.Current.JumpDuration)`, `OnModuleLanded`가 `PlaySwim()`. 평소 입력 경로에서는 `CanAcceptInput`이 이동 중 점프를 막으므로 이 경합은 보스·컷신이 모듈을 직접 부를 때만 생긴다.
+- `idleClip`은 없앴다. 정지 포즈는 `animator.SetFrame(swimClip, 0)`이다.
+- **애니메이터는 `InputEnabled`를 따라 멈춘다**(`IsEnabled`). 컷신·결과 화면·피격 중에는 플레이어 애니메이터가 틱을 받지 않으므로, 같은 `SpriteRenderer`를 쓰는 컷신 배우 애니메이터(`CutsceneActor.Animator`)와 싸우지 않는다. 컷신이 끝나면 `PlayFlow`가 `SnapToLane`을 불러 수영 포즈로 돌아온다.
+- 스케일: 생성기가 `Player` 오브젝트에 `GameConfig.playerScale`(0.29)을 `localScale`로 준다. 527×280px 연어가 1.53×0.81 unit이 되어 레인 간격 1.1 안에 든다. 히트박스는 `BoxCollider2D.size = 알파 박스(5.27×2.80) × playerHitboxScale(0.87)` = 로컬 4.58×2.44(월드 1.33×0.71), `offset = (알파 박스 중심 − pivot)/PPU`(pivot이 박스 중심이라 0). 값은 `GameConfigValues`에 있다.
+- `HitReactionModule`은 색만, 애니메이터는 `sprite`만 바꿔 겹치지 않는다.
+
+### 컷신 베이스 (`Game.Cutscene`)
+
+`Docs/Cutscene.md` 「헬퍼」에 `Animate`, `SetPose`, `Clip`이 있다. `CutsceneActor`는 `SpriteRenderer`가 있을 때만 `Animator`(지연 `AddModule`)를 만든다. 클립은 `CutscenePlayer.clips`(id → `CustomAnimation`)로 주입되며 생성기가 `player_jump`, `player_swim`, `player_lane_up`, `player_lane_down` 네 개를 연결한다. `CutsceneBase`에 `PlayerJumpClip`·`PlayerSwimClip`·`PlayerLaneUpClip`·`PlayerLaneDownClip` 접근자가 있다. `EndingCutscene`이 도착 직후 `Animate(Player, PlayerJumpClip)`을 한 번 쓴다.
+
+### 보스 (`Game.Boss`)
+
+아직 붙이지 않았다. 보스 아트가 오면 「생성기」에 `Boss_*` 클립을 더하고 각 페이즈 `OnEnter`에서 `Play(clip, 상태 길이)`를 부른다.
+
+### 아트 임포트 설정 유지 (`Editor/SalmonArtPostprocessor.cs`)
+
+`Assets/GameAssets/Art/`는 Drive 미러라 `Tools/sync_drive.py`가 PNG 내용이 바뀌면 파일을 덮어쓴다(`.meta`는 파일 이동·삭제 때만 같이 옮기거나 지운다). `.meta`가 남아도 알파 박스가 바뀌면 pivot이 어긋나므로 `AssetPostprocessor.OnPreprocessTexture`가 **`Assets/GameAssets/Art/물고기 애니메이팅/` 아래 모든 `*.png`**를 임포트할 때마다 위 표의 설정(Sprite, Single, PPU 100, Tight, 밉맵 없음, 무압축, 2048, Custom pivot)을 다시 적용한다(`IsSalmonFramePath`). pivot은 `AnimationAssetGenerator.ResolveSharedPivotCached()`(11장 합집합 알파 박스, 30초 캐시, 파일이 없으면 고정값 `(0.5309896, 0.3759259)`)다. 11장을 한꺼번에 임포트해도 첫 장만 계산하고 나머지는 캐시를 쓴다. 생성기의 `ConfigureSpriteImporter`도 같은 `ApplyImportSettings`를 부른 뒤 `SaveAndReimport`하므로 둘이 어긋나지 않는다. **미러 `.meta`는 손으로 고치지 않는다** — 값은 전부 이 후처리기가 만든다.
+
+`AnimationAssetGenerator.TryGetSalmonBounds(out Rect, out Vector2Int)`가 **11장 합집합** 알파 박스(픽셀)와 텍스처 크기를 돌려주며 코어루프 생성기가 히트박스 계산에 쓴다. 클립이 바뀌어도 히트박스가 같아 판정이 흔들리지 않는다.
+
+## 임시값
+
+- 자리표시자는 없어졌다. 네 클립 모두 실제 아트다.
+- `Player_Swim`의 fps 6은 정한 값이다(2프레임 루프라 0.333초에 한 바퀴). 루프 클립은 한 바퀴마다 `Completed`를 쏘므로 초당 3번이다. 굼떠 보이면 8로 올린다.
+- `Player_LaneUp`/`LaneDown`의 fps 10은 2프레임 ÷ 0.2초에서 나온 값이라 duration과 길이가 같다. duration이 이기므로 fps는 참고용이다.
+- `Player_Jump`의 `duration` 0.8은 기획서 3번 문서의 「점프 지속 약 0.8초」에서 왔다. 플레이어가 `Play(jump, GameConfig.JumpDuration)`을 쓰면 에셋 값은 참고용이 된다.
+- 프레임 이벤트는 아직 어느 클립에도 없다. 사운드 붙일 때 `jump_splash` 같은 id를 점프 클립 1~2프레임에 넣고 `FrameEvent`를 `AudioManager`로 잇는 것이 자연스럽다(`Docs/Requests.md`의 사운드 항목과 같은 결).
+
+## 확신이 없는 지점
+
+- **연어 크기.** 통합에서 `GameConfig.playerScale` 0.29(몸 높이 약 0.81 unit)로 정했다. PPU는 100 그대로. 스포너의 `playerHalfWidth` 0.35와 실제 히트박스 폭 1.33이 어긋나는 점은 `Docs/DesignQuestions.md`에 올렸다.
+- **레인 이동 2프레임이 0.2초에 맞는지 모른다.** 프레임당 0.1초라 사실상 시작 포즈 한 장, 기울어진 포즈 한 장이고 도착 포즈는 수영 0프레임이 받는다. 아트가 「1번=기울기 시작, 2번=최대 기울기」로 그렸다고 보고 그대로 넘겼다. 착지 프레임이 따로 있어야 자연스러우면 3프레임을 요청해야 한다.
+- **`올라가기`·`내려가기`의 2번 프레임이 `기본`의 2번 프레임과 파일 내용이 같다**(sha256 동일, `점프-1`도 같다). 아트가 「끝나면 기본 자세로 돌아온다」는 뜻으로 넣은 것으로 보고 그대로 썼다. 의도가 다르면 `Docs/DesignQuestions.md`로 올려야 한다.
+- **점프 5프레임이 포물선 어디에 대응하는지 모른다.** `JumpModule`은 `4 * JumpHeight * t * (1 - t)` 포물선으로 Y를 직접 움직이고, 애니메이션은 0.8초를 5등분해 균등하게 넘긴다. 3번 프레임이 정점 그림인지 아닌지는 아트가 그렇게 그렸을 때만 맞는다. 어긋나면 프레임 수를 늘리거나 `Play(clip, duration)` 대신 `SetFrame(clip, index)`을 `JumpModule.Progress01`로 직접 몰아야 한다. 후자는 포물선과 완벽히 동기되지만 모듈 하나가 다른 모듈을 매 프레임 읽어야 해서 지금은 하지 않았다.
+- **루프 클립의 `Completed` 의미.** 「한 바퀴 뒤 완료하되 계속 재생」이라는 지시대로 만들었는데, 그러면 이벤트가 바퀴마다 계속 발생한다. 수영처럼 상시 도는 클립에 `Completed`를 구독하면 초당 여러 번 불린다. 지금은 그게 맞는 동작이라고 보고 문서에만 적었다.
+- **`Stop()`이 프레임을 유지한다**는 지시를 따랐다. 그래서 점프 도중 스킵하면 공중 포즈가 남는다. 컷신 스킵 규약(끝값 즉시 적용)과 다르므로 컷신 쪽에서는 `Stop()` 뒤에 `SetFrame`으로 끝 포즈를 찍어야 한다. 이걸 `Animate` 헬퍼 안에 넣을지는 컷신 소유자가 정한다.
+- **아트 `.meta` 수정 범위.** `Tools/sync_drive.py`를 확인했다: sha256이 다르면 PNG만 덮어쓰고 `.meta`는 이동·삭제 때만 건드린다. 새 파일이 오면 `.meta`가 없어 기본 임포트가 되므로 `JumpArtPostprocessor`가 임포트 시점에 설정을 다시 건다(「통합 절차」).
+- **`Play` 무시 조건**을 「같은 클립 + 같은 길이 + 재생 중」으로 했다. `Play(jump, 0.8)`을 매 프레임 불러도 안전하다는 뜻이다. 다만 멈춘 뒤 같은 클립을 다시 넣으면 처음부터 다시 돈다. 「무시」를 재생 여부와 무관하게 볼 수도 있어서 애매하다.
