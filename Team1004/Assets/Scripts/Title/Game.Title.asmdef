@@ -1,0 +1,11 @@
+{
+    "name": "Game.Title",
+    "rootNamespace": "Game.Title",
+    "references": [
+        "Core.Foundation",
+        "Core.Scene",
+        "Core.Audio",
+        "Game.Settings",
+        "UnityEngine.UI"
+    ]
+}

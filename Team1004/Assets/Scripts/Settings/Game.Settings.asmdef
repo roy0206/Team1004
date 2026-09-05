@@ -1,0 +1,17 @@
+{
+    "name": "Game.Settings",
+    "rootNamespace": "Game.Settings",
+    "references": [
+        "Core.Foundation",
+        "Core.Scene",
+        "Core.Audio",
+        "Core.Save",
+        "Core.Save.PlayerPrefs",
+        "Game.Config",
+        "UnityEngine.UI"
+    ],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ]
+}

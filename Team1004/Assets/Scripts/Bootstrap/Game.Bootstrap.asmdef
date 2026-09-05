@@ -1,0 +1,24 @@
+{
+    "name": "Game.Bootstrap",
+    "rootNamespace": "Game.Bootstrap",
+    "references": [
+        "Core.Foundation",
+        "Core.Scene",
+        "Core.Resource",
+        "Core.Resource.Resources",
+        "Core.Pool",
+        "Core.Audio",
+        "Core.Audio.Resources",
+        "Core.Input",
+        "Core.Save",
+        "Core.Save.PlayerPrefs",
+        "Game.Config",
+        "Game.Settings",
+        "Game.Dialogue",
+        "Unity.InputSystem"
+    ],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ]
+}

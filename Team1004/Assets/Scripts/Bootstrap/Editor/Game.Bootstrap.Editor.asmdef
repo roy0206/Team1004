@@ -1,0 +1,39 @@
+{
+    "name": "Game.Bootstrap.Editor",
+    "rootNamespace": "Game.Bootstrap.Editor",
+    "references": [
+        "Game.Bootstrap",
+        "Game.Config",
+        "Game.Settings",
+        "Game.Player",
+        "Game.Play",
+        "Game.Title",
+        "Game.View",
+        "Game.Cutscene",
+        "Game.Cutscene.Editor",
+        "Game.Spawner",
+        "Game.Spawner.Editor",
+        "Game.Boss.Editor",
+        "Game.Boss.Integration",
+        "Game.Boss",
+        "Game.Animation",
+        "Game.Animation.Editor",
+        "Game.Environment",
+        "Game.Environment.Editor",
+        "Core.Foundation",
+        "Core.Modules",
+        "Core.Scene",
+        "Core.Scene.Transition",
+        "Core.Resource",
+        "Core.Pool",
+        "Core.Audio",
+        "Core.Input",
+        "Unity.InputSystem",
+        "UnityEngine.UI",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Universal.2D.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

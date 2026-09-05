@@ -1,0 +1,70 @@
+{
+  "settings": {
+    "initialPoolSize": 4,
+    "maxSfxChannels": 8,
+    "spatialBlend": 0.0,
+    "minDistance": 1.0,
+    "maxDistance": 15.0,
+    "masterVolume": 1.0,
+    "sfxVolume": 1.0,
+    "bgmVolume": 1.0
+  },
+  "sounds": [
+    {
+      "id": "ui_click",
+      "loadKey": "Audio/UiClick"
+    },
+    {
+      "id": "lane_move",
+      "loadKey": "Audio/LaneMove"
+    },
+    {
+      "id": "jump",
+      "loadKey": "Audio/Jump"
+    },
+    {
+      "id": "land",
+      "loadKey": "Audio/Land"
+    },
+    {
+      "id": "stage_clear",
+      "loadKey": "Audio/StageClear"
+    },
+    {
+      "id": "stage_fail",
+      "loadKey": "Audio/StageFail"
+    },
+    {
+      "id": "bgm_title",
+      "loadKey": "Audio/BgmTitle"
+    },
+    {
+      "id": "bgm_play",
+      "loadKey": "Audio/BgmPlay"
+    },
+    {
+      "id": "hit",
+      "loadKey": "Audio/Hit"
+    },
+    {
+      "id": "boss_telegraph",
+      "loadKey": "Audio/BossTelegraph"
+    },
+    {
+      "id": "boss_attack",
+      "loadKey": "Audio/BossAttack"
+    },
+    {
+      "id": "boss_clear",
+      "loadKey": "Audio/BossClear"
+    },
+    {
+      "id": "cutscene_transition",
+      "loadKey": "Audio/CutsceneTransition"
+    },
+    {
+      "id": "ending",
+      "loadKey": "Audio/Ending"
+    }
+  ]
+}

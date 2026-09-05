@@ -1,0 +1,19 @@
+{
+    "name": "Game.Play",
+    "rootNamespace": "Game.Play",
+    "references": [
+        "Core.Foundation",
+        "Core.Modules",
+        "Core.Scene",
+        "Core.Audio",
+        "Core.Input",
+        "Core.Save",
+        "Game.Config",
+        "Game.Player",
+        "Game.Settings",
+        "Game.Cutscene",
+        "Game.Spawner",
+        "Game.Environment",
+        "UnityEngine.UI"
+    ]
+}

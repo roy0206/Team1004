@@ -1,0 +1,7 @@
+{
+    "name": "Game.View",
+    "rootNamespace": "Game.View",
+    "references": [
+        "Core.Modules"
+    ]
+}

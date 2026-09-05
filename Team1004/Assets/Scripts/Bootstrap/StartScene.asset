@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbf34c5510e3bbc4d8a60b1744b0741a, type: 3}
+  m_Name: StartScene
+  m_EditorClassIdentifier: Core.Scene::SceneReference
+  scene:
+    path: Assets/Scenes/Start.unity
+    guid: b567354507398e443bca64625bcac4b0
+  overrideTransition: 0
+  transition:
+    useLoadingScene: 0
+    loadingScene:
+      path: 
+      guid: 
+    minimumLoadingDuration: 0
+    coverDuration: 0.3
+    revealDuration: 0.3
