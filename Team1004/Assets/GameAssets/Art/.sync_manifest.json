@@ -1,1 +1,46 @@
-{}
+{
+  "물고기 애니메이팅/기본/물고기 기본-1.png": {
+    "id": "1BQ0SsMxTaFG_2j-sOqoVN7mXkdbIYXVb",
+    "sha256": "133b130f7f50b3d2660da48df50de2c44c0fc67a223204448dbd4527f7e840cc"
+  },
+  "물고기 애니메이팅/기본/물고기 기본-2.png": {
+    "id": "1ywtPYlfXLmX3X7ViXFNmbcqdis_FuUBs",
+    "sha256": "4d9f33842fb7862e50fc34504ce9ad40168a13eed90c14eb9d230c5918b44c3b"
+  },
+  "물고기 애니메이팅/내려가기/물고기 내려가기 -1.png": {
+    "id": "1M0ATIaJVyxLLzVFbia8ijemsKd3WPflX",
+    "sha256": "af8d9cf317036e9550664d40487b91b96270673b85ea4d3c3a19709c499cbae6"
+  },
+  "물고기 애니메이팅/내려가기/물고기 내려가기-2.png": {
+    "id": "16dpOQBM9BF8_CJ8Eny4J83dZS8F7s6B3",
+    "sha256": "4d9f33842fb7862e50fc34504ce9ad40168a13eed90c14eb9d230c5918b44c3b"
+  },
+  "물고기 애니메이팅/올라가기/물고기 올라가기 -1.png": {
+    "id": "1NADqHUcd9kNJAoYO0-uHzTjl6elhyKHr",
+    "sha256": "f026cdb797c46290cdec7ed54624ceec798cbc979c81e813bdd36d5d01f07094"
+  },
+  "물고기 애니메이팅/올라가기/물고기 올라가기-2.png": {
+    "id": "1Icn6eUkwfHyjxkWl4Q36uzYUCbqL9lDQ",
+    "sha256": "4d9f33842fb7862e50fc34504ce9ad40168a13eed90c14eb9d230c5918b44c3b"
+  },
+  "물고기 애니메이팅/점프/물고기 점프-1.png": {
+    "id": "1GiHcM5II7rTF5GwSqBPX1h3TQHsx-h-T",
+    "sha256": "4d9f33842fb7862e50fc34504ce9ad40168a13eed90c14eb9d230c5918b44c3b"
+  },
+  "물고기 애니메이팅/점프/물고기 점프-2.png": {
+    "id": "1qqo72AXNohnAp5H0EE7T1e-jtL8ji-R2",
+    "sha256": "f026cdb797c46290cdec7ed54624ceec798cbc979c81e813bdd36d5d01f07094"
+  },
+  "물고기 애니메이팅/점프/물고기 점프-3.png": {
+    "id": "1exJhRKUFdMBP4PV1CqmqqAMrlpouk0-4",
+    "sha256": "cb5ce633d308e4e0ad1db09d72a846ea77c90ad7754bd0734ff70888417994fe"
+  },
+  "물고기 애니메이팅/점프/물고기 점프-4.png": {
+    "id": "1XEZ8FARvTdTZt7ZziS1H31k_XtZgLPlc",
+    "sha256": "38830a93f2f4554f4ed8a53eb521807f6d9d48b18db742f573eae12fd7260564"
+  },
+  "물고기 애니메이팅/점프/물고기 점프-5.png": {
+    "id": "16yzZxcZGc1SDaBV7ycOLTkZr2MCjgjie",
+    "sha256": "af8d9cf317036e9550664d40487b91b96270673b85ea4d3c3a19709c499cbae6"
+  }
+}
