@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce727e03ab8bca64fa100ad2642f4312, type: 3}
-  m_Name: Obstacle_Fish
+  m_Name: Boss_Rapid
   m_EditorClassIdentifier: Game.Animation::Game.Animation.CustomAnimation
   frames:
-  - {fileID: 21300000, guid: 2b9f4c81e6a0d5f4ab37c0d29e5148a6, type: 3}
-  - {fileID: 21300000, guid: 6d47a0e2b1c9f83498025de6a7134bf0, type: 3}
+  - {fileID: 21300000, guid: 709530025c24efe4680c74ff7ee127ab, type: 3}
+  - {fileID: 21300000, guid: 85dae4647b71228419663f0416763a8b, type: 3}
   framesPerSecond: 6
   loop: 1
   duration: 0

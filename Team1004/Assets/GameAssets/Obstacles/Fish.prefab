@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.2195122, y: 0.2195122, z: 1}
+  m_LocalScale: {x: 0.1287554, y: 0.1287554, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7100000000000001013}
@@ -85,7 +85,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 84f698fbc4a714c43a45ffe2dd28d624, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2b9f4c81e6a0d5f4ab37c0d29e5148a6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -139,7 +139,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 3.5533333, y: 1.7766666}
+  m_Size: {x: 6.058, y: 2.796}
   m_EdgeRadius: 0
 --- !u!114 &1346215619633858814
 MonoBehaviour:
@@ -171,7 +171,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Water::Game.Water.WaterInteractor
   shape: {fileID: 0}
-  size: {x: 4.1, y: 2.05}
+  size: {x: 6.99, y: 3.18}
   offset: {x: 0, y: 0}
   ignoreColliderShape: 1
   surfaceInfluence: 1
@@ -201,7 +201,7 @@ Transform:
   m_GameObject: {fileID: 7100000000000000000}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.05, y: 0, z: 0}
+  m_LocalPosition: {x: 3.495, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

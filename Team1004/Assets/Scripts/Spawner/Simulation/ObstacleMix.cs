@@ -59,7 +59,7 @@ namespace Game.Spawner
                     for (var j = 0; j < entries.Count; j++)
                     {
                         var obstacle = entries[j].Obstacle;
-                        if (obstacle == null || IndexOf(obstacles, obstacle.Id) >= 0)
+                        if (obstacle == null || !obstacle.UsableInNormalPatterns || IndexOf(obstacles, obstacle.Id) >= 0)
                             continue;
 
                         obstacles.Add(obstacle);

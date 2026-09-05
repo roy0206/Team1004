@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd536be40e6a8df4ab41b67d53388d13, type: 3}
-  m_Name: Fish
+  m_Name: LongRock
   m_EditorClassIdentifier: Game.Spawner::Game.Spawner.ObstacleDefinition
-  id: Fish
-  prefab: {fileID: 7863988488511380758, guid: 19a4d33f6eb272a4ba23885c4264e5e6, type: 3}
-  laneSpan: 1
-  allowedStartLanes: 7
-  fitAxis: 0
-  visualHeight: 0
-  bodyLength: 0.9
-  collisionLength: 0.78
-  collisionHeight: 0.36
-  speedMultiplier: 1.25
-  spawnWeight: 3
-  usableInNormalPatterns: 1
-  usableInJumpPatterns: 0
+  id: LongRock
+  prefab: {fileID: 7412903355618250001, guid: 8a2d67f0b5c34e19ae03d7c62185b9f4, type: 3}
+  laneSpan: 3
+  allowedStartLanes: 1
+  fitAxis: 1
+  visualHeight: 3.77
+  bodyLength: 3.35
+  collisionLength: 2.91
+  collisionHeight: 2.9
+  speedMultiplier: 1
+  spawnWeight: 1
+  usableInNormalPatterns: 0
+  usableInJumpPatterns: 1

@@ -123,17 +123,19 @@ namespace Game.Spawner.Tests
         }
 
         [Test]
-        public void DefaultProfile_NeverRequestsJumpPatterns()
+        public void DefaultProfile_UsesTheLongRockJumpRatios()
         {
             var profile = SpawnerDefaults.CreateProfile();
+            var expected = new[] { 0.05f, 0.10f, 0.15f, 0f };
 
             for (var section = 0; section < profile.SectionCount; section++)
             {
                 for (var step = 0; step <= 10; step++)
                 {
                     var sample = profile.GetSection(section).Sample(step / 10f);
-                    Assert.AreEqual(0f, sample.JumpRequiredRatio, 0.0001f,
-                        "Section " + section + " asks for jump-required patterns. Jump forcing belongs to boss 3 only (design v4).");
+                    Assert.AreEqual(expected[section], sample.JumpRequiredRatio, 0.0001f,
+                        "Section " + section + " 점프 필수 비율은 긴 돌 기믹 비율이다(v8 05절 Variant B).");
+                    Assert.AreEqual(SpawnerDefaults.GetSectionJumpRatio(section), sample.JumpRequiredRatio, 0.0001f);
                 }
             }
         }
@@ -150,7 +152,99 @@ namespace Game.Spawner.Tests
         public void DefaultObstacles_AreAllSingleLane()
         {
             foreach (var obstacle in obstacles)
+            {
+                if (obstacle.Id == SpawnerDefaults.LongRockId)
+                    continue;
+
                 Assert.AreEqual(1, obstacle.LaneSpan, obstacle.Id + " must occupy one lane (design v3, section 10).");
+            }
+        }
+
+        [Test]
+        public void LongRock_BlocksEveryLaneAndOnlyStartsAtTheTop()
+        {
+            var longRock = Find(SpawnerDefaults.LongRockId);
+
+            Assert.AreEqual(3, longRock.LaneSpan, "긴 돌은 세 레인을 한꺼번에 막는다(v8 05절 Variant B).");
+            Assert.AreEqual(LaneMask.Of((int)Lane.Top), longRock.AllowedStartLaneMask, "긴 돌은 상단에서 시작해 세 레인을 덮는다.");
+            Assert.IsTrue(longRock.CanStartAt((int)Lane.Top, 3));
+            Assert.IsFalse(longRock.CanStartAt((int)Lane.Middle, 3));
+            Assert.AreEqual(LaneMask.All(3), LaneMask.Span((int)Lane.Top, longRock.LaneSpan));
+            Assert.IsFalse(longRock.UsableInNormalPatterns, "긴 돌은 일반 패턴 풀에 들어가지 않는다.");
+            Assert.IsTrue(longRock.UsableInJumpPatterns);
+        }
+
+        [Test]
+        public void LongRock_SizesComeFromTheArtAndTheJumpArc()
+        {
+            var longRock = Find(SpawnerDefaults.LongRockId);
+            var scale = ObstacleVisual.UniformScaleForHeight(779f, SpawnerDefaults.LongRockVisualHeight);
+
+            Assert.AreEqual(ObstacleFitAxis.Height, longRock.FitAxis);
+            Assert.AreEqual(3.77f, longRock.VisualHeight, 0.0001f, "강바닥 -1.72에서 수면 위 2.05까지다.");
+            Assert.AreEqual(
+                SpawnerDefaults.LongRockVisualTopY - SpawnerDefaults.LongRockVisualBottomY,
+                longRock.VisualHeight,
+                0.0001f);
+            Assert.AreEqual(
+                (SpawnerDefaults.LongRockVisualTopY + SpawnerDefaults.LongRockVisualBottomY) * 0.5f,
+                SpawnerDefaults.LongRockVisualCenterY,
+                0.0001f);
+            Assert.AreEqual(6.92f * scale, longRock.BodyLength, 0.005f, "몸길이는 알파 박스 692 px에서 나온다.");
+            Assert.AreEqual(longRock.BodyLength * ObstacleVisual.HitboxScale, longRock.CollisionLength, 0.006f);
+            Assert.AreEqual(2.9f, longRock.CollisionHeight, 0.0001f);
+        }
+
+        [Test]
+        public void LongRock_ColliderTopStaysUnderTheJumpArc()
+        {
+            var longRock = Find(SpawnerDefaults.LongRockId);
+            var colliderTop = longRock.CollisionHeight * 0.5f;
+            var blockSeconds = (longRock.CollisionLength + SpawnerDefaults.PlayerHitboxWidth) / config.ScrollSpeed;
+            var duration = config.JumpDuration;
+            var laneY = 1.1f;
+            var jumpHeight = 2.2f;
+            var half = SpawnerDefaults.PlayerHitboxHeight * 0.5f;
+            var clearStart = -1f;
+            var clearEnd = -1f;
+            var steps = 16000;
+
+            for (var i = 0; i <= steps; i++)
+            {
+                var seconds = duration * i / steps;
+                var t = seconds / duration;
+                var bottom = laneY + 4f * jumpHeight * t * (1f - t) - half;
+
+                if (bottom <= colliderTop)
+                    continue;
+
+                if (clearStart < 0f)
+                    clearStart = seconds;
+
+                clearEnd = seconds;
+            }
+
+            Assert.Greater(clearStart, 0f, "점프 중 연어 아랫변이 콜라이더 윗변을 넘는 구간이 없다.");
+            Assert.Greater(clearEnd - clearStart, blockSeconds,
+                "연어가 콜라이더 위에 있는 시간(" + (clearEnd - clearStart) + "s)이 봉쇄 시간(" + blockSeconds + "s)보다 길어야 한다.");
+            Assert.Greater(clearEnd - clearStart - blockSeconds, 0.3f, "점프 시작 허용 창이 0.3초보다 넓어야 한다.");
+        }
+
+        [Test]
+        public void LongRockSolo_IsTheOnlyDrawableJumpPattern()
+        {
+            var drawable = new List<string>();
+
+            foreach (var pattern in patterns)
+            {
+                var analysis = PatternAnalyzer.Analyze(pattern, config, 1f);
+
+                if (analysis.Solvable && analysis.JumpRequired && pattern.IsUsableAs(true))
+                    drawable.Add(pattern.Id);
+            }
+
+            Assert.AreEqual(1, drawable.Count, "점프 필수 풀에는 긴 돌 패턴만 남는다: " + string.Join(", ", drawable));
+            Assert.AreEqual("LongRock_Solo", drawable[0]);
         }
 
         [Test]
@@ -227,13 +321,21 @@ namespace Game.Spawner.Tests
             var expected = new Dictionary<string, float>
             {
                 { SpawnerDefaults.RockId, SpawnerDefaults.RockVisualHeight * ObstacleVisual.HitboxScale },
-                { SpawnerDefaults.FishId, 0.45f * ObstacleVisual.HitboxScale },
+                { SpawnerDefaults.FishId, 0.409442f * ObstacleVisual.HitboxScale },
                 { SpawnerDefaults.LogId, 0.97627f * ObstacleVisual.HitboxScale }
             };
 
             foreach (var obstacle in obstacles)
-                Assert.AreEqual(expected[obstacle.Id], obstacle.CollisionHeight, 0.006f,
+            {
+                if (!expected.TryGetValue(obstacle.Id, out var height))
+                    continue;
+
+                Assert.AreEqual(height, obstacle.CollisionHeight, 0.006f,
                     obstacle.Id + " 충돌 높이는 아트 높이 × " + ObstacleVisual.HitboxScale + "다.");
+            }
+
+            Assert.IsFalse(expected.ContainsKey(SpawnerDefaults.LongRockId),
+                "긴 돌은 레인 안에 들어가는 장애물이 아니라 세로가 점프 궤적에서 나온다(LongRock_ColliderTopStaysUnderTheJumpArc).");
         }
 
         [Test]

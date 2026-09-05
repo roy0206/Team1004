@@ -143,7 +143,7 @@ namespace Game.Animation.Editor
         private static readonly SharedPivotFolder ObstacleFishFolder = new(
             ObjectArtPostprocessor.ObstacleFishFolder,
             false,
-            new Vector2(0.5270833f, 0.4912037f));
+            new Vector2(0.4945312f, 0.5518519f));
 
         private static readonly SharedPivotFolder BossWaveFolder = new(
             BossArtPostprocessor.WaveFolder,

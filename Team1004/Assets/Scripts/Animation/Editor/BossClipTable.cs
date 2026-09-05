@@ -2,19 +2,18 @@ using System.Collections.Generic;
 
 namespace Game.Animation.Editor
 {
-    public static class ObstacleClipTable
+    public static class BossClipTable
     {
-        public const string FishClipName = "Obstacle_Fish";
-        public const string FishFolderName = "이빨물고기";
-        public const string FishFramePrefix = "이빨";
+        public const string RapidClipName = "Boss_Rapid";
+        public const string RapidFolderName = "물결";
 
         private static readonly FlipbookClipDefinition[] Definitions =
         {
             new(
-                FishClipName,
-                ObjectArtPostprocessor.ArtFolder,
-                FishFolderName,
-                FishFramePrefix,
+                RapidClipName,
+                BossArtPostprocessor.ArtFolder,
+                RapidFolderName,
+                RapidFolderName,
                 2,
                 6f,
                 true,
@@ -22,7 +21,7 @@ namespace Game.Animation.Editor
         };
 
         public static IReadOnlyList<FlipbookClipDefinition> All => Definitions;
-        public static FlipbookClipDefinition Fish => Definitions[0];
+        public static FlipbookClipDefinition Rapid => Definitions[0];
 
         public static int TotalFrameCount
         {

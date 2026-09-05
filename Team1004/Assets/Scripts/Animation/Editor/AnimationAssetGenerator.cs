@@ -115,7 +115,7 @@ namespace Game.Animation.Editor
             if (match != null)
                 return folder + "/" + match;
 
-            if (definition.FrameCount == 1)
+            if (index == 0)
             {
                 var single = SalmonFrameMatcher.FindSingleFrame(names, definition.FramePrefix);
 

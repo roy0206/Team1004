@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2e7ecf1b5a348b4db7e59fb006db748, type: 3}
+  m_Name: LongRock_Solo
+  m_EditorClassIdentifier: Game.Spawner::Game.Spawner.SpawnPattern
+  id: LongRock_Solo
+  entries:
+  - obstacle: {fileID: 11400000, guid: 3f18b0c4a7d64e2ab5c9016d84f27e31, type: 2}
+    startLane: 0
+    arrivalOffset: 0
+  manualJumpRequired: 1
+  enabled: 1

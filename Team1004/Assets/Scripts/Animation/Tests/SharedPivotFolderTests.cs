@@ -9,7 +9,7 @@ namespace Game.Animation.Tests
     {
         private const string SalmonFrame = AnimationAssetGenerator.ArtFolder + "/기본/물고기 기본-1.png";
         private const string HitFrame = AnimationAssetGenerator.ArtFolder + "/충돌/충돌.png";
-        private const string FishFrame = ObjectArtPostprocessor.ObstacleFishFolder + "/장애물 물고기1.png";
+        private const string FishFrame = ObjectArtPostprocessor.ObstacleFishFolder + "/이빨.png";
         private const string RockArt = ObjectArtPostprocessor.ArtFolder + "/돌1.png";
 
         private const int UnionMinX = 755;
@@ -118,10 +118,10 @@ namespace Game.Animation.Tests
 
             Assert.IsFalse(folder.Recursive);
             Assert.IsTrue(folder.Contains(FishFrame));
-            Assert.IsTrue(folder.Contains(ObjectArtPostprocessor.ObstacleFishFolder + "/장애물 물고기2.png"));
+            Assert.IsTrue(folder.Contains(ObjectArtPostprocessor.ObstacleFishFolder + "/이빨 2.png"));
             Assert.IsFalse(folder.Contains(RockArt));
-            Assert.IsFalse(folder.Contains(ObjectArtPostprocessor.ObstacleFishFolder + "/하위/장애물 물고기1.png"));
-            Assert.IsFalse(folder.Contains(ObjectArtPostprocessor.ObstacleFishFolder + "/장애물 물고기1.psd"));
+            Assert.IsFalse(folder.Contains(ObjectArtPostprocessor.ObstacleFishFolder + "/하위/이빨.png"));
+            Assert.IsFalse(folder.Contains(ObjectArtPostprocessor.ObstacleFishFolder + "/이빨.psd"));
         }
 
         [Test]
