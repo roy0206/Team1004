@@ -1,0 +1,11 @@
+{
+    "name": "Game.Water",
+    "rootNamespace": "Game.Water",
+    "references": [
+        "Core.Modules",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.Burst",
+        "Unity.2D.SpriteShape.Runtime"
+    ]
+}
