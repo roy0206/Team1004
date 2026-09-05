@@ -1,0 +1,12 @@
+{
+    "name": "Game.Player",
+    "rootNamespace": "Game.Player",
+    "references": [
+        "Core.Foundation",
+        "Core.Modules",
+        "Core.Input",
+        "Game.Config",
+        "Game.Animation",
+        "Game.Water"
+    ]
+}
