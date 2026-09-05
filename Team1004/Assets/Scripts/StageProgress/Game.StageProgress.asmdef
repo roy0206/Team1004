@@ -1,0 +1,10 @@
+{
+    "name": "Game.StageProgress",
+    "rootNamespace": "Game.StageProgress",
+    "references": [
+        "Core.Foundation",
+        "Game.Config",
+        "Game.Play",
+        "UnityEngine.UI"
+    ]
+}
