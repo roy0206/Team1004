@@ -1,0 +1,11 @@
+{
+    "name": "Game.Spawner",
+    "rootNamespace": "Game.Spawner",
+    "references": [
+        "Core.Foundation",
+        "Core.Modules",
+        "Core.Pool",
+        "Game.Config",
+        "Game.Player"
+    ]
+}

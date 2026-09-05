@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd536be40e6a8df4ab41b67d53388d13, type: 3}
+  m_Name: Rock
+  m_EditorClassIdentifier: Game.Spawner::Game.Spawner.ObstacleDefinition
+  id: Rock
+  prefab: {fileID: 7679543782716869865, guid: 9d9bcc8d6753fc941bb8ae45637e5f77, type: 3}
+  laneSpan: 1
+  allowedStartLanes: 7
+  bodyLength: 1
+  collisionLength: 0.87
+  speedMultiplier: 1
+  usableInNormalPatterns: 1
+  usableInJumpPatterns: 1

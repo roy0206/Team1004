@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd536be40e6a8df4ab41b67d53388d13, type: 3}
+  m_Name: Fish
+  m_EditorClassIdentifier: Game.Spawner::Game.Spawner.ObstacleDefinition
+  id: Fish
+  prefab: {fileID: 7863988488511380758, guid: 19a4d33f6eb272a4ba23885c4264e5e6, type: 3}
+  laneSpan: 1
+  allowedStartLanes: 7
+  bodyLength: 1.4
+  collisionLength: 1.2
+  speedMultiplier: 1.8
+  usableInNormalPatterns: 1
+  usableInJumpPatterns: 1

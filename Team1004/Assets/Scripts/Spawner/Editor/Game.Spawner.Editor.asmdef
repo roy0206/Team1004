@@ -1,0 +1,15 @@
+{
+    "name": "Game.Spawner.Editor",
+    "rootNamespace": "Game.Spawner.Editor",
+    "references": [
+        "Game.Spawner",
+        "Game.Config",
+        "Game.Player",
+        "Core.Foundation",
+        "Core.Modules",
+        "Core.Pool"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

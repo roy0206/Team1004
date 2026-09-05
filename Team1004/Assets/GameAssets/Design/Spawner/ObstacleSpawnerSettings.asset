@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8da2d825efd89c43ad7902ce2473b0a, type: 3}
+  m_Name: ObstacleSpawnerSettings
+  m_EditorClassIdentifier: Game.Spawner::Game.Spawner.ObstacleSpawnerSettings
+  library: {fileID: 11400000, guid: 89351132139732842a86b02bcfce3d41, type: 2}
+  difficulty: {fileID: 11400000, guid: ecd50b1445b38b44c98c81bd9fc400bf, type: 2}
+  screenRightX: 6.4
+  screenLeftX: -6.4
+  playerHalfWidth: 0.35
+  tickSeconds: 0.05
+  safetyPadding: 0.1
+  minJumpPatternGap: 2
+  sectionStartGrace: 2
+  retryInterval: 0.2
+  maxCandidateAttempts: 4
+  despawnMargin: 1
+  prewarmPerObstacle: 4
+  defaultSeed: 12345
