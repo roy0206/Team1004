@@ -21,6 +21,12 @@ namespace Game.Play.Tests
         [Timeout(180000)]
         public IEnumerator BootstrapToPlay_ReachesRunning_AndLaneInputMovesPlayer()
         {
+            if (SceneController.HasInstance)
+            {
+                yield return WaitUntil(() => !SceneController.HasInstance || !SceneController.Instance.IsTransitioning, 30f);
+                yield return null;
+            }
+
             SceneManager.LoadScene(BootstrapScenePath);
 
             yield return WaitUntil(

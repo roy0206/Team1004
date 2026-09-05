@@ -17,6 +17,8 @@ namespace Game.Spawner
         private StateLayout layout;
         private StateSet frontier;
         private CourseGenerator generator;
+        private DeterministicRandom variantRandom;
+        private int seed;
         private List<PatternAnalysis> analyses;
         private float sectionTime;
         private float sectionLength;
@@ -31,6 +33,7 @@ namespace Game.Spawner
 
         public bool IsInitialized => generator != null;
         public bool IsRunning { get; private set; }
+        public bool SpawningEnabled { get; set; } = true;
         public int SectionIndex => generator != null ? generator.SectionIndex : -1;
         public float SectionTime => sectionTime;
         public float SectionProgress => progress;
@@ -55,6 +58,8 @@ namespace Game.Spawner
 
             this.settings = settings;
             this.scrollRoot = scrollRoot;
+            this.seed = seed;
+            variantRandom = CreateVariantRandom(seed, 0);
 
             config = settings.CreateSimulationConfig(GameConfig.Current);
             if (!config.Validate(out var error))
@@ -94,11 +99,13 @@ namespace Game.Spawner
             EnsureInitialized();
             ReleaseAll();
             generator.BeginSection(sectionIndex);
+            variantRandom = CreateVariantRandom(seed, sectionIndex);
             sectionTime = 0f;
             sectionLength = length;
             sectionDuration = duration;
             hasSectionStart = false;
             progress = 0f;
+            SpawningEnabled = true;
             IsRunning = true;
         }
 
@@ -121,6 +128,9 @@ namespace Game.Spawner
                 progress = sectionLength > 0f ? Mathf.Clamp01((distance - sectionStartDistance) / sectionLength) : 1f;
 
             MoveAndRecycle(deltaTime);
+
+            if (!SpawningEnabled)
+                return;
 
             if (generator.SpawnStopped || sectionTime < generator.NextDecisionTime)
                 return;
@@ -249,10 +259,22 @@ namespace Game.Spawner
                 }
 
                 thing.AddModule(new ObstacleRuntimeModule(instance, timing));
+                thing.ApplyVariant(NextVariantSeed());
                 activeThings.Add(thing);
             }
 
             PatternSpawned?.Invoke(placement);
+        }
+
+        private uint NextVariantSeed()
+        {
+            variantRandom ??= CreateVariantRandom(seed, 0);
+            return variantRandom.NextUInt();
+        }
+
+        private static DeterministicRandom CreateVariantRandom(int seed, int sectionIndex)
+        {
+            return new DeterministicRandom(unchecked(seed * 15731 + sectionIndex * 32749 + 3));
         }
 
         private static float LaneCenterY(int startLane, int laneSpan)

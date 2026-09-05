@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: WaterSurfaceProfile
   m_EditorClassIdentifier: Unity.2D.SpriteShape.Runtime::UnityEngine.U2D.SpriteShape
   m_Angles: []
-  m_FillTexture: {fileID: 2800000, guid: fade2cf3f8baed641b46008a9aa18437, type: 3}
+  m_FillTexture: {fileID: 2800000, guid: 2d8f4b6c1e07a3f49ab5c60d8e213f75, type: 3}
   m_CornerSprites:
   - m_CornerType: 0
     m_Sprites:

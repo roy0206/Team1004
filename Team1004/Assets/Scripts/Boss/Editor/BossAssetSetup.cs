@@ -13,7 +13,6 @@ namespace Game.Boss.Editor
         private const string PlaceholderFolder = "Assets/GameAssets/Placeholder";
         private const string SquareSpritePath = PlaceholderFolder + "/Square.png";
         private const string CircleSpritePath = PlaceholderFolder + "/Circle.png";
-        private const string HitboxFrameSpritePath = PlaceholderFolder + "/HitboxFrame.png";
         private const string GameConfigPath = "Assets/GameAssets/Design/GameConfig.asset";
         private const string DesignFolder = "Assets/GameAssets/Design/Boss";
         private const string BossFolder = "Assets/GameAssets/Boss";
@@ -30,16 +29,11 @@ namespace Game.Boss.Editor
         private const float CameraSize = 3.6f;
         private const float ViewWidth = CameraSize * 2f * 16f / 9f;
         private const float LaneHeight = 0.9f;
-        private const int HitboxFramePixels = 64;
-        private const int HitboxFrameBorder = 8;
-        private const byte HitboxFrameFillAlpha = 64;
-        private const int HitboxFrameOrder = 9;
         private const float TelegraphMinAlpha = 0.3f;
         private const float TelegraphMaxAlpha = 0.4f;
         private const float TelegraphBrightAlpha = 0.45f;
 
         private static readonly Color TelegraphColor = new(1f, 0.2f, 0.2f, 0.35f);
-        private static readonly Color HitboxFrameColor = new(1f, 0.15f, 0.15f, 0.35f);
         private static readonly Color HookColor = new(0.85f, 0.85f, 0.85f, 1f);
         private static readonly Color LineColor = new(0.95f, 0.95f, 0.95f, 0.9f);
         private static readonly Color WalrusColor = new(0.55f, 0.4f, 0.3f, 1f);
@@ -51,7 +45,6 @@ namespace Game.Boss.Editor
         {
             public Sprite Square;
             public Sprite Circle;
-            public Sprite HitboxFrame;
             public GameConfigValues Config;
         }
 
@@ -89,7 +82,6 @@ namespace Game.Boss.Editor
             {
                 Square = EnsureSprite(SquareSpritePath, false),
                 Circle = EnsureSprite(CircleSpritePath, true),
-                HitboxFrame = EnsureHitboxFrameSprite(),
                 Config = LoadConfig()
             };
 
@@ -164,23 +156,32 @@ namespace Game.Boss.Editor
             {
                 var boss = root.AddComponent<FishingLineBoss>();
                 var telegraph = CreateTelegraph(context, root.transform);
+                var laneHazard = CreateLaneHazard(context, root.transform, "FishingHook");
 
                 var parkY = config.WaterSurfaceY + data.HookParkOffset;
                 var hook = new GameObject("Hook");
                 hook.transform.SetParent(root.transform, false);
-                hook.transform.position = new Vector3(config.PlayerX, parkY, 0f);
-                var hookHazard = AddHazard(context, hook, "FishingHook", new Vector2(0.5f, 0.6f), true);
+                hook.transform.position = new Vector3(data.HookExitX, parkY, 0f);
+                AddWaterBody(hook, new Vector2(0.5f, 0.6f));
 
-                CreateSprite("HookSprite", hook.transform, context.Circle, HookColor,
+                var hookSprite = CreateSprite("HookSprite", hook.transform, context.Circle, HookColor,
                     hook.transform.position, new Vector2(0.5f, 0.5f), 6);
-                CreateSprite("Line", hook.transform, context.Square, LineColor,
-                    hook.transform.position + new Vector3(0f, 4f, 0f), new Vector2(0.06f, 8f), 5);
+                var hookRenderer = hookSprite.GetComponent<SpriteRenderer>();
+                hookRenderer.enabled = false;
+
+                var lineSprite = CreateSprite("Line", root.transform, context.Square, LineColor,
+                    hook.transform.position, new Vector2(data.LineWidth, 1f), 5);
+                var lineRenderer = lineSprite.GetComponent<SpriteRenderer>();
+                lineRenderer.enabled = false;
 
                 var serialized = new SerializedObject(boss);
                 serialized.FindProperty("data").objectReferenceValue = data;
                 serialized.FindProperty("telegraph").objectReferenceValue = telegraph;
+                serialized.FindProperty("laneHazard").objectReferenceValue = laneHazard;
                 serialized.FindProperty("hook").objectReferenceValue = hook.transform;
-                serialized.FindProperty("hookHazard").objectReferenceValue = hookHazard;
+                serialized.FindProperty("hookRenderer").objectReferenceValue = hookRenderer;
+                serialized.FindProperty("line").objectReferenceValue = lineSprite.transform;
+                serialized.FindProperty("lineRenderer").objectReferenceValue = lineRenderer;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
                 SavePrefab(root, FishingLinePrefabPath);
@@ -199,21 +200,23 @@ namespace Game.Boss.Editor
             try
             {
                 var middleLane = config.LaneCount / 2;
-                root.transform.position = new Vector3(data.RestX, config.GetLaneY(middleLane), 0f);
+                root.transform.position = Vector3.zero;
 
                 var boss = root.AddComponent<WalrusBoss>();
                 var telegraph = CreateTelegraph(context, root.transform);
+                var laneHazard = CreateLaneHazard(context, root.transform, "Walrus");
 
                 var body = CreateSprite("Body", root.transform, context.Square, WalrusColor,
-                    root.transform.position, new Vector2(data.BodyWidth, data.SingleBodyHeight), 6);
-                var bodyHazard = AddHazard(context, body, "Walrus", context.Square.bounds.size, true);
+                    new Vector3(data.RestX, config.GetLaneY(middleLane), 0f),
+                    new Vector2(data.BodyWidth, data.SingleBodyHeight), 6);
+                AddWaterBody(body, context.Square.bounds.size);
 
                 var serialized = new SerializedObject(boss);
                 serialized.FindProperty("data").objectReferenceValue = data;
                 serialized.FindProperty("telegraph").objectReferenceValue = telegraph;
+                serialized.FindProperty("laneHazard").objectReferenceValue = laneHazard;
                 serialized.FindProperty("body").objectReferenceValue = body.transform;
                 serialized.FindProperty("bodyRenderer").objectReferenceValue = body.GetComponent<SpriteRenderer>();
-                serialized.FindProperty("bodyHazard").objectReferenceValue = bodyHazard;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
                 SavePrefab(root, WalrusPrefabPath);
@@ -233,40 +236,38 @@ namespace Game.Boss.Editor
             {
                 var boss = root.AddComponent<WaterfallBoss>();
                 var telegraph = CreateTelegraph(context, root.transform);
+                var laneHazard = CreateLaneHazard(context, root.transform, "Rapid");
 
                 var waterfall = CreateSprite("Waterfall", root.transform, context.Square, WaterfallColor,
                     new Vector3(data.WaterfallX, 0f, 0f), new Vector2(1.5f, CameraSize * 2f + 0.8f), 4);
 
                 var laneCount = config.LaneCount;
                 var rapids = new Transform[laneCount];
-                var rapidHazards = new Hazard[laneCount];
                 var rocks = new Transform[laneCount];
-                var rockHazards = new Hazard[laneCount];
 
                 for (var lane = 0; lane < laneCount; lane++)
                 {
                     var y = config.GetLaneY(lane);
 
                     var rapid = CreateSprite($"Rapid{lane}", root.transform, context.Square, RapidColor,
-                        new Vector3(data.SpawnX, y, 0f), new Vector2(3f, LaneHeight), 5);
+                        new Vector3(data.SpawnX, y, 0f), new Vector2(ViewWidth * 0.25f, LaneHeight), 5);
                     rapids[lane] = rapid.transform;
-                    rapidHazards[lane] = AddHazard(context, rapid, "Rapid", context.Square.bounds.size, false);
+                    rapid.SetActive(false);
 
                     var rock = CreateSprite($"Rock{lane}", root.transform, context.Circle, RockColor,
                         new Vector3(data.SpawnX + data.RockTrail, y, 0f), new Vector2(0.7f, 0.7f), 6);
                     rocks[lane] = rock.transform;
-                    rockHazards[lane] = AddHazard(context, rock, "Rock", context.Circle.bounds.size, false);
+                    rock.SetActive(false);
                 }
 
                 var serialized = new SerializedObject(boss);
                 serialized.FindProperty("data").objectReferenceValue = data;
                 serialized.FindProperty("telegraph").objectReferenceValue = telegraph;
+                serialized.FindProperty("laneHazard").objectReferenceValue = laneHazard;
                 serialized.FindProperty("waterfall").objectReferenceValue = waterfall.transform;
                 serialized.FindProperty("waterfallRenderer").objectReferenceValue = waterfall.GetComponent<SpriteRenderer>();
                 SetArray(serialized.FindProperty("rapids"), rapids);
-                SetArray(serialized.FindProperty("rapidHazards"), rapidHazards);
                 SetArray(serialized.FindProperty("rocks"), rocks);
-                SetArray(serialized.FindProperty("rockHazards"), rockHazards);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
                 SavePrefab(root, WaterfallPrefabPath);
@@ -333,7 +334,8 @@ namespace Game.Boss.Editor
             for (var lane = 0; lane < config.LaneCount; lane++)
             {
                 var laneObject = CreateSprite($"Lane{lane}", telegraphObject.transform, context.Square, TelegraphColor,
-                    new Vector3(0f, config.GetLaneY(lane), 0f), new Vector2(ViewWidth, LaneHeight), 3);
+                    new Vector3(0f, config.GetLaneY(lane), 0f),
+                    new Vector2(config.BossLaneBandWidth, config.BossLaneBandHeight), 3);
                 renderers[lane] = laneObject.GetComponent<SpriteRenderer>();
                 renderers[lane].enabled = false;
             }
@@ -372,7 +374,7 @@ namespace Game.Boss.Editor
             return spriteObject;
         }
 
-        private static Hazard AddHazard(Context context, GameObject target, string kind, Vector2 colliderSize, bool touchesWater)
+        private static void AddWaterBody(GameObject target, Vector2 colliderSize)
         {
             var body = target.AddComponent<Rigidbody2D>();
             body.bodyType = RigidbodyType2D.Kinematic;
@@ -383,106 +385,56 @@ namespace Game.Boss.Editor
             collider.isTrigger = true;
             collider.size = colliderSize;
 
-            var hazard = target.AddComponent<Hazard>();
-            var serialized = new SerializedObject(hazard);
-            serialized.FindProperty("kind").stringValue = kind;
+            var interactor = target.AddComponent<WaterInteractor>();
+            var serialized = new SerializedObject(interactor);
+            serialized.FindProperty("shape").objectReferenceValue = collider;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            hazard.enabled = false;
-
-            AddHitboxView(context, target, collider, colliderSize);
-
-            if (touchesWater)
-            {
-                var interactor = target.AddComponent<WaterInteractor>();
-                var interactorSerialized = new SerializedObject(interactor);
-                interactorSerialized.FindProperty("shape").objectReferenceValue = collider;
-                interactorSerialized.ApplyModifiedPropertiesWithoutUndo();
-            }
-
-            return hazard;
         }
 
-        private static HitboxView AddHitboxView(Context context, GameObject target, BoxCollider2D collider, Vector2 colliderSize)
+        private static LaneHazard CreateLaneHazard(Context context, Transform parent, string kind)
         {
-            var frameObject = new GameObject("HitboxFrame");
-            frameObject.transform.SetParent(target.transform, false);
-            frameObject.transform.localPosition = new Vector3(collider.offset.x, collider.offset.y, 0f);
+            var config = context.Config;
+            var root = new GameObject("LaneHazard");
+            root.transform.SetParent(parent, false);
+            root.transform.position = Vector3.zero;
 
-            var frame = frameObject.AddComponent<SpriteRenderer>();
-            frame.sprite = context.HitboxFrame;
-            frame.drawMode = SpriteDrawMode.Sliced;
-            frame.size = colliderSize;
-            frame.color = HitboxFrameColor;
-            frame.sortingOrder = HitboxFrameOrder;
-            frame.enabled = false;
+            var laneHazard = root.AddComponent<LaneHazard>();
+            var laneCount = config.LaneCount;
+            var hazards = new Hazard[laneCount];
+            var boxes = new BoxCollider2D[laneCount];
+            var width = config.BossLaneBandWidth;
+            var height = config.BossLaneBandHeight;
 
-            var view = target.AddComponent<HitboxView>();
-            var serialized = new SerializedObject(view);
-            serialized.FindProperty("frame").objectReferenceValue = frame;
-            serialized.FindProperty("box").objectReferenceValue = collider;
-            serialized.FindProperty("color").colorValue = HitboxFrameColor;
+            for (var lane = 0; lane < laneCount; lane++)
+            {
+                var laneObject = new GameObject($"Band{lane}");
+                laneObject.transform.SetParent(root.transform, false);
+                laneObject.transform.position = new Vector3(0f, config.GetLaneY(lane), 0f);
+
+                var body = laneObject.AddComponent<Rigidbody2D>();
+                body.bodyType = RigidbodyType2D.Kinematic;
+                body.useFullKinematicContacts = true;
+                body.gravityScale = 0f;
+
+                var box = laneObject.AddComponent<BoxCollider2D>();
+                box.isTrigger = true;
+                box.size = new Vector2(width, height);
+
+                var hazard = laneObject.AddComponent<Hazard>();
+                var hazardSerialized = new SerializedObject(hazard);
+                hazardSerialized.FindProperty("kind").stringValue = kind;
+                hazardSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+                hazards[lane] = hazard;
+                boxes[lane] = box;
+                laneObject.SetActive(false);
+            }
+
+            var serialized = new SerializedObject(laneHazard);
+            SetArray(serialized.FindProperty("laneHazards"), hazards);
+            SetArray(serialized.FindProperty("laneBoxes"), boxes);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            return view;
-        }
-
-        private static Sprite EnsureHitboxFrameSprite()
-        {
-            var path = HitboxFrameSpritePath;
-
-            if (!File.Exists(path))
-            {
-                var texture = new Texture2D(HitboxFramePixels, HitboxFramePixels, TextureFormat.RGBA32, false);
-                var pixels = new Color32[HitboxFramePixels * HitboxFramePixels];
-
-                for (var y = 0; y < HitboxFramePixels; y++)
-                {
-                    for (var x = 0; x < HitboxFramePixels; x++)
-                    {
-                        var onBorder = x < HitboxFrameBorder || y < HitboxFrameBorder ||
-                                       x >= HitboxFramePixels - HitboxFrameBorder ||
-                                       y >= HitboxFramePixels - HitboxFrameBorder;
-                        pixels[y * HitboxFramePixels + x] = new Color32(255, 255, 255, onBorder ? (byte)255 : HitboxFrameFillAlpha);
-                    }
-                }
-
-                texture.SetPixels32(pixels);
-                texture.Apply();
-                File.WriteAllBytes(path, texture.EncodeToPNG());
-                Object.DestroyImmediate(texture);
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-            }
-
-            var border = new Vector4(HitboxFrameBorder, HitboxFrameBorder, HitboxFrameBorder, HitboxFrameBorder);
-
-            if (AssetImporter.GetAtPath(path) is TextureImporter importer)
-            {
-                var settings = new TextureImporterSettings();
-                importer.ReadTextureSettings(settings);
-
-                if (settings.textureType != TextureImporterType.Sprite ||
-                    settings.spriteBorder != border ||
-                    settings.spriteMeshType != SpriteMeshType.FullRect ||
-                    !Mathf.Approximately(settings.spritePixelsPerUnit, PixelsPerUnit))
-                {
-                    settings.textureType = TextureImporterType.Sprite;
-                    settings.spriteMode = (int)SpriteImportMode.Single;
-                    settings.spritePixelsPerUnit = PixelsPerUnit;
-                    settings.spriteBorder = border;
-                    settings.spriteMeshType = SpriteMeshType.FullRect;
-                    settings.mipmapEnabled = false;
-                    settings.alphaIsTransparency = true;
-                    settings.filterMode = FilterMode.Bilinear;
-                    importer.SetTextureSettings(settings);
-                    importer.SaveAndReimport();
-                }
-            }
-
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-
-            if (sprite == null)
-                Debug.LogError($"[BossAssetSetup] Sprite was not imported: {path}");
-
-            return sprite;
+            return laneHazard;
         }
 
         private static void SetArray<T>(SerializedProperty property, T[] values) where T : Object

@@ -24,7 +24,9 @@ namespace Game.Boss
             boss.ResetStance();
             boss.ResetPosition();
             boss.PlaceAtX(boss.Data.ExitX);
-            tween = boss.transform.DOMoveX(boss.Data.RestX, Duration).SetEase(Ease.OutCubic);
+
+            if (boss.Body != null)
+                tween = boss.Body.DOMoveX(boss.Data.RestX, Duration).SetEase(Ease.OutCubic);
         }
 
         public override void OnExit(WalrusBoss boss)
@@ -70,11 +72,14 @@ namespace Game.Boss
 
             boss.ShowTelegraph(pattern.LaneMask);
             boss.SetStance(pattern);
-            boss.SetBodyHitboxVisible(true);
 
             KillTween();
+
+            if (boss.Body == null)
+                return;
+
             var approach = Timing.Telegraph * boss.Data.ApproachRatio;
-            tween = boss.transform.DOMoveY(boss.GetLaneCenterY(pattern.LaneMask), approach).SetEase(Ease.OutSine);
+            tween = boss.Body.DOMoveY(boss.GetLaneCenterY(pattern.LaneMask), approach).SetEase(Ease.OutSine);
         }
 
         protected override void OnAttackBegin(WalrusBoss boss)
@@ -84,16 +89,21 @@ namespace Game.Boss
 
             KillTween();
             boss.PlayAttackSfx();
-            boss.SetBodyHazard(true);
-            tween = boss.transform.DOMoveX(boss.Data.DashX, Timing.Attack).SetEase(Ease.InQuad);
+            boss.ArmLaneHazard();
+
+            if (boss.Body != null)
+                tween = boss.Body.DOMoveX(boss.Data.DashX, Timing.Attack).SetEase(Ease.InQuad);
         }
 
         protected override void OnAttackEnd(WalrusBoss boss)
         {
+            boss.DisarmLaneHazard();
             boss.HideTelegraph();
             KillTween();
             boss.ResetStance();
-            tween = boss.transform.DOMoveX(boss.Data.RestX, Timing.Recovery).SetEase(Ease.OutSine);
+
+            if (boss.Body != null)
+                tween = boss.Body.DOMoveX(boss.Data.RestX, Timing.Recovery).SetEase(Ease.OutSine);
         }
 
         protected override void OnPhaseExit(WalrusBoss boss)
@@ -121,7 +131,14 @@ namespace Game.Boss
         public override void OnEnter(WalrusBoss boss)
         {
             boss.ResetStance();
-            tween = boss.transform.DOMoveX(boss.Data.ExitX, boss.Data.OutroDuration)
+
+            if (boss.Body == null)
+            {
+                boss.Complete(BossOutcome.Passed);
+                return;
+            }
+
+            tween = boss.Body.DOMoveX(boss.Data.ExitX, boss.Data.OutroDuration)
                 .SetEase(Ease.InCubic)
                 .OnComplete(() =>
                 {

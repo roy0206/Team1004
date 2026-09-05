@@ -9,6 +9,8 @@ using Game.Environment;
 using Game.Environment.Editor;
 using Game.Cutscene;
 using Game.Cutscene.Editor;
+using Game.Ledge;
+using Game.Ledge.Editor;
 using Game.Play;
 using Game.Player;
 using Game.Settings;
@@ -56,7 +58,9 @@ namespace Game.Bootstrap.Editor
         private const string BossSetPrefabPath = "Assets/GameAssets/Boss/BossSet.prefab";
         private const string DialogueCsvPath = "Assets/GameAssets/Design/Dialogue/dialogue.csv";
         private const string EnvironmentPrefabPath = EnvironmentSetup.PrefabPath;
+        private const string LedgeSetPrefabPath = LedgeSetup.PrefabPath;
         private const string ControlHintText = "↑↓ : 레인 이동   ·   가장 위에서 ↑ : 점프";
+        private const string BannerSampleText = "BOSS 1 — 낚싯줄";
         private const string TitleHintText = "↑↓ : 레인 이동 / 가장 위에서 ↑ : 점프";
         private const int PlayerSortingOrder = 10;
 
@@ -153,10 +157,11 @@ namespace Game.Bootstrap.Editor
                 context.UiSprite = context.Square;
 
             EnsureSpawnerAssets(overwrite);
-            EnsureCutsceneDialoguePrefab();
+            EnsureCutsceneDialoguePrefab(overwrite);
             EnsureBossAssets(overwrite);
-            EnsureAnimationAssets();
-            EnsureEnvironmentAssets();
+            EnsureAnimationAssets(overwrite);
+            EnsureEnvironmentAssets(overwrite);
+            EnsureLedgeAssets(overwrite);
 
             EnsureSceneReference(StartSceneReferencePath);
             EnsureSceneReference(PlaySceneReferencePath);
@@ -196,8 +201,15 @@ namespace Game.Bootstrap.Editor
             Debug.Log("[CoreLoopSetup] Core loop scenes are ready. Press Play (Play From Bootstrap starts from Bootstrap.unity).");
         }
 
-        private static void EnsureCutsceneDialoguePrefab()
+        private static void EnsureCutsceneDialoguePrefab(bool overwrite)
         {
+            if (overwrite)
+            {
+                Debug.Log("[CoreLoopSetup] Regenerating CutsceneDialogue.prefab (overwrite) so the dialogue layout and hint text are refreshed.");
+                CutsceneSetup.Generate(true);
+                return;
+            }
+
             if (AssetDatabase.LoadAssetAtPath<GameObject>(CutsceneDialoguePrefabPath) != null)
                 return;
 
@@ -226,7 +238,7 @@ namespace Game.Bootstrap.Editor
         {
             if (overwrite)
             {
-                Debug.Log("[CoreLoopSetup] Regenerating boss prefabs (overwrite) so hitbox views and telegraph values are refreshed.");
+                Debug.Log("[CoreLoopSetup] Regenerating boss prefabs (overwrite) so lane hazards and telegraph values are refreshed.");
                 BossAssetSetup.Generate(true);
                 return;
             }
@@ -238,14 +250,28 @@ namespace Game.Bootstrap.Editor
             BossAssetSetup.Generate();
         }
 
-        private static void EnsureAnimationAssets()
+        private static void EnsureAnimationAssets(bool overwrite)
         {
-            AnimationAssetGenerator.GenerateMissing();
+            if (overwrite)
+                Debug.Log("[CoreLoopSetup] Regenerating animation clips (overwrite) and re-importing art frames with the shared pivot.");
+
+            AnimationAssetGenerator.Generate(overwrite);
         }
 
-        private static void EnsureEnvironmentAssets()
+        private static void EnsureEnvironmentAssets(bool overwrite)
         {
-            EnvironmentSetup.Generate(false);
+            if (overwrite)
+                Debug.Log("[CoreLoopSetup] Regenerating Environment.prefab (overwrite). Placeholder textures and the water profile are kept.");
+
+            EnvironmentSetup.Generate(overwrite);
+        }
+
+        private static void EnsureLedgeAssets(bool overwrite)
+        {
+            if (overwrite)
+                Debug.Log("[CoreLoopSetup] Regenerating LedgeSet.prefab (overwrite). LedgeData.asset is kept.");
+
+            LedgeSetup.Generate(overwrite);
         }
 
         private static void WarnExisting(string path)
@@ -655,7 +681,9 @@ namespace Game.Bootstrap.Editor
 
             var cutscenePlayer = CreateCutscenePlayer(camera, playerActor, bossActor, landmarkActor);
             WireCutsceneClips(cutscenePlayer, jumpClip, swimClip, laneUpClip, laneDownClip);
+            CutsceneActorSetup.EnsureActors(cutscenePlayer);
             InstantiateBossSet(camera);
+            var ledgeDirector = InstantiateLedgeSet(environment, player);
 
             var hudCanvas = CreateCanvas("HudCanvas", camera);
             var hudTransform = hudCanvas.transform;
@@ -678,12 +706,17 @@ namespace Game.Bootstrap.Editor
                 TextAnchor.MiddleCenter, Center, new Vector2(0f, -150f), new Vector2(900f, 48f));
             controlHint.gameObject.SetActive(false);
 
+            var banner = CreateText(context, hudTransform, "Banner", BannerSampleText, 56, Color.white,
+                TextAnchor.MiddleCenter, Center, new Vector2(0f, 60f), new Vector2(1000f, 96f));
+            banner.gameObject.SetActive(false);
+
             var hud = hudCanvas.gameObject.AddComponent<PlayHud>();
             var hudSerialized = new SerializedObject(hud);
             hudSerialized.FindProperty("progressFill").objectReferenceValue = barFill;
             hudSerialized.FindProperty("distanceText").objectReferenceValue = distanceText;
             hudSerialized.FindProperty("pauseButton").objectReferenceValue = pauseButton;
             hudSerialized.FindProperty("controlHint").objectReferenceValue = controlHint;
+            hudSerialized.FindProperty("banner").objectReferenceValue = banner;
             hudSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             CreateJumpCooldownView(context, hudTransform);
@@ -709,6 +742,7 @@ namespace Game.Bootstrap.Editor
             flowSerialized.FindProperty("resultPanel").objectReferenceValue = resultPanel;
             flowSerialized.FindProperty("cutscene").objectReferenceValue = cutscenePlayer;
             flowSerialized.FindProperty("environment").objectReferenceValue = environment;
+            flowSerialized.FindProperty("ledgeDirector").objectReferenceValue = ledgeDirector;
             flowSerialized.FindProperty("introCutsceneId").stringValue = CutsceneCatalog.Intro;
             var sectionCutsceneIds = flowSerialized.FindProperty("sectionCutsceneIds");
             var sectionIds = CutsceneCatalog.SectionIds;
@@ -1002,6 +1036,33 @@ namespace Game.Bootstrap.Editor
             var serialized = new SerializedObject(director);
             serialized.FindProperty("stageCamera").objectReferenceValue = camera;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static LedgeDirector InstantiateLedgeSet(EnvironmentThing environment, LanePlayer player)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LedgeSetPrefabPath);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[CoreLoopSetup] '{LedgeSetPrefabPath}' is missing. Upstream ledges are skipped until it exists.");
+                return null;
+            }
+
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instance.transform.SetParent(null, false);
+            instance.transform.localPosition = Vector3.zero;
+
+            var director = instance.GetComponent<LedgeDirector>();
+            if (director == null)
+            {
+                Debug.LogWarning("[CoreLoopSetup] LedgeSet.prefab has no LedgeDirector on its root.");
+                return null;
+            }
+
+            var serialized = new SerializedObject(director);
+            serialized.FindProperty("environment").objectReferenceValue = environment;
+            serialized.FindProperty("player").objectReferenceValue = player;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return director;
         }
 
         private static void SetupActor(CutsceneActor actor, string id, SpriteRenderer renderer)

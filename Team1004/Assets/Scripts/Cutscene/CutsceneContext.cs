@@ -70,6 +70,7 @@ namespace Game.Cutscene
         public CutsceneActor Player => Actor(CutsceneActorIds.Player);
         public CutsceneActor Boss => Actor(CutsceneActorIds.Boss);
         public CutsceneActor Landmark => Actor(CutsceneActorIds.Landmark);
+        public CutsceneActor Child => Actor(CutsceneActorIds.Child);
 
         public CutsceneActor Actor(string id)
         {

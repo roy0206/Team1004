@@ -68,6 +68,7 @@ namespace Game.Cutscene
         protected CutsceneActor Player => Actor(CutsceneActorIds.Player);
         protected CutsceneActor Boss => Actor(CutsceneActorIds.Boss);
         protected CutsceneActor Landmark => Actor(CutsceneActorIds.Landmark);
+        protected CutsceneActor Child => Actor(CutsceneActorIds.Child);
         protected CustomAnimation PlayerJumpClip => Clip(CutsceneClipIds.PlayerJump);
         protected CustomAnimation PlayerSwimClip => Clip(CutsceneClipIds.PlayerSwim);
         protected CustomAnimation PlayerLaneUpClip => Clip(CutsceneClipIds.PlayerLaneUp);

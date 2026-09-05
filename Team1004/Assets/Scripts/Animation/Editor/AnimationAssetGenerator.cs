@@ -17,17 +17,14 @@ namespace Game.Animation.Editor
 
         private const int MaxTextureSize = 2048;
         private const byte AlphaThreshold = 8;
-        private const double PivotCacheSeconds = 30d;
 
-        private static readonly Vector2 FallbackPivot = new(0.5309896f, 0.37592593f);
-
-        private static Vector2 cachedPivot = FallbackPivot;
-        private static double cachedPivotTime = double.NegativeInfinity;
+        public static readonly Vector2 SalmonFallbackPivot = new(0.5307292f, 0.37592593f);
 
         public static string SwimClipPath => SalmonClipTable.Swim.AssetPath;
         public static string LaneUpClipPath => SalmonClipTable.LaneUp.AssetPath;
         public static string LaneDownClipPath => SalmonClipTable.LaneDown.AssetPath;
         public static string JumpClipPath => SalmonClipTable.Jump.AssetPath;
+        public static string HitClipPath => SalmonClipTable.Hit.AssetPath;
         public static string DefaultPlayerSpritePath => GetFramePath(SalmonClipTable.Swim, 0);
 
         [MenuItem("Team1004/Generate Animation Assets")]
@@ -63,32 +60,42 @@ namespace Game.Animation.Editor
         {
             EnsureFolder(DesignFolder);
 
-            var pivot = ResolveSharedPivot();
-            cachedPivot = pivot;
-            cachedPivotTime = EditorApplication.timeSinceStartup;
+            SharedPivotFolders.InvalidateAll();
 
+            var pivot = SharedPivotFolders.Salmon.Refresh();
             var framePaths = EnumerateFramePaths();
 
             for (var i = 0; i < framePaths.Count; i++)
                 ConfigureSpriteImporter(framePaths[i], pivot);
 
+            var objectFramePaths = EnumerateObjectFramePaths();
+
+            for (var i = 0; i < objectFramePaths.Count; i++)
+                ConfigureSpriteImporter(objectFramePaths[i], ObjectArtPostprocessor.ResolvePivotCached(objectFramePaths[i]));
+
             AssetDatabase.Refresh();
             DeleteLegacyAssets();
 
             var config = LoadConfigValues();
-            var definitions = SalmonClipTable.All;
 
-            for (var i = 0; i < definitions.Count; i++)
-                EnsureClip(definitions[i], config, overwrite);
+            EnsureClips(SalmonClipTable.All, config, overwrite);
+            EnsureClips(ObstacleClipTable.All, config, overwrite);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             Debug.Log("[AnimationAssetGenerator] Animation assets are ready. pivot=" + pivot +
-                      ", frames=" + framePaths.Count + ", folder=" + DesignFolder);
+                      ", frames=" + framePaths.Count + ", objectFrames=" + objectFramePaths.Count +
+                      ", folder=" + DesignFolder);
         }
 
-        public static string GetFramePath(SalmonClipDefinition definition, int index)
+        private static void EnsureClips(IReadOnlyList<FlipbookClipDefinition> definitions, GameConfigValues config, bool overwrite)
+        {
+            for (var i = 0; i < definitions.Count; i++)
+                EnsureClip(definitions[i], config, overwrite);
+        }
+
+        public static string GetFramePath(FlipbookClipDefinition definition, int index)
         {
             if (definition == null || index < 0 || index >= definition.FrameCount)
                 return null;
@@ -100,10 +107,18 @@ namespace Game.Animation.Editor
             if (match != null)
                 return folder + "/" + match;
 
+            if (definition.FrameCount == 1)
+            {
+                var single = SalmonFrameMatcher.FindSingleFrame(names, definition.FramePrefix);
+
+                if (single != null)
+                    return folder + "/" + single;
+            }
+
             return folder + "/" + definition.FramePrefix + "-" + (index + 1) + SalmonFrameMatcher.Extension;
         }
 
-        public static IReadOnlyList<string> GetFramePaths(SalmonClipDefinition definition)
+        public static IReadOnlyList<string> GetFramePaths(FlipbookClipDefinition definition)
         {
             if (definition == null)
                 return Array.Empty<string>();
@@ -118,8 +133,20 @@ namespace Game.Animation.Editor
 
         public static IReadOnlyList<string> EnumerateFramePaths()
         {
-            var paths = new List<string>(SalmonClipTable.TotalFrameCount);
-            var definitions = SalmonClipTable.All;
+            return EnumerateFramePaths(SalmonClipTable.All, SalmonClipTable.TotalFrameCount);
+        }
+
+        public static IReadOnlyList<string> EnumerateObjectFramePaths()
+        {
+            return EnumerateFramePaths(ObstacleClipTable.All, ObstacleClipTable.TotalFrameCount);
+        }
+
+        public static IReadOnlyList<string> EnumerateFramePaths(IReadOnlyList<FlipbookClipDefinition> definitions, int capacity)
+        {
+            var paths = new List<string>(capacity);
+
+            if (definitions == null)
+                return paths;
 
             for (var i = 0; i < definitions.Count; i++)
             {
@@ -147,30 +174,35 @@ namespace Game.Animation.Editor
 
         public static Vector2 ResolveSharedPivot()
         {
-            if (!TryGetSalmonBounds(out var bounds, out var textureSize))
-            {
-                Debug.LogWarning("[AnimationAssetGenerator] 알파 바운딩 박스를 구하지 못해 pivot을 기본값 " + FallbackPivot + "로 둔다.");
-                return FallbackPivot;
-            }
-
-            return new Vector2(bounds.center.x / textureSize.x, bounds.center.y / textureSize.y);
+            return SharedPivotFolders.Salmon.ResolvePivot();
         }
 
         public static Vector2 ResolveSharedPivotCached()
         {
-            var now = EditorApplication.timeSinceStartup;
-
-            if (now - cachedPivotTime <= PivotCacheSeconds)
-                return cachedPivot;
-
-            cachedPivot = ResolveSharedPivot();
-            cachedPivotTime = now;
-            return cachedPivot;
+            return SharedPivotFolders.Salmon.ResolvePivotCached();
         }
 
         public static bool TryGetSalmonBounds(out Rect pixelBounds, out Vector2Int textureSize)
         {
-            var framePaths = EnumerateFramePaths();
+            return TryGetAlphaBounds(EnumerateFramePaths(), out pixelBounds, out textureSize);
+        }
+
+        public static bool TryGetAlphaBounds(string assetPath, out Rect pixelBounds, out Vector2Int textureSize)
+        {
+            return TryGetAlphaBounds(new[] { assetPath }, out pixelBounds, out textureSize);
+        }
+
+        public static Vector2 AlphaBoundsPivot(Rect pixelBounds, Vector2Int textureSize)
+        {
+            if (textureSize.x <= 0 || textureSize.y <= 0)
+                return new Vector2(0.5f, 0.5f);
+
+            return new Vector2(pixelBounds.center.x / textureSize.x, pixelBounds.center.y / textureSize.y);
+        }
+
+        public static bool TryGetAlphaBounds(IReadOnlyList<string> assetPaths, out Rect pixelBounds, out Vector2Int textureSize)
+        {
+            var framePaths = assetPaths ?? Array.Empty<string>();
             var minX = int.MaxValue;
             var minY = int.MaxValue;
             var maxX = int.MinValue;
@@ -249,7 +281,7 @@ namespace Game.Animation.Editor
             importer.crunchedCompression = false;
         }
 
-        public static float ResolveDuration(SalmonClipDefinition definition, GameConfigValues config)
+        public static float ResolveDuration(FlipbookClipDefinition definition, GameConfigValues config)
         {
             if (definition == null)
                 return 0f;
@@ -258,8 +290,8 @@ namespace Game.Animation.Editor
 
             return definition.DurationSource switch
             {
-                SalmonClipDuration.LaneMove => Mathf.Max(0f, values.LaneMoveDuration),
-                SalmonClipDuration.Jump => Mathf.Max(0f, values.JumpDuration),
+                FlipbookClipDuration.LaneMove => Mathf.Max(0f, values.LaneMoveDuration),
+                FlipbookClipDuration.Jump => Mathf.Max(0f, values.JumpDuration),
                 _ => 0f
             };
         }
@@ -292,7 +324,7 @@ namespace Game.Animation.Editor
             return names;
         }
 
-        private static string ToFullPath(string assetPath)
+        public static string ToFullPath(string assetPath)
         {
             return Path.GetFullPath(Path.Combine(Application.dataPath, "..", assetPath));
         }
@@ -344,7 +376,7 @@ namespace Game.Animation.Editor
             importer.SaveAndReimport();
         }
 
-        private static Sprite[] LoadFrames(SalmonClipDefinition definition)
+        private static Sprite[] LoadFrames(FlipbookClipDefinition definition)
         {
             var paths = GetFramePaths(definition);
             var frames = new Sprite[paths.Count];
@@ -365,7 +397,7 @@ namespace Game.Animation.Editor
             return frames;
         }
 
-        private static void EnsureClip(SalmonClipDefinition definition, GameConfigValues config, bool overwrite)
+        private static void EnsureClip(FlipbookClipDefinition definition, GameConfigValues config, bool overwrite)
         {
             var path = definition.AssetPath;
             var asset = AssetDatabase.LoadAssetAtPath<CustomAnimation>(path);
@@ -395,7 +427,7 @@ namespace Game.Animation.Editor
             Report(path, asset);
         }
 
-        private static bool NeedsRepair(CustomAnimation asset, SalmonClipDefinition definition)
+        private static bool NeedsRepair(CustomAnimation asset, FlipbookClipDefinition definition)
         {
             if (asset.FrameCount != definition.FrameCount)
                 return true;

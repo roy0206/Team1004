@@ -13,6 +13,7 @@ namespace Game.Cutscene.Editor
         private const string FontPath = PlaceholderFolder + "/Fonts/MonaS12.ttf";
         private const string BuiltinFontName = "LegacyRuntime.ttf";
         private const string DialoguePrefabPath = UiFolder + "/CutsceneDialogue.prefab";
+        private const string HintLabel = "Enter / 클릭 ▶";
 
         private const int UiLayer = 5;
         private const int CanvasSortingOrder = 100;
@@ -36,7 +37,7 @@ namespace Game.Cutscene.Editor
         [MenuItem("Team1004/Regenerate Cutscene Dialogue Prefab (Overwrite)")]
         public static void Regenerate()
         {
-            var confirmed = EditorUtility.DisplayDialog(
+            var confirmed = Application.isBatchMode || EditorUtility.DisplayDialog(
                 "Regenerate Cutscene Dialogue Prefab",
                 "CutsceneDialogue.prefab을 다시 만듭니다.\n" +
                 "직접 고친 내용은 사라집니다. 계속할까요?",
@@ -45,6 +46,11 @@ namespace Game.Cutscene.Editor
 
             if (confirmed)
                 Run(true);
+        }
+
+        public static void Generate(bool overwrite)
+        {
+            Run(overwrite);
         }
 
         private static void Run(bool overwrite)
@@ -117,7 +123,7 @@ namespace Game.Cutscene.Editor
             Stretch(body.rectTransform, new Vector2(36f, 28f), new Vector2(-36f, -76f));
 
             var hint = CreateText(panel, "Hint", font, 24, HintColor, TextAnchor.MiddleRight);
-            hint.text = "Space ▶";
+            hint.text = HintLabel;
             Place(hint.rectTransform, BottomRight, new Vector2(-28f, 16f), new Vector2(220f, 34f));
 
             Canvas.ForceUpdateCanvases();

@@ -3,6 +3,8 @@
     "rootNamespace": "Game.Spawner.Editor",
     "references": [
         "Game.Spawner",
+        "Game.Animation",
+        "Game.Animation.Editor",
         "Game.Config",
         "Game.Player",
         "Core.Foundation",

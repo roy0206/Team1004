@@ -14,6 +14,8 @@
         "Game.Cutscene",
         "Game.Spawner",
         "Game.Environment",
+        "Game.Ledge",
+        "Unity.InputSystem",
         "UnityEngine.UI"
     ]
 }

@@ -15,9 +15,13 @@ MonoBehaviour:
   id: Rock
   prefab: {fileID: 7679543782716869865, guid: 9d9bcc8d6753fc941bb8ae45637e5f77, type: 3}
   laneSpan: 1
-  allowedStartLanes: 7
-  bodyLength: 1
-  collisionLength: 0.87
+  allowedStartLanes: 4
+  fitAxis: 1
+  visualHeight: 1.1
+  bodyLength: 2.44
+  collisionLength: 2.13
+  collisionHeight: 0.96
   speedMultiplier: 1
+  spawnWeight: 5
   usableInNormalPatterns: 1
   usableInJumpPatterns: 1

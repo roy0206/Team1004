@@ -1,0 +1,12 @@
+{
+    "name": "Game.Ledge",
+    "rootNamespace": "Game.Ledge",
+    "references": [
+        "Core.Modules",
+        "Core.Foundation",
+        "Game.Config",
+        "Game.Environment",
+        "Game.Player",
+        "Game.Water"
+    ]
+}

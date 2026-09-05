@@ -10,6 +10,24 @@ namespace Game.Spawner
         public const string LogId = "Log";
         public const int SectionCount = 4;
         public const int DefaultSeed = 12345;
+        public const float NormalSectionJumpRatio = 0f;
+        public const float JumpDurationSeconds = 1.6f;
+
+        public const float LaneSpacing = 1.1f;
+        public const float PlayerHitboxWidth = 0.92f;
+        public const float PlayerHitboxHeight = 0.71f;
+        public const float PlayerHalfWidth = 0.46f;
+
+        public const float RockSpawnWeight = 5f;
+        public const float FishSpawnWeight = 3f;
+        public const float LogSpawnWeight = 2f;
+
+        public const float RockVisualHeight = LaneSpacing;
+        public const float RockBodyLength = 2.44f;
+        public const float RockCollisionLength = 2.13f;
+        public const float RockCollisionHeight = 0.96f;
+        public const float FishCollisionHeight = 0.39f;
+        public const float LogCollisionHeight = 0.85f;
 
         private const int Top = 0;
         private const int Middle = 1;
@@ -19,7 +37,7 @@ namespace Game.Spawner
 
         public static SimulationConfig CreateConfig()
         {
-            return new SimulationConfig();
+            return new SimulationConfig { PlayerHalfWidth = PlayerHalfWidth };
         }
 
         public static float GetSectionDuration(int sectionIndex)
@@ -31,9 +49,9 @@ namespace Game.Spawner
         {
             return new List<ObstacleSpec>
             {
-                new ObstacleSpec(RockId, RockId, 1, LaneMask.All(3), 1.0f, 0.87f, 1.0f, true, true),
-                new ObstacleSpec(FishId, FishId, 1, LaneMask.All(3), 1.4f, 1.2f, 1.8f, true, true),
-                new ObstacleSpec(LogId, LogId, 1, LaneMask.All(3), 3.0f, 2.6f, 1.0f, true, true)
+                new ObstacleSpec(RockId, RockId, 1, LaneMask.Of(Bottom), RockBodyLength, RockCollisionLength, RockCollisionHeight, 1.0f, RockSpawnWeight, true, true, ObstacleFitAxis.Height, RockVisualHeight),
+                new ObstacleSpec(FishId, FishId, 1, LaneMask.All(3), 0.9f, 0.78f, FishCollisionHeight, 1.25f, FishSpawnWeight, true, true),
+                new ObstacleSpec(LogId, LogId, 1, LaneMask.All(3), 1.8f, 1.566f, LogCollisionHeight, 0.8f, LogSpawnWeight, true, true)
             };
         }
 
@@ -45,34 +63,42 @@ namespace Game.Spawner
 
             return new List<PatternSpec>
             {
-                Pattern("Rock_Top", Entry(rock, Top, 0f)),
-                Pattern("Rock_Middle", Entry(rock, Middle, 0f)),
                 Pattern("Rock_Bottom", Entry(rock, Bottom, 0f)),
+                Pattern("Rocks_BottomTwice", Entry(rock, Bottom, 0f), Entry(rock, Bottom, 0.9f)),
+                Pattern("Rocks_BottomThrice", Entry(rock, Bottom, 0f), Entry(rock, Bottom, 0.8f), Entry(rock, Bottom, 1.6f)),
                 Pattern("Fish_Top", Entry(fish, Top, 0f)),
                 Pattern("Fish_Middle", Entry(fish, Middle, 0f)),
                 Pattern("Fish_Bottom", Entry(fish, Bottom, 0f)),
                 Pattern("Log_Top", Entry(log, Top, 0f)),
                 Pattern("Log_Middle", Entry(log, Middle, 0f)),
                 Pattern("Log_Bottom", Entry(log, Bottom, 0f)),
-                Pattern("Rocks_TopBottom", Entry(rock, Top, 0f), Entry(rock, Bottom, 0f)),
-                Pattern("Rocks_TopMiddle", Entry(rock, Top, 0f), Entry(rock, Middle, 0f)),
-                Pattern("Rocks_MiddleBottom", Entry(rock, Middle, 0f), Entry(rock, Bottom, 0f)),
-                Pattern("RockTop_FishBottom", Entry(rock, Top, 0f), Entry(fish, Bottom, 0f)),
+
                 Pattern("FishTop_RockBottom", Entry(fish, Top, 0f), Entry(rock, Bottom, 0f)),
+                Pattern("FishMiddle_RockBottom", Entry(fish, Middle, 0f), Entry(rock, Bottom, 0f)),
+                Pattern("LogTop_RockBottom", Entry(log, Top, 0f), Entry(rock, Bottom, 0f)),
+                Pattern("LogMiddle_RockBottom", Entry(log, Middle, 0f), Entry(rock, Bottom, 0f)),
                 Pattern("Fishes_TopMiddle", Entry(fish, Top, 0f), Entry(fish, Middle, 0f)),
-                Pattern("RockMiddle_LogBottom", Entry(rock, Middle, 0f), Entry(log, Bottom, 0f)),
-                Pattern("LogTop_RockMiddle", Entry(log, Top, 0f), Entry(rock, Middle, 0f)),
+                Pattern("Fishes_TopBottom", Entry(fish, Top, 0f), Entry(fish, Bottom, 0f)),
                 Pattern("FishTop_LogMiddle", Entry(fish, Top, 0f), Entry(log, Middle, 0f)),
-                Pattern("Rocks_TopThenBottom", Entry(rock, Top, 0f), Entry(rock, Bottom, 0.7f)),
-                Pattern("Rocks_BottomThenTop", Entry(rock, Bottom, 0f), Entry(rock, Top, 0.7f)),
+                Pattern("LogTop_FishMiddle", Entry(log, Top, 0f), Entry(fish, Middle, 0f)),
+                Pattern("FishTop_LogBottom", Entry(fish, Top, 0f), Entry(log, Bottom, 0f)),
+
+                Pattern("RockBottom_ThenFishTop", Entry(rock, Bottom, 0f), Entry(fish, Top, 0.7f)),
+                Pattern("FishTop_ThenRockBottom", Entry(fish, Top, 0f), Entry(rock, Bottom, 0.7f)),
+                Pattern("RockBottom_ThenFishMiddle", Entry(rock, Bottom, 0f), Entry(fish, Middle, 0.6f)),
+                Pattern("LogTop_ThenRockBottom", Entry(log, Top, 0f), Entry(rock, Bottom, 0.6f)),
+                Pattern("LogMiddle_ThenRockBottom", Entry(log, Middle, 0f), Entry(rock, Bottom, 0.6f)),
+                Pattern("RockBottom_ThenLogTop", Entry(rock, Bottom, 0f), Entry(log, Top, 0.6f)),
+                Pattern("RockBottom_ThenLogMiddle", Entry(rock, Bottom, 0f), Entry(log, Middle, 0.6f)),
+                Pattern("Rocks_BottomTwice_FishTopBetween", Entry(rock, Bottom, 0f), Entry(fish, Top, 0.7f), Entry(rock, Bottom, 1.4f)),
                 Pattern("Fish_TopThenBottom", Entry(fish, Top, 0f), Entry(fish, Bottom, 0.5f)),
-                Pattern("LogBottom_ThenRockMiddle", Entry(log, Bottom, 0f), Entry(rock, Middle, 0.5f)),
-                Pattern("LogTop_ThenRockMiddle", Entry(log, Top, 0f), Entry(rock, Middle, 0.5f)),
-                Pattern("Weave_MiddleThenTopBottom", Entry(rock, Middle, 0f), Entry(rock, Top, 0.9f), Entry(rock, Bottom, 0.9f)),
-                Pattern("Jump_RocksAllLanes", true, Entry(rock, Top, 0f), Entry(rock, Middle, 0f), Entry(rock, Bottom, 0f)),
-                Pattern("Jump_FishTop_RocksMiddleBottom", true, Entry(fish, Top, 0f), Entry(rock, Middle, 0f), Entry(rock, Bottom, 0f)),
-                Pattern("Jump_LogBottom_RockMiddle_FishTop", true, Entry(log, Bottom, 0f), Entry(rock, Middle, 0.2f), Entry(fish, Top, 0.2f)),
-                Pattern("Jump_LogMiddle_RockTop_RockBottom", true, Entry(log, Middle, 0f), Entry(rock, Top, 0.2f), Entry(rock, Bottom, 0.3f))
+                Pattern("Fish_BottomThenTop", Entry(fish, Bottom, 0f), Entry(fish, Top, 0.5f)),
+                Pattern("Weave_RockBottom_ThenFishTopLogMiddle", Entry(rock, Bottom, 0f), Entry(fish, Top, 0.9f), Entry(log, Middle, 0.9f)),
+                Pattern("Weave_LogMiddle_ThenFishTopRockBottom", Entry(log, Middle, 0f), Entry(fish, Top, 1.2f), Entry(rock, Bottom, 1.2f)),
+
+                Pattern("Jump_FishTop_FishMiddle_RockBottom", true, Entry(fish, Top, 0f), Entry(fish, Middle, 0f), Entry(rock, Bottom, 0f)),
+                Pattern("Jump_LogTop_FishMiddle_RockBottom", true, Entry(log, Top, 0f), Entry(fish, Middle, 0f), Entry(rock, Bottom, 0f)),
+                Pattern("Jump_FishTop_LogMiddle_RockBottom", true, Entry(fish, Top, 0f), Entry(log, Middle, 0.2f), Entry(rock, Bottom, 0.2f))
             };
         }
 
@@ -81,23 +107,23 @@ namespace Game.Spawner
             switch (sectionIndex)
             {
                 case 0:
-                    start = new DifficultySample(1.00f, 2.5f, 0.6f, 0.10f, 1.0f, 0.3f, 0.0f, true);
-                    end = new DifficultySample(1.05f, 2.0f, 0.6f, 0.20f, 1.0f, 0.5f, 0.1f, true);
+                    start = new DifficultySample(1.00f, 2.5f, 1.3f, NormalSectionJumpRatio, 1.0f, 0.20f, 0.00f, true);
+                    end = new DifficultySample(1.00f, 2.0f, 1.3f, NormalSectionJumpRatio, 1.0f, 0.50f, 0.15f, true);
                     spawnStopProgress = 1f;
                     break;
                 case 1:
-                    start = new DifficultySample(1.10f, 2.0f, 0.5f, 0.25f, 0.6f, 1.0f, 0.3f, true);
-                    end = new DifficultySample(1.25f, 1.6f, 0.5f, 0.25f, 0.5f, 1.0f, 0.5f, true);
+                    start = new DifficultySample(1.00f, 2.0f, 1.0f, NormalSectionJumpRatio, 0.6f, 1.00f, 0.30f, true);
+                    end = new DifficultySample(1.00f, 1.6f, 1.0f, NormalSectionJumpRatio, 0.4f, 1.00f, 0.60f, true);
                     spawnStopProgress = 1f;
                     break;
                 case 2:
-                    start = new DifficultySample(1.30f, 1.7f, 0.4f, 0.30f, 0.3f, 1.0f, 1.0f, true);
-                    end = new DifficultySample(1.50f, 1.3f, 0.4f, 0.35f, 0.3f, 1.0f, 1.0f, true);
+                    start = new DifficultySample(1.00f, 1.7f, 0.8f, NormalSectionJumpRatio, 0.3f, 1.00f, 0.80f, true);
+                    end = new DifficultySample(1.00f, 1.3f, 0.8f, NormalSectionJumpRatio, 0.2f, 1.00f, 1.20f, true);
                     spawnStopProgress = 1f;
                     break;
                 default:
-                    start = new DifficultySample(1.10f, 2.5f, 0.6f, 0.10f, 1.0f, 0.3f, 0.0f, true);
-                    end = new DifficultySample(1.00f, 3.0f, 0.6f, 0.00f, 1.0f, 0.1f, 0.0f, true);
+                    start = new DifficultySample(1.00f, 2.5f, 1.3f, NormalSectionJumpRatio, 1.0f, 0.30f, 0.00f, true);
+                    end = new DifficultySample(1.00f, 3.0f, 1.3f, NormalSectionJumpRatio, 1.0f, 0.10f, 0.00f, true);
                     spawnStopProgress = 0.7f;
                     break;
             }

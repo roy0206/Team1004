@@ -48,14 +48,25 @@ namespace Game.Spawner.Editor
                 return;
             }
 
-            var report = Build(config, specs, profile, source, configAsset != null ? AssetDatabase.GetAssetPath(configAsset) : "기본 GameConfigValues");
+            string jumpNote = null;
+
+            if (Math.Abs(config.JumpDuration - SpawnerDefaults.JumpDurationSeconds) > 0.001f)
+            {
+                jumpNote = "GameConfig의 점프 시간 " + F(config.JumpDuration) + "s가 기획 4판의 " +
+                           F(SpawnerDefaults.JumpDurationSeconds) + "s와 달라, 도달 가능성 시뮬레이션은 " +
+                           F(SpawnerDefaults.JumpDurationSeconds) + "s로 돌렸다.";
+                Debug.LogWarning("[SpawnerBalanceReport] " + jumpNote);
+                config.JumpDuration = SpawnerDefaults.JumpDurationSeconds;
+            }
+
+            var report = Build(config, specs, profile, source, configAsset != null ? AssetDatabase.GetAssetPath(configAsset) : "기본 GameConfigValues", jumpNote);
             var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "SpawnerBalance.md"));
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, report, new UTF8Encoding(false));
             Debug.Log("[SpawnerBalanceReport] Written: " + path);
         }
 
-        private static string Build(SimulationConfig config, List<PatternSpec> specs, DifficultyProfile profile, string source, string configSource)
+        private static string Build(SimulationConfig config, List<PatternSpec> specs, DifficultyProfile profile, string source, string configSource, string jumpNote)
         {
             var culture = CultureInfo.InvariantCulture;
             var sb = new StringBuilder();
@@ -70,6 +81,11 @@ namespace Game.Spawner.Editor
             sb.AppendLine("- GameConfig: `" + configSource + "`");
             sb.AppendLine("- 스크롤 " + F(config.ScrollSpeed) + " u/s, 레인 " + config.LaneCount + ", 이동 " + F(config.LaneMoveDuration) + "s, 점프 " + F(config.JumpDuration) + "s, 쿨타임 " + F(config.JumpCooldown) + "s, 입력 허용 오차(padding) " + F(config.SafetyPadding) + "s, 격자 " + F(config.TickSeconds) + "s");
             sb.AppendLine("- 구간당 시드 " + SeedsPerSection + "개, 구간 시간 25/30/35/15초(기획서 3판 9절), 시뮬레이션 스텝 " + F(StepSeconds) + "s");
+            sb.AppendLine("- 장애물(길이 / 히트박스 / 속도 배율): " + ObstacleLine(specs));
+
+            if (!string.IsNullOrEmpty(jumpNote))
+                sb.AppendLine("- " + jumpNote);
+
             sb.AppendLine();
 
             sb.AppendLine("## 패턴 (속도 배율 1.0)");
@@ -167,6 +183,35 @@ namespace Game.Spawner.Editor
 
             sb.AppendLine();
             sb.AppendLine("반응 여유는 패턴이 완전히 보인 뒤 아무 입력 없이 버틸 수 있는 최대 시간이다. 검증 거절은 후보가 시뮬레이터 생존 검사에 떨어진 횟수, 빈 결정은 모든 후보가 떨어져 스폰을 미룬 횟수다.");
+            return sb.ToString();
+        }
+
+        private static string ObstacleLine(List<PatternSpec> specs)
+        {
+            var seen = new List<ObstacleSpec>();
+
+            for (var i = 0; i < specs.Count; i++)
+            {
+                var entries = specs[i].Entries;
+
+                for (var j = 0; j < entries.Count; j++)
+                {
+                    var obstacle = entries[j].Obstacle;
+                    if (!seen.Contains(obstacle))
+                        seen.Add(obstacle);
+                }
+            }
+
+            var sb = new StringBuilder();
+
+            for (var i = 0; i < seen.Count; i++)
+            {
+                if (i > 0)
+                    sb.Append(", ");
+
+                sb.Append(seen[i].Id + " " + F(seen[i].BodyLength) + " / " + F(seen[i].CollisionLength) + " / x" + F(seen[i].SpeedMultiplier));
+            }
+
             return sb.ToString();
         }
 

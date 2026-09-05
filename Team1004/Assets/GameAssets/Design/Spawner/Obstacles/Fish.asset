@@ -16,8 +16,12 @@ MonoBehaviour:
   prefab: {fileID: 7863988488511380758, guid: 19a4d33f6eb272a4ba23885c4264e5e6, type: 3}
   laneSpan: 1
   allowedStartLanes: 7
-  bodyLength: 1.4
-  collisionLength: 1.2
-  speedMultiplier: 1.8
+  fitAxis: 0
+  visualHeight: 0
+  bodyLength: 0.9
+  collisionLength: 0.78
+  collisionHeight: 0.39
+  speedMultiplier: 1.25
+  spawnWeight: 3
   usableInNormalPatterns: 1
   usableInJumpPatterns: 1

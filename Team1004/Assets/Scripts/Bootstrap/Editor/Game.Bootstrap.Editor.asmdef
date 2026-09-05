@@ -20,6 +20,8 @@
         "Game.Animation.Editor",
         "Game.Environment",
         "Game.Environment.Editor",
+        "Game.Ledge",
+        "Game.Ledge.Editor",
         "Core.Foundation",
         "Core.Modules",
         "Core.Scene",

@@ -25,15 +25,24 @@ MonoBehaviour:
     - 30
     - 35
     - 15
-    jumpDuration: 0.8
+    jumpDuration: 1.6
     jumpCooldown: 1.2
-    jumpHeight: 1.6
+    jumpHeight: 2.2
     waterSurfaceY: 2
     hitStopDuration: 0.1
     hitPushDistance: 0.4
     bossDuration: 30
-    bossTelegraphDuration: 0.8
-    bossFullLaneTelegraphDuration: 1
+    bossTelegraphDuration: 1.2
+    bossFullLaneTelegraphDuration: 1.5
     bossAttackDuration: 0.6
     bossRecoveryDuration: 0.6
+    bossLaneBandWidth: 12.8
+    bossLaneBandHeight: 0.9
+    bossBannerDuration: 1
+    bossClearBannerDuration: 1
     spawnSeed: 0
+    playerScale: 0.29
+    playerHitboxScale: 0.87
+    controlHintDuration: 2.5
+    debugEnabled: 0
+    debugInvincible: 0

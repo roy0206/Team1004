@@ -36,10 +36,8 @@ namespace Game.Animation.Editor
 
             var cursor = SkipWhitespace(name, prefix.Length);
 
-            if (cursor >= name.Length || name[cursor] != '-')
-                return false;
-
-            cursor = SkipWhitespace(name, cursor + 1);
+            if (cursor < name.Length && name[cursor] == '-')
+                cursor = SkipWhitespace(name, cursor + 1);
 
             if (cursor >= name.Length)
                 return false;
@@ -61,6 +59,31 @@ namespace Game.Animation.Editor
 
             index = value;
             return true;
+        }
+
+        public static bool IsSingleFrame(string framePrefix, string fileName)
+        {
+            if (string.IsNullOrEmpty(framePrefix) || string.IsNullOrEmpty(fileName))
+                return false;
+
+            var name = Normalize(StripExtension(fileName)).Trim();
+            var prefix = Normalize(framePrefix).Trim();
+
+            return prefix.Length > 0 && string.Equals(name, prefix, StringComparison.Ordinal);
+        }
+
+        public static string FindSingleFrame(IReadOnlyList<string> fileNames, string framePrefix)
+        {
+            if (fileNames == null)
+                return null;
+
+            for (var i = 0; i < fileNames.Count; i++)
+            {
+                if (IsSingleFrame(framePrefix, fileNames[i]))
+                    return fileNames[i];
+            }
+
+            return null;
         }
 
         public static string FindFrame(IReadOnlyList<string> fileNames, string framePrefix, int index)

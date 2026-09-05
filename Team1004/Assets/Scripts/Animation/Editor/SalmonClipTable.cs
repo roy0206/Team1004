@@ -2,25 +2,47 @@ using System.Collections.Generic;
 
 namespace Game.Animation.Editor
 {
-    public enum SalmonClipDuration
+    public enum FlipbookClipDuration
     {
         FromFrames,
         LaneMove,
         Jump
     }
 
-    public sealed class SalmonClipDefinition
+    public sealed class FlipbookClipDefinition
     {
-        public SalmonClipDefinition(
+        public FlipbookClipDefinition(
             string assetName,
             string folderName,
             string framePrefix,
             int frameCount,
             float framesPerSecond,
             bool loop,
-            SalmonClipDuration durationSource)
+            FlipbookClipDuration durationSource)
+            : this(
+                assetName,
+                AnimationAssetGenerator.ArtFolder,
+                folderName,
+                framePrefix,
+                frameCount,
+                framesPerSecond,
+                loop,
+                durationSource)
+        {
+        }
+
+        public FlipbookClipDefinition(
+            string assetName,
+            string rootFolder,
+            string folderName,
+            string framePrefix,
+            int frameCount,
+            float framesPerSecond,
+            bool loop,
+            FlipbookClipDuration durationSource)
         {
             AssetName = assetName;
+            RootFolder = rootFolder;
             FolderName = folderName;
             FramePrefix = framePrefix;
             FrameCount = frameCount;
@@ -30,32 +52,36 @@ namespace Game.Animation.Editor
         }
 
         public string AssetName { get; }
+        public string RootFolder { get; }
         public string FolderName { get; }
         public string FramePrefix { get; }
         public int FrameCount { get; }
         public float FramesPerSecond { get; }
         public bool Loop { get; }
-        public SalmonClipDuration DurationSource { get; }
+        public FlipbookClipDuration DurationSource { get; }
 
         public string AssetPath => AnimationAssetGenerator.DesignFolder + "/" + AssetName + ".asset";
-        public string FolderPath => AnimationAssetGenerator.ArtFolder + "/" + FolderName;
+
+        public string FolderPath => string.IsNullOrEmpty(FolderName) ? RootFolder : RootFolder + "/" + FolderName;
     }
 
     public static class SalmonClipTable
     {
-        private static readonly SalmonClipDefinition[] Definitions =
+        private static readonly FlipbookClipDefinition[] Definitions =
         {
-            new("Player_Swim", "기본", "물고기 기본", 2, 6f, true, SalmonClipDuration.FromFrames),
-            new("Player_LaneUp", "올라가기", "물고기 올라가기", 2, 10f, false, SalmonClipDuration.LaneMove),
-            new("Player_LaneDown", "내려가기", "물고기 내려가기", 2, 10f, false, SalmonClipDuration.LaneMove),
-            new("Player_Jump", "점프", "물고기 점프", 5, 12f, false, SalmonClipDuration.Jump)
+            new("Player_Swim", "기본", "물고기 기본", 2, 6f, true, FlipbookClipDuration.FromFrames),
+            new("Player_LaneUp", "올라가기", "물고기 올라가기", 2, 10f, false, FlipbookClipDuration.LaneMove),
+            new("Player_LaneDown", "내려가기", "물고기 내려가기", 2, 10f, false, FlipbookClipDuration.LaneMove),
+            new("Player_Jump", "점프", "물고기 점프", 5, 12f, false, FlipbookClipDuration.Jump),
+            new("Player_Hit", "충돌", "충돌", 1, 6f, false, FlipbookClipDuration.FromFrames)
         };
 
-        public static IReadOnlyList<SalmonClipDefinition> All => Definitions;
-        public static SalmonClipDefinition Swim => Definitions[0];
-        public static SalmonClipDefinition LaneUp => Definitions[1];
-        public static SalmonClipDefinition LaneDown => Definitions[2];
-        public static SalmonClipDefinition Jump => Definitions[3];
+        public static IReadOnlyList<FlipbookClipDefinition> All => Definitions;
+        public static FlipbookClipDefinition Swim => Definitions[0];
+        public static FlipbookClipDefinition LaneUp => Definitions[1];
+        public static FlipbookClipDefinition LaneDown => Definitions[2];
+        public static FlipbookClipDefinition Jump => Definitions[3];
+        public static FlipbookClipDefinition Hit => Definitions[4];
 
         public static int TotalFrameCount
         {
@@ -70,7 +96,7 @@ namespace Game.Animation.Editor
             }
         }
 
-        public static SalmonClipDefinition Find(string assetName)
+        public static FlipbookClipDefinition Find(string assetName)
         {
             for (var i = 0; i < Definitions.Length; i++)
             {

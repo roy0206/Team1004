@@ -15,14 +15,15 @@ MonoBehaviour:
   displayName: 
   useGameConfigTiming: 1
   duration: 30
-  telegraphDuration: 0.8
-  attackDuration: 0.7
-  recoveryDuration: 0.5
-  fullLaneTelegraphDuration: 1
+  telegraphDuration: 1.2
+  attackDuration: 0.6
+  recoveryDuration: 0.6
+  fullLaneTelegraphDuration: 1.5
   telegraphImminentLead: 0.2
   introDuration: 1
   outroDuration: 0.8
   allowRepeatPattern: 0
+  holdsWorld: 1
   seed: 0
   patterns:
   - label: Top
@@ -51,9 +52,10 @@ MonoBehaviour:
     requiresJump: 1
   waterfallX: 5.5
   finalWaterfallEnterX: 9.5
-  finalWaterfallEnterDuration: 1
+  finalApproachDuration: 3
+  finalClearHeight: 2.2
+  finalContactHalfWidth: 0.75
+  finalPassDuration: 0.8
   spawnX: 7.5
   exitX: -8
   rockTrail: 1
-  safeWindowDuration: 2
-  jumpCuePulseDuration: 0.35

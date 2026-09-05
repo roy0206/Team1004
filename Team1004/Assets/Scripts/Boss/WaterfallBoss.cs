@@ -1,6 +1,5 @@
-using DG.Tweening;
-using Game.Player;
 using Game.StateMachine;
+using Game.Water;
 using UnityEngine;
 
 namespace Game.Boss
@@ -10,16 +9,19 @@ namespace Game.Boss
         [SerializeField] private Transform waterfall;
         [SerializeField] private SpriteRenderer waterfallRenderer;
         [SerializeField] private Transform[] rapids;
-        [SerializeField] private Hazard[] rapidHazards;
         [SerializeField] private Transform[] rocks;
-        [SerializeField] private Hazard[] rockHazards;
-
-        private Tween cueTween;
-        private Color waterfallColor = Color.white;
-        private bool waterfallColorCached;
 
         public Transform Waterfall => waterfall;
         public bool IsWaterfallVisible => waterfallRenderer != null && waterfallRenderer.enabled;
+        public bool StartsAtFinalWaterfall => EntryCheckpoint == BossCheckpoints.FinalWaterfall;
+        public bool IsFinalApproach { get; private set; }
+        public float FinalApproachElapsed { get; private set; }
+
+        public float FinalApproachRemaining =>
+            IsFinalApproach && Data != null ? Mathf.Max(0f, Data.FinalApproachDuration - FinalApproachElapsed) : -1f;
+
+        public float FinalContactX =>
+            Config.PlayerX + (Data != null ? Data.FinalContactHalfWidth : 0f);
 
         public int AttackLaneCount
         {
@@ -34,15 +36,30 @@ namespace Game.Boss
             }
         }
 
-        protected override WaterfallBossState InitialKey => WaterfallBossState.Intro;
+        public override string ActiveCheckpoint =>
+            IsActive && HasState && CurrentKey == WaterfallBossState.Breakthrough
+                ? BossCheckpoints.FinalWaterfall
+                : null;
+
+        protected override WaterfallBossState InitialKey =>
+            StartsAtFinalWaterfall ? WaterfallBossState.Breakthrough : WaterfallBossState.Intro;
 
         protected override void OnInitialize()
         {
             base.OnInitialize();
-            CacheWaterfallColor();
-            HideJumpCue();
             HideWaterfall();
             ParkAll();
+        }
+
+        protected override void OnBegin()
+        {
+            base.OnBegin();
+
+            if (!StartsAtFinalWaterfall || Timer == null)
+                return;
+
+            Timer.Start();
+            Timer.Tick(Timer.Duration);
         }
 
         protected override void BuildStates(StateMachineModule<WaterfallBoss, WaterfallBossState> fsm)
@@ -59,14 +76,12 @@ namespace Game.Boss
         protected override void OnComplete(BossOutcome outcome)
         {
             base.OnComplete(outcome);
-            HideJumpCue();
             ParkAll();
         }
 
         protected override void OnReset()
         {
             base.OnReset();
-            HideJumpCue();
             HideWaterfall();
             ParkAll();
         }
@@ -79,21 +94,6 @@ namespace Game.Boss
         public Transform GetRock(int lane)
         {
             return rocks != null && lane >= 0 && lane < rocks.Length ? rocks[lane] : null;
-        }
-
-        public void SetLaneHazard(int lane, bool enabled)
-        {
-            if (rapidHazards != null && lane >= 0 && lane < rapidHazards.Length && rapidHazards[lane] != null)
-            {
-                rapidHazards[lane].enabled = enabled;
-                HazardHitbox.SetVisible(rapidHazards[lane], enabled);
-            }
-
-            if (rockHazards != null && lane >= 0 && lane < rockHazards.Length && rockHazards[lane] != null)
-            {
-                rockHazards[lane].enabled = enabled;
-                HazardHitbox.SetVisible(rockHazards[lane], enabled);
-            }
         }
 
         public void SetLaneVisible(int lane, bool visible)
@@ -112,12 +112,10 @@ namespace Game.Boss
         {
             ParkLane(lane);
             SetLaneVisible(lane, true);
-            SetLaneHazard(lane, true);
         }
 
         public void ParkLane(int lane)
         {
-            SetLaneHazard(lane, false);
             SetLaneVisible(lane, false);
 
             if (Data == null)
@@ -128,10 +126,16 @@ namespace Game.Boss
             var rock = GetRock(lane);
 
             if (rapid != null)
+            {
                 rapid.position = new Vector3(Data.SpawnX, y, rapid.position.z);
+                WaterInteractor.NotifyTeleport(rapid);
+            }
 
             if (rock != null)
+            {
                 rock.position = new Vector3(Data.SpawnX + Data.RockTrail, y, rock.position.z);
+                WaterInteractor.NotifyTeleport(rock);
+            }
         }
 
         public void ParkAll()
@@ -145,18 +149,25 @@ namespace Game.Boss
             if (waterfallRenderer != null)
                 waterfallRenderer.enabled = false;
 
-            if (waterfall == null)
-                return;
+            if (Data != null)
+                PlaceWaterfall(Data.FinalWaterfallEnterX);
 
-            var position = waterfall.position;
-            var x = Data != null ? Data.FinalWaterfallEnterX : position.x;
-            waterfall.position = new Vector3(x, 0f, position.z);
+            WaterInteractor.NotifyTeleport(waterfall);
         }
 
         public void ShowWaterfall()
         {
             if (waterfallRenderer != null)
                 waterfallRenderer.enabled = true;
+        }
+
+        public void PlaceWaterfall(float x)
+        {
+            if (waterfall == null)
+                return;
+
+            var position = waterfall.position;
+            waterfall.position = new Vector3(x, 0f, position.z);
         }
 
         public bool CanPlayerJumpWithin(float seconds)
@@ -167,40 +178,38 @@ namespace Game.Boss
             return !Player.IsAirborne && Player.JumpCooldownRemaining <= seconds;
         }
 
-        public void ShowJumpCue()
+        public void BeginFinalApproach()
         {
-            if (waterfallRenderer == null || cueTween != null)
-                return;
-
-            CacheWaterfallColor();
-            var pulse = Data != null ? Data.JumpCuePulseDuration : 0.35f;
-
-            if (pulse <= 0f)
-                return;
-
-            var renderer = waterfallRenderer;
-            cueTween = DOTween.ToAlpha(() => renderer.color, value => renderer.color = value, waterfallColor.a * 0.4f, pulse)
-                .SetLoops(-1, LoopType.Yoyo);
+            IsFinalApproach = true;
+            FinalApproachElapsed = 0f;
         }
 
-        public void HideJumpCue()
+        public void AdvanceFinalApproach(float deltaTime)
         {
-            if (cueTween != null && cueTween.IsActive())
-                cueTween.Kill();
-
-            cueTween = null;
-
-            if (waterfallRenderer != null && waterfallColorCached)
-                waterfallRenderer.color = waterfallColor;
+            if (IsFinalApproach)
+                FinalApproachElapsed += deltaTime;
         }
 
-        private void CacheWaterfallColor()
+        public void EndFinalApproach()
         {
-            if (waterfallColorCached || waterfallRenderer == null)
-                return;
+            IsFinalApproach = false;
+        }
 
-            waterfallColorCached = true;
-            waterfallColor = waterfallRenderer.color;
+        public bool ClearsFinalWaterfall()
+        {
+            if (Player == null)
+                return true;
+
+            if (!Player.IsAirborne)
+                return false;
+
+            var height = Data != null ? Data.FinalClearHeight : 0f;
+            return Player.transform.position.y >= height;
+        }
+
+        public void ReportFinalWaterfallImpact()
+        {
+            RaiseImpact();
         }
     }
 }

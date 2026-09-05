@@ -5,6 +5,7 @@
         "Core.Foundation",
         "Core.Modules",
         "Core.Pool",
+        "Game.Animation",
         "Game.Config",
         "Game.Player"
     ]

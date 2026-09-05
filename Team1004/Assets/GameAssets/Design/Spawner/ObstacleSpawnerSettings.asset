@@ -16,7 +16,7 @@ MonoBehaviour:
   difficulty: {fileID: 11400000, guid: ecd50b1445b38b44c98c81bd9fc400bf, type: 2}
   screenRightX: 6.4
   screenLeftX: -6.4
-  playerHalfWidth: 0.35
+  playerHalfWidth: 0.46
   tickSeconds: 0.05
   safetyPadding: 0.1
   minJumpPatternGap: 2

@@ -158,7 +158,7 @@ namespace Game.Cutscene
 
             if (!InputManager.TryGetInstance(out var input) || !input.IsInitialized)
             {
-                WarnInput("InputManager is not initialized. Space advance is disabled; call Advance() from code.");
+                WarnInput("InputManager is not initialized. Enter and mouse advance are disabled; call Advance() from code.");
                 return;
             }
 

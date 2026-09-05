@@ -54,8 +54,11 @@ namespace Game.Boss.Integration
             var camera = stageCamera != null ? stageCamera : Camera.main;
             var scrollRoot = flow.Scroller != null ? flow.Scroller.transform : null;
 
+            boss.EntryCheckpoint = PlayFlow.CheckpointTag;
             boss.Initialize(new BossContext(flow.Player, scrollRoot, camera));
+            boss.Impact += OnBossImpact;
             Running = boss;
+            flow.SetBossHoldsWorld(boss.HoldsWorld);
             var view = flow.BossTimer;
             var viewShown = false;
 
@@ -68,11 +71,16 @@ namespace Game.Boss.Integration
 
                 while (boss != null && !boss.IsFinished)
                 {
-                    if (flow == null || flow.IsTerminal)
+                    if (flow == null || flow.IsTerminal || flow.IsBossInterrupted)
                     {
                         boss.Abort();
                         break;
                     }
+
+                    var checkpoint = boss.ActiveCheckpoint;
+
+                    if (!string.IsNullOrEmpty(checkpoint))
+                        flow.SetBossCheckpoint(checkpoint);
 
                     UpdateTimerView(view, boss, ref viewShown);
                     await Awaitable.NextFrameAsync();
@@ -82,11 +90,23 @@ namespace Game.Boss.Integration
             {
                 Running = null;
 
+                if (flow != null)
+                    flow.SetBossHoldsWorld(false);
+
+                if (boss != null)
+                    boss.Impact -= OnBossImpact;
+
                 if (view != null)
                     view.SetVisible(false);
             }
 
             return boss != null && boss.Outcome == BossOutcome.Passed;
+        }
+
+        private void OnBossImpact()
+        {
+            if (flow != null)
+                flow.ReportImpact();
         }
 
         private void Hook()

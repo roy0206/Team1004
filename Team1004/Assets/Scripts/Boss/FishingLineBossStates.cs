@@ -1,5 +1,5 @@
-using DG.Tweening;
 using Game.StateMachine;
+using UnityEngine;
 
 namespace Game.Boss
 {
@@ -13,7 +13,11 @@ namespace Game.Boss
     public sealed class FishingLineAttackPhase : TelegraphedAttackPhase<FishingLineBoss, FishingLineBossState>
     {
         private BossPattern pattern;
-        private Tween tween;
+        private float laneY;
+        private float sweepDuration;
+        private float sweepLead;
+        private float sweepElapsed;
+        private bool sweeping;
 
         public FishingLineAttackPhase(
             StateMachine<FishingLineBoss, FishingLineBossState> machine,
@@ -25,6 +29,8 @@ namespace Game.Boss
         }
 
         public BossPattern CurrentPattern => pattern;
+        public bool IsSweeping => sweeping;
+        public float SweepLead => sweepLead;
 
         protected override void OnPhaseEnter(FishingLineBoss boss)
         {
@@ -34,12 +40,20 @@ namespace Game.Boss
         protected override void OnTelegraphBegin(FishingLineBoss boss)
         {
             boss.ResetHook();
+            sweeping = false;
+            sweepElapsed = 0f;
 
             if (!boss.TryPickPattern(out pattern))
                 return;
 
             boss.ShowTelegraph(pattern.LaneMask);
-            boss.SetHookHitboxVisible(true);
+
+            laneY = boss.GetLaneY(BossLanes.First(pattern.LaneMask));
+            boss.StageHook(laneY);
+
+            var data = boss.Data;
+            sweepDuration = data.HookSweepDuration;
+            sweepLead = data.GetPlayerCrossRatio(boss.Config.PlayerX) * sweepDuration - Timing.Attack * 0.5f;
         }
 
         protected override void OnTelegraphImminent(FishingLineBoss boss)
@@ -47,47 +61,59 @@ namespace Game.Boss
             boss.BrightenTelegraph();
         }
 
-        protected override void OnAttackBegin(FishingLineBoss boss)
+        protected override void OnStepUpdate(FishingLineBoss boss, float deltaTime)
         {
-            if (pattern == null || boss.Hook == null)
+            if (pattern == null)
                 return;
 
-            var lane = BossLanes.First(pattern.LaneMask);
-            var targetY = boss.GetLaneY(lane);
-            var descend = Timing.Attack * boss.Data.HookDescendRatio;
+            if (!sweeping)
+            {
+                if (Step == BossAttackStep.Telegraph && sweepLead > 0f && CurrentTelegraph - StepElapsed <= sweepLead)
+                    sweeping = true;
+                else
+                    return;
+            }
 
-            KillTween();
+            sweepElapsed += deltaTime;
+
+            var data = boss.Data;
+            var progress = sweepDuration > 0f ? Mathf.Clamp01(sweepElapsed / sweepDuration) : 1f;
+            var x = Mathf.Lerp(data.HookEnterX, data.HookExitX, progress);
+            var bob = data.HookBobAmplitude *
+                      Mathf.Sin(sweepElapsed * data.HookBobFrequency * Mathf.PI * 2f);
+            boss.PlaceHook(x, laneY + bob);
+        }
+
+        protected override void OnAttackBegin(FishingLineBoss boss)
+        {
+            if (pattern == null)
+                return;
+
             boss.PlayAttackSfx();
-            tween = boss.Hook.DOMoveY(targetY, descend)
-                .SetEase(Ease.InQuad)
-                .OnComplete(() => boss.SetHookHazard(true));
+            boss.ArmLaneHazard();
+            sweeping = true;
         }
 
         protected override void OnAttackEnd(FishingLineBoss boss)
         {
+            boss.DisarmLaneHazard();
             boss.HideTelegraph();
-            KillTween();
-            boss.SetHookHazard(false);
-            boss.SetHookHitboxVisible(false);
+        }
 
-            if (boss.Hook != null)
-                tween = boss.Hook.DOMoveY(boss.HookParkY, Timing.Recovery).SetEase(Ease.OutQuad);
+        protected override void OnRecoveryEnd(FishingLineBoss boss)
+        {
+            boss.ResetHook();
+            sweeping = false;
+            sweepElapsed = 0f;
         }
 
         protected override void OnPhaseExit(FishingLineBoss boss)
         {
-            KillTween();
             pattern = null;
+            sweeping = false;
+            sweepElapsed = 0f;
             boss.HideTelegraph();
             boss.ResetHook();
-        }
-
-        private void KillTween()
-        {
-            if (tween != null && tween.IsActive())
-                tween.Kill();
-
-            tween = null;
         }
     }
 }

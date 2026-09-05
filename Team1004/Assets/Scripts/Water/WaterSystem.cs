@@ -53,29 +53,57 @@ namespace Game.Water
         bool Collide_Internal(Water water, IWaterCollider body)
         {
             if (body == null || water == null) return false;
-            if (!_simulationData.Contains(water)) return false;
-            var bounds = body.Bounds;
-            var positions = _simulationData.GetPositions(water);
-            var velocities = _simulationData.GetVelocities(water);
-            var waterRange = _simulationData.mappingData.GetWaterRange(water);
+            int index = _simulationData.IndexOf(water);
+            if (index < 0) return false;
+            return Collide_Internal(index, water, body, body.Bounds);
+        }
+
+        bool Collide_Internal(int index, Water water, IWaterCollider body, Bounds bounds)
+        {
+            var config = settings;
+            if (config == null) return false;
+            var waterRange = _simulationData.mappingData.waterRanges[index];
             var intersect = waterRange.Intersect(water.InnerIndexRange(bounds.min.x, bounds.max.x));
+            if (intersect.length <= 0) return false;
+
+            var positions = _simulationData.GetPositions(index);
+            var velocities = _simulationData.GetVelocities(index);
             var bodyVelocity = body.VerticalVelocity;
+            var horizontal = body.HorizontalVelocity;
+            var influence = body.SurfaceInfluence;
+            var wakeTransfer = config.wakeVelocityTransfer * Mathf.Max(0f, body.WakeScale);
+            var cap = config.MaxInjectedVelocity;
+            var transfersVertical = body.TransfersVerticalVelocity;
+            var surfaceY = water.bounds.yMax;
+            var wake = wakeTransfer > 0f && Mathf.Abs(horizontal) > 0f && bounds.size.y > 0f;
             var touched = false;
+
             for (int i = intersect.start; i < intersect.end; i++)
             {
                 int waterIndex = i - waterRange.start;
                 float py = positions[waterIndex];
                 float v = velocities[waterIndex];
-                Vector2 point = new Vector2(water.IndexToX(i), py + water.bounds.yMax);
-                if (Mathf.Abs(py) < settings.surfaceCollisionDistance && body.OverlapPoint(point))
+                float nodeX = water.IndexToX(i);
+                float nodeY = py + surfaceY;
+
+                if (Mathf.Abs(py) < config.surfaceCollisionDistance && body.OverlapPoint(new Vector2(nodeX, nodeY)))
                 {
                     touched = true;
-                    if (Mathf.Abs(bodyVelocity) > Mathf.Abs(v) || bodyVelocity * v < 0)
+                    if (transfersVertical && (Mathf.Abs(bodyVelocity) > Mathf.Abs(v) || bodyVelocity * v < 0))
                     {
-                        velocities[waterIndex] = bodyVelocity * settings.collisionVelocityTransfer
-                            * (1f - Mathf.Abs(py) / settings.surfaceCollisionDistance);
+                        var injected = bodyVelocity * config.collisionVelocityTransfer
+                            * (1f - Mathf.Abs(py) / config.surfaceCollisionDistance);
+                        v = WaterWake.CapInjection(v, injected, cap);
+                        velocities[waterIndex] = v;
                     }
                 }
+
+                if (!wake) continue;
+
+                float wakeVelocity = WaterWake.CapInjection(v, WaterWake.NodeVelocity(
+                    v, nodeX, nodeY, bounds, horizontal, influence, wakeTransfer), cap);
+
+                if (wakeVelocity != v) velocities[waterIndex] = wakeVelocity;
             }
             return touched;
         }
@@ -83,8 +111,10 @@ namespace Game.Water
         bool CollideAll_Internal(IWaterCollider body)
         {
             if (body == null) return false;
+            var config = settings;
+            if (config == null) return false;
             var bounds = body.Bounds;
-            var reach = settings != null ? settings.surfaceCollisionDistance : 0f;
+            var reach = Mathf.Max(config.surfaceCollisionDistance, body.SurfaceInfluence);
             var touched = false;
             var waters = _simulationData.waters;
             for (int i = 0; i < waters.Count; i++)
@@ -94,7 +124,7 @@ namespace Game.Water
                 var rect = water.bounds;
                 if (bounds.max.x < rect.xMin || bounds.min.x > rect.xMax) continue;
                 if (bounds.max.y < rect.yMax - reach || bounds.min.y > rect.yMax + reach) continue;
-                touched |= Collide_Internal(water, body);
+                touched |= Collide_Internal(i, water, body, bounds);
             }
             return touched;
         }
@@ -215,6 +245,10 @@ namespace Game.Water
             public NativeArray<float> GetVelocities(Water water) => velocities.GetSubArray( mappingData.GetNodeRange(water));
             public NativeArray<float> GetPositions(Water water) => positions.GetSubArray( mappingData.GetNodeRange(water));
 
+            public NativeArray<float> GetVelocities(int index) => velocities.GetSubArray(mappingData.nodeRanges[index]);
+            public NativeArray<float> GetPositions(int index) => positions.GetSubArray(mappingData.nodeRanges[index]);
+
+            public int IndexOf(Water water) => mappingData.waters.IndexOf(water);
             public bool Contains(Water water) => mappingData.waters.Contains(water);
             public void Dispose()
             {

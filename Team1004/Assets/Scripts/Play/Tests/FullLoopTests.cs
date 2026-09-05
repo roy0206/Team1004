@@ -28,6 +28,7 @@ namespace Game.Play.Tests
         private const float CutsceneSkipFallbackSeconds = 20f;
         private const float WaterSampleRadius = 0.4f;
         private const int BossInputPeriod = 24;
+        private const int LedgeInputPeriod = 8;
 
         private static readonly PlayState[] ExpectedStates =
         {
@@ -87,7 +88,26 @@ namespace Game.Play.Tests
             var sections = new List<int>();
             flow.SectionStarted += sections.Add;
 
+            var ledgeExpected = new HashSet<int>();
+            var ledgeBlocked = new HashSet<int>();
+            var ledgeCleared = new HashSet<int>();
+            var ledgeFinished = new HashSet<int>();
+            var ledge = flow.LedgeHandler;
+            Assert.IsNotNull(ledge, "PlayFlow has no ledge handler. LedgeSet.prefab is not wired into the play scene.");
+            Assert.IsNotNull(flow.Ledge, "PlayFlow.ledgeDirector is not wired.");
+            Assert.IsNotNull(flow.Ledge.Data, "LedgeDirector has no LedgeData.");
+            ledge.Blocked += section => ledgeBlocked.Add(section);
+            ledge.Cleared += section => ledgeCleared.Add(section);
+            ledge.Finished += section => ledgeFinished.Add(section);
+
+            for (var section = 1; section <= GameConfig.Current.SectionCount; section++)
+                if (flow.Ledge.Data.HasLedge(section))
+                    ledgeExpected.Add(section);
+
             var keyboard = Keyboard.current ?? InputSystem.AddDevice<Keyboard>();
+            var waterfallBoss = UnityEngine.Object.FindAnyObjectByType<Game.Boss.WaterfallBoss>(FindObjectsInactive.Include);
+            Assert.IsNotNull(waterfallBoss, "WaterfallBoss is not in the play scene.");
+            var upHeld = false;
             var bossTimerSeen = new HashSet<int>();
             var hintSeen = false;
             var waterChecked = false;
@@ -116,11 +136,11 @@ namespace Game.Play.Tests
                         }
                         else if (frame % 2 == 0)
                         {
-                            Press(keyboard.spaceKey);
+                            Press(keyboard.enterKey);
                         }
                         else
                         {
-                            Release(keyboard.spaceKey);
+                            Release(keyboard.enterKey);
                         }
 
                         break;
@@ -137,6 +157,14 @@ namespace Game.Play.Tests
                             yield return JumpAndSampleWater(flow, keyboard, value => waterDisplacement = Mathf.Max(waterDisplacement, value));
                         }
 
+                        if (ledge.IsHoldingWorld)
+                        {
+                            if (frame % LedgeInputPeriod == 0)
+                                Press(keyboard.upArrowKey);
+                            else if (frame % LedgeInputPeriod == 2)
+                                Release(keyboard.upArrowKey);
+                        }
+
                         break;
 
                     case PlayState.Boss:
@@ -145,10 +173,32 @@ namespace Game.Play.Tests
                         if (flow.BossTimer != null && flow.BossTimer.IsShown)
                             bossTimerSeen.Add(flow.Section);
 
+                        if (waterfallBoss.IsFinalApproach)
+                        {
+                            if (upHeld)
+                            {
+                                Release(keyboard.upArrowKey);
+                                upHeld = false;
+                            }
+                            else if (ShouldClearFinalWaterfall(flow.Player, waterfallBoss))
+                            {
+                                Press(keyboard.upArrowKey);
+                                upHeld = true;
+                            }
+
+                            break;
+                        }
+
                         if (frame % BossInputPeriod == 0)
+                        {
                             Press(keyboard.upArrowKey);
+                            upHeld = true;
+                        }
                         else if (frame % BossInputPeriod == 2)
+                        {
                             Release(keyboard.upArrowKey);
+                            upHeld = false;
+                        }
 
                         break;
                 }
@@ -156,7 +206,7 @@ namespace Game.Play.Tests
                 yield return null;
             }
 
-            Release(keyboard.spaceKey);
+            Release(keyboard.enterKey);
             Release(keyboard.upArrowKey);
             Time.timeScale = 1f;
 
@@ -171,6 +221,13 @@ namespace Game.Play.Tests
             CollectionAssert.AreEqual(new[] { 1, 2, 3, 4 }, sections, "Section sequence differs.");
             CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, bossTimerSeen, "Boss timer view was not shown for every boss.");
             Assert.IsTrue(hintSeen, "The control hint was not shown when section 1 started.");
+            CollectionAssert.AreEquivalent(ledgeExpected, ledgeCleared,
+                "Ledges were not cleared in every section that schedules one. Blocked: " + string.Join(", ", ledgeBlocked) +
+                " cleared: " + string.Join(", ", ledgeCleared));
+            CollectionAssert.AreEquivalent(ledgeExpected, ledgeFinished, "Ledges did not finish rising in every scheduled section.");
+            Assert.IsFalse(ledge.IsActive, "A ledge is still active after the loop.");
+            Assert.IsTrue(flow.Spawner != null && flow.Spawner.SpawningEnabled,
+                "Obstacle spawning stayed suspended after the ledge finished.");
             Assert.IsTrue(waterChecked, "The water sample step did not run.");
             Assert.Greater(waterDisplacement, 0.001f, "The water surface under the player did not move after a jump.");
 
@@ -284,6 +341,21 @@ namespace Game.Play.Tests
             Assert.Less(retried.Distance, 1f, "Distance should restart from the section checkpoint.");
         }
 
+        private static bool ShouldClearFinalWaterfall(Game.Player.LanePlayer player, Game.Boss.WaterfallBoss boss)
+        {
+            if (player == null || player.IsMoving || player.IsAirborne)
+                return false;
+
+            if (player.CurrentLane != player.TopLane)
+                return true;
+
+            if (!player.CanJump)
+                return false;
+
+            var remaining = boss.FinalApproachRemaining;
+            return remaining >= 0f && remaining <= GameConfig.Current.JumpDuration * 0.75f;
+        }
+
         private IEnumerator JumpAndSampleWater(PlayFlow flow, Keyboard keyboard, Action<float> report)
         {
             var player = flow.Player;
@@ -342,8 +414,18 @@ namespace Game.Play.Tests
             return max;
         }
 
+        private static IEnumerator SettlePreviousScene()
+        {
+            if (!SceneController.HasInstance)
+                yield break;
+
+            yield return WaitUntil(() => !SceneController.HasInstance || !SceneController.Instance.IsTransitioning, 30f);
+            yield return null;
+        }
+
         private static IEnumerator LoadBootstrapToStart()
         {
+            yield return SettlePreviousScene();
             SceneManager.LoadScene(BootstrapScenePath);
 
             yield return WaitUntil(

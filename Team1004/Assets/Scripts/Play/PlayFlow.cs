@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using Game.Config;
 using Game.Cutscene;
 using Game.Environment;
+using Game.Ledge;
 using Game.Player;
 using Game.Settings;
 using Game.Spawner;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Game.Play
 {
@@ -46,9 +48,27 @@ namespace Game.Play
         private const string CutsceneTransitionSfxId = "cutscene_transition";
         private const string EndingSfxId = "ending";
         private const string BossClearSfxId = "boss_clear";
+        private const string BossBannerFormat = "BOSS {0} — {1}";
+        private const string ClearBannerText = "CLEAR";
+        private const int DebugSlotCount = 8;
+
+        public const string FinalWaterfallCheckpoint = "FinalWaterfall";
 
         private static readonly HashSet<string> seenCutscenes = new(StringComparer.Ordinal);
         private static int checkpointStep = -1;
+        private static string checkpointTag = string.Empty;
+
+        private static readonly Key[] debugSlotKeys =
+        {
+            Key.Digit1,
+            Key.Digit2,
+            Key.Digit3,
+            Key.Digit4,
+            Key.Digit5,
+            Key.Digit6,
+            Key.Digit7,
+            Key.Digit8
+        };
 
         [SerializeField] private LanePlayer player;
         [SerializeField] private StageScroller scroller;
@@ -59,6 +79,7 @@ namespace Game.Play
         [SerializeField] private ResultPanel resultPanel;
         [SerializeField] private CutscenePlayer cutscene;
         [SerializeField] private EnvironmentThing environment;
+        [SerializeField] private LedgeDirector ledgeDirector;
         [SerializeField] private string introCutsceneId = CutsceneCatalog.Intro;
         [SerializeField] private string[] sectionCutsceneIds =
         {
@@ -80,6 +101,9 @@ namespace Game.Play
         private float sectionDuration;
         private float sectionTime;
         private PlayState stateBeforePause = PlayState.Running;
+        private bool flowRunning;
+        private bool bannerHold;
+        private int pendingStep = -1;
 
         public PlayState State { get; private set; } = PlayState.Ready;
         public float Distance { get; private set; }
@@ -96,11 +120,19 @@ namespace Game.Play
         public CutscenePlayer Cutscene => cutscene;
         public BossTimerView BossTimer => bossTimer;
         public EnvironmentThing Environment => environment;
+        public LedgeDirector Ledge => ledgeDirector;
+        public ILedgeHandler LedgeHandler { get; set; }
+        public bool IsWorldHeld => LedgeHandler != null && LedgeHandler.IsHoldingWorld;
         public PlayHud Hud => hud;
         public ResultPanel ResultPanel => resultPanel;
         public bool IsResultVisible => resultPanel != null && resultPanel.gameObject.activeSelf;
+        public bool IsBannerVisible => hud != null && hud.IsBannerVisible;
+        public bool IsBossInterrupted { get; private set; }
+        public bool BossHoldsWorld { get; private set; }
+        public bool IsDebugEnabled => GameConfig.Current.DebugEnabled;
         public static IReadOnlyCollection<string> SeenCutscenes => seenCutscenes;
         public static int CheckpointStep => checkpointStep;
+        public static string CheckpointTag => checkpointTag;
 
         public Func<int, Awaitable<bool>> BossHandler { get; set; }
 
@@ -111,6 +143,9 @@ namespace Game.Play
         {
             Time.timeScale = 1f;
             Unsubscribe();
+
+            if (LedgeHandler != null)
+                LedgeHandler.Failed -= OnLedgeFailed;
         }
 
         private void OnEnable()
@@ -159,13 +194,40 @@ namespace Game.Play
             if (bossTimer != null)
                 bossTimer.Hide();
 
+            if (LedgeHandler == null && ledgeDirector != null)
+                LedgeHandler = ledgeDirector;
+
+            if (LedgeHandler != null)
+                LedgeHandler.Failed += OnLedgeFailed;
+
             SetState(PlayState.Ready);
-            await RunFlowAsync();
+            await RunFlowAsync(-1);
         }
 
         private void Update()
         {
+            HandleDebugInput();
+
             if (State != PlayState.Running)
+                return;
+
+            var ledge = LedgeHandler;
+
+            if (ledge != null)
+                ledge.Tick(Time.deltaTime);
+
+            if (State != PlayState.Running)
+                return;
+
+            var holding = ledge != null && ledge.IsHoldingWorld;
+
+            if (scroller != null)
+                scroller.SetScrolling(!holding);
+
+            if (environment != null)
+                environment.SetScrolling(!holding);
+
+            if (holding)
                 return;
 
             Distance += GameConfig.Current.ScrollSpeed * Time.deltaTime;
@@ -173,6 +235,8 @@ namespace Game.Play
 
             if (spawnerReady && player != null)
             {
+                spawner.SetSpawningEnabled(ledge == null || !ledge.IsSpawnSuspended);
+
                 var playerState = SpawnPlayerState.FromPlayer(
                     player, player.JumpCooldownRemaining, player.AirborneRemaining, player.MoveRemaining);
                 spawner.Advance(Time.deltaTime, Distance, playerState);
@@ -233,6 +297,8 @@ namespace Game.Play
             if (spawnerReady)
                 spawner.Stop();
 
+            LedgeHandler?.Stop();
+
             SetState(PlayState.Failed);
             PlaySfx(FailSfxId);
 
@@ -247,63 +313,258 @@ namespace Game.Play
 
         public void GoTitle()
         {
-            checkpointStep = -1;
+            ResetCheckpoint();
             LoadScene(startScene);
         }
 
         public static void ResetCheckpoint()
         {
             checkpointStep = -1;
+            checkpointTag = string.Empty;
         }
 
         public static void ResetSession()
         {
             seenCutscenes.Clear();
-            checkpointStep = -1;
+            ResetCheckpoint();
         }
 
-        private async Awaitable RunFlowAsync()
+        public void SetBossCheckpoint(string tag)
         {
-            BuildSteps();
+            if (State != PlayState.Boss || string.IsNullOrEmpty(tag))
+                return;
 
-            var start = Mathf.Clamp(checkpointStep, 0, steps.Count - 1);
-            if (checkpointStep < 0)
-                start = 0;
+            checkpointTag = tag;
+        }
 
-            ApplySkippedSteps(start);
+        public void ReportImpact()
+        {
+            if (State != PlayState.Running && State != PlayState.Boss)
+                return;
 
-            for (var i = start; i < steps.Count; i++)
+            RunHitReactionAsync();
+        }
+
+        private async Awaitable RunFlowAsync(int startStep)
+        {
+            if (flowRunning)
+                return;
+
+            flowRunning = true;
+
+            try
             {
+                BuildSteps();
+
+                var start = startStep;
+
+                if (start < 0)
+                    start = checkpointStep < 0 ? 0 : Mathf.Clamp(checkpointStep, 0, steps.Count - 1);
+                else
+                    start = Mathf.Clamp(start, 0, steps.Count - 1);
+
+                var i = start;
+                ApplySkippedSteps(i);
+
+                while (i < steps.Count)
+                {
+                    if (this == null || IsTerminal)
+                        return;
+
+                    var step = steps[i];
+                    switch (step.Kind)
+                    {
+                        case FlowStepKind.Intro:
+                            await PlayCutsceneAsync(introCutsceneId);
+                            break;
+                        case FlowStepKind.Section:
+                            checkpointStep = i;
+                            checkpointTag = string.Empty;
+                            await RunSectionAsync(step.Index);
+                            break;
+                        case FlowStepKind.Cutscene:
+                            await PlayCutsceneAsync(GetSectionCutsceneId(step.Index));
+                            break;
+                        case FlowStepKind.Boss:
+                            checkpointStep = i;
+                            await RunBossAsync(step.Index);
+                            break;
+                        case FlowStepKind.Ending:
+                            await PlayCutsceneAsync(endingCutsceneId);
+                            break;
+                    }
+
+                    if (this == null)
+                        return;
+
+                    if (pendingStep >= 0)
+                    {
+                        i = pendingStep;
+                        pendingStep = -1;
+                        ApplySkippedSteps(i);
+                        continue;
+                    }
+
+                    if (IsTerminal)
+                        return;
+
+                    i++;
+                }
+
                 if (this == null || IsTerminal)
                     return;
 
-                var step = steps[i];
-                switch (step.Kind)
-                {
-                    case FlowStepKind.Intro:
-                        await PlayCutsceneAsync(introCutsceneId);
-                        break;
-                    case FlowStepKind.Section:
-                        checkpointStep = i;
-                        await RunSectionAsync(step.Index);
-                        break;
-                    case FlowStepKind.Cutscene:
-                        await PlayCutsceneAsync(GetSectionCutsceneId(step.Index));
-                        break;
-                    case FlowStepKind.Boss:
-                        checkpointStep = i;
-                        await RunBossAsync(step.Index);
-                        break;
-                    case FlowStepKind.Ending:
-                        await PlayCutsceneAsync(endingCutsceneId);
-                        break;
-                }
+                Clear();
+            }
+            finally
+            {
+                flowRunning = false;
+            }
+        }
+
+        public bool DebugJumpTo(int slot)
+        {
+            if (steps.Count == 0)
+                BuildSteps();
+
+            if (!TryGetDebugStep(slot, out var stepIndex))
+            {
+                Debug.LogWarning($"[PlayFlow] Debug slot {slot} has no matching step.", this);
+                return false;
             }
 
-            if (this == null || IsTerminal)
+            PrepareDebugJump();
+
+            if (flowRunning)
+            {
+                pendingStep = stepIndex;
+                return true;
+            }
+
+            RunFlowFrom(stepIndex);
+            return true;
+        }
+
+        private async void RunFlowFrom(int stepIndex)
+        {
+            await RunFlowAsync(stepIndex);
+        }
+
+        private bool TryGetDebugStep(int slot, out int stepIndex)
+        {
+            stepIndex = -1;
+
+            if (slot < 1 || slot > DebugSlotCount)
+                return false;
+
+            if (slot == DebugSlotCount)
+                return TryFindStep(FlowStepKind.Ending, 0, out stepIndex);
+
+            var kind = slot % 2 == 1 ? FlowStepKind.Section : FlowStepKind.Boss;
+            return TryFindStep(kind, (slot + 1) / 2, out stepIndex);
+        }
+
+        private bool TryFindStep(FlowStepKind kind, int index, out int stepIndex)
+        {
+            for (var i = 0; i < steps.Count; i++)
+            {
+                if (steps[i].Kind != kind || steps[i].Index != index)
+                    continue;
+
+                stepIndex = i;
+                return true;
+            }
+
+            stepIndex = -1;
+            return false;
+        }
+
+        private void HandleDebugInput()
+        {
+            var keyboard = Keyboard.current;
+
+            if (keyboard == null)
                 return;
 
-            Clear();
+            for (var slot = 0; slot < debugSlotKeys.Length; slot++)
+            {
+                if (!keyboard[debugSlotKeys[slot]].wasPressedThisFrame)
+                    continue;
+
+                if (!GameConfig.Current.DebugEnabled)
+                {
+                    Debug.LogWarning(
+                        $"[PlayFlow] Debug jump {slot + 1} was ignored because debugEnabled is false.", this);
+                    return;
+                }
+
+                DebugJumpTo(slot + 1);
+                return;
+            }
+        }
+
+        private void PrepareDebugJump()
+        {
+            IsBossInterrupted = true;
+            Time.timeScale = 1f;
+            bannerHold = false;
+            checkpointTag = string.Empty;
+
+            if (pausePanel != null)
+                pausePanel.Hide();
+
+            if (resultPanel != null)
+                resultPanel.Hide();
+
+            if (bossTimer != null)
+                bossTimer.Hide();
+
+            if (hud != null)
+            {
+                hud.HideBanner();
+                hud.HideControlHint();
+            }
+
+            if (spawnerReady)
+            {
+                spawner.Stop();
+                spawner.ReleaseAll();
+            }
+
+            LedgeHandler?.Stop();
+
+            MarkCutscenesSeen();
+
+            if (cutscene != null && cutscene.IsPlaying)
+                cutscene.Skip();
+
+            if (player != null)
+            {
+                player.CancelJump();
+                player.ResetHit();
+                player.ResetJumpCooldown();
+                player.SnapToLane(player.CurrentLane);
+            }
+
+            sectionTime = 0f;
+            stateBeforePause = PlayState.Running;
+            SetState(PlayState.Ready);
+        }
+
+        private void MarkCutscenesSeen()
+        {
+            if (!string.IsNullOrEmpty(introCutsceneId))
+                seenCutscenes.Add(introCutsceneId);
+
+            if (!string.IsNullOrEmpty(endingCutsceneId))
+                seenCutscenes.Add(endingCutsceneId);
+
+            if (sectionCutsceneIds == null)
+                return;
+
+            for (var i = 0; i < sectionCutsceneIds.Length; i++)
+                if (!string.IsNullOrEmpty(sectionCutsceneIds[i]))
+                    seenCutscenes.Add(sectionCutsceneIds[i]);
         }
 
         private void BuildSteps()
@@ -368,6 +629,8 @@ namespace Game.Play
             if (spawnerReady)
                 spawner.BeginSectionByDuration(section - 1, sectionDuration);
 
+            LedgeHandler?.BeginSection(section, sectionDuration);
+
             try
             {
                 SectionStarted?.Invoke(section);
@@ -385,8 +648,11 @@ namespace Game.Play
             if (section == 1 && hud != null)
                 hud.ShowControlHint(GameConfig.Current.ControlHintDuration);
 
-            while (this != null && !IsTerminal && !IsSectionFinished())
+            while (this != null && !IsTerminal && pendingStep < 0 && !IsSectionFinished())
                 await Awaitable.NextFrameAsync();
+
+            if (this != null)
+                LedgeHandler?.Stop();
         }
 
         private bool IsSectionFinished()
@@ -405,20 +671,57 @@ namespace Game.Play
             if (bossTimer != null)
                 bossTimer.SetBossName(GetBossName(index));
 
+            await ShowBannerAsync(string.Format(BossBannerFormat, index, GetBossName(index)),
+                GameConfig.Current.BossBannerDuration);
+
+            if (this == null || IsTerminal || pendingStep >= 0)
+                return;
+
             if (BossHandler == null)
             {
                 await Awaitable.NextFrameAsync();
                 return;
             }
 
+            IsBossInterrupted = false;
             var survived = await BossHandler(index);
-            if (this == null || IsTerminal)
+            if (this == null || pendingStep >= 0 || IsTerminal)
                 return;
 
-            if (survived)
-                PlaySfx(BossClearSfxId);
-            else
+            if (!survived)
+            {
                 Fail();
+                return;
+            }
+
+            checkpointTag = string.Empty;
+            PlaySfx(BossClearSfxId);
+            await ShowBannerAsync(ClearBannerText, GameConfig.Current.BossClearBannerDuration);
+        }
+
+        private async Awaitable ShowBannerAsync(string text, float seconds)
+        {
+            if (hud == null || seconds <= 0f)
+                return;
+
+            bannerHold = true;
+            ApplyInputEnabled();
+
+            await hud.ShowBannerAsync(text, seconds);
+
+            if (this == null)
+                return;
+
+            bannerHold = false;
+            ApplyInputEnabled();
+        }
+
+        private void ApplyInputEnabled()
+        {
+            if (player == null)
+                return;
+
+            player.InputEnabled = !bannerHold && (State == PlayState.Running || State == PlayState.Boss);
         }
 
         private string GetBossName(int index)
@@ -536,11 +839,16 @@ namespace Game.Play
                 Resume();
         }
 
-        private async void OnHit(Hazard hazard)
+        private void OnHit(Hazard hazard)
         {
             if (State != PlayState.Running && State != PlayState.Boss)
                 return;
 
+            RunHitReactionAsync();
+        }
+
+        private async void RunHitReactionAsync()
+        {
             if (spawnerReady)
                 spawner.Stop();
 
@@ -554,6 +862,11 @@ namespace Game.Play
             if (this == null)
                 return;
 
+            Fail();
+        }
+
+        private void OnLedgeFailed(int section)
+        {
             Fail();
         }
 
@@ -572,18 +885,33 @@ namespace Game.Play
             PlaySfx(LandSfxId);
         }
 
+        public void SetBossHoldsWorld(bool holds)
+        {
+            BossHoldsWorld = holds;
+
+            if (environment != null)
+                environment.SetScrolling(EnvironmentScrolls(State));
+        }
+
+        private bool EnvironmentScrolls(PlayState state)
+        {
+            if (state == PlayState.Running)
+                return true;
+
+            return state == PlayState.Boss && !BossHoldsWorld;
+        }
+
         private void SetState(PlayState next)
         {
             State = next;
 
-            if (player != null)
-                player.InputEnabled = next == PlayState.Running || next == PlayState.Boss;
+            ApplyInputEnabled();
 
             if (scroller != null)
                 scroller.SetScrolling(next == PlayState.Running);
 
             if (environment != null)
-                environment.SetScrolling(next == PlayState.Running || next == PlayState.Boss);
+                environment.SetScrolling(EnvironmentScrolls(next));
 
             if (hud != null)
                 hud.gameObject.SetActive(next != PlayState.Cutscene);
@@ -646,6 +974,7 @@ namespace Game.Play
         {
             seenCutscenes.Clear();
             checkpointStep = -1;
+            checkpointTag = string.Empty;
         }
     }
 }

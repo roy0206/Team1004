@@ -1,0 +1,16 @@
+{
+    "name": "Game.Ledge.Editor",
+    "rootNamespace": "Game.Ledge.Editor",
+    "references": [
+        "Game.Ledge",
+        "Game.Config",
+        "Game.Environment",
+        "Game.Environment.Editor",
+        "Game.Player",
+        "Core.Foundation",
+        "Core.Modules"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

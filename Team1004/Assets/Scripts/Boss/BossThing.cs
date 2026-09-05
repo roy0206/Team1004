@@ -34,9 +34,26 @@ namespace Game.Boss
         public bool IsPlayerVulnerable => Player != null && Player.IsVulnerable;
         public virtual BossTimer Timer => null;
         public virtual string DisplayName => name;
+        public virtual bool HoldsWorld => false;
+
+        public string EntryCheckpoint { get; set; }
+        public virtual string ActiveCheckpoint => null;
 
         public event Action Began;
         public event Action<BossOutcome> Finished;
+        public event Action Impact;
+
+        protected void RaiseImpact()
+        {
+            try
+            {
+                Impact?.Invoke();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
 
         public void Initialize(BossContext context)
         {

@@ -17,6 +17,7 @@ namespace Game.Spawner
         public SpawnModule Spawn => EnsureModule();
         public bool IsInitialized => spawn != null && spawn.IsInitialized;
         public bool IsRunning => spawn != null && spawn.IsRunning;
+        public bool SpawningEnabled => spawn == null || spawn.SpawningEnabled;
         public bool IsSectionExhausted => spawn != null && spawn.IsSectionExhausted;
         public int ActiveObstacleCount => spawn != null ? spawn.ActiveObstacleCount : 0;
         public int SectionIndex => spawn != null ? spawn.SectionIndex : -1;
@@ -81,6 +82,11 @@ namespace Game.Spawner
         {
             if (spawn != null)
                 spawn.Stop();
+        }
+
+        public void SetSpawningEnabled(bool enabled)
+        {
+            EnsureModule().SpawningEnabled = enabled;
         }
 
         public void ReleaseAll()
