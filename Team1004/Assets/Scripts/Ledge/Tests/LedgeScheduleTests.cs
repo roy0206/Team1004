@@ -13,7 +13,7 @@ namespace Game.Ledge.Tests
         private const float RiseDuration = 0.7f;
         private const float SettleDuration = 1.2f;
         private const float RetireX = -20f;
-        private const float ClearMargin = 1.2f;
+        private const float ClearMargin = 3.35f;
         private const float QteDistance = 2.5f;
         private const float QteLead = QteDistance / Speed;
         private const float Step = 1f / 60f;
@@ -209,7 +209,7 @@ namespace Game.Ledge.Tests
             var plan = clock.Plan;
 
             Run(clock, plan.LedgeTime - 0.5f, false);
-            Run(clock, 1f, true);
+            Run(clock, 1.5f, true);
 
             Assert.AreEqual(LedgePhase.Passing, clock.Phase);
             Assert.Less(clock.FrontX, PlayerX - ClearMargin);
@@ -243,7 +243,7 @@ namespace Game.Ledge.Tests
         {
             var clock = CreateClock();
             Run(clock, LedgeTime - 0.5f, false);
-            Run(clock, 1f, true);
+            Run(clock, 1.5f, true);
             clock.Advance(Step, false);
 
             Assert.AreEqual(LedgePhase.Rising, clock.Phase);
@@ -265,7 +265,7 @@ namespace Game.Ledge.Tests
         {
             var clock = CreateClock();
             Run(clock, LedgeTime - 0.5f, false);
-            Run(clock, 1f, true);
+            Run(clock, 1.5f, true);
             clock.Advance(Step, false);
             Run(clock, RiseDuration + 0.1f, false);
 
@@ -411,7 +411,7 @@ namespace Game.Ledge.Tests
             Assert.IsTrue(clock.Begin(first, RiseDuration, SettleDuration, RetireX, ClearMargin, QteDistance));
 
             Run(clock, firstLedgeTime - 0.5f, false);
-            Run(clock, 1f, true);
+            Run(clock, 1.5f, true);
             clock.Advance(Step, false);
             Run(clock, 12f, false);
 
@@ -419,6 +419,53 @@ namespace Game.Ledge.Tests
 
             var second = LedgePlan.Create(secondLedgeTime, SafeTime, Speed, PlayerX, SpawnX);
             Assert.Less(clock.Time, second.StartTime);
+        }
+
+        [Test]
+        public void Step_FillsTheRiverbedToTheWaterSurface()
+        {
+            const float alphaWidthPixels = 692f;
+            const float alphaHeightPixels = 779f;
+            const float riverbedTopY = -1.65f;
+            const float waterSurfaceY = 2f;
+            const float bottomY = -1.72f;
+            const float topY = 2.05f;
+
+            var scale = (topY - bottomY) / (alphaHeightPixels / 100f);
+            var width = alphaWidthPixels / 100f * scale;
+
+            Assert.AreEqual(0.4839538f, scale, 1e-6f, "긴 돌 균등 스케일");
+            Assert.AreEqual(3.34896f, width, 1e-4f, "긴 돌 폭");
+            Assert.AreEqual(ClearMargin, width, 0.002f, "clearMargin은 돌 폭이어야 넘은 판정이 그림과 맞는다.");
+            Assert.AreEqual(0.165f, (topY + bottomY) * 0.5f, 1e-4f, "Step 로컬 y");
+            Assert.AreEqual(width * 0.5f, 1.67448f, 1e-4f, "Step 로컬 x는 폭의 절반이라 왼쪽 변이 단차 앞면에 온다.");
+            Assert.Less(bottomY, riverbedTopY, "아랫변이 강바닥에 조금 묻힌다.");
+            Assert.Greater(topY, waterSurfaceY, "윗변이 수면 위로 나온다.");
+        }
+
+        [Test]
+        public void QteJump_LandsAfterTheWiderWallHasPassed()
+        {
+            const float jumpDuration = 1.6f;
+
+            var earliest = jumpDuration - QteLead;
+
+            Assert.Greater(earliest * Speed, ClearMargin,
+                "QTE 성공 점프는 가장 이른 경우에도 폭 " + ClearMargin + "짜리 돌을 넘긴 뒤 착지해야 한다.");
+
+            var clock = CreateClock();
+            var plan = clock.Plan;
+
+            Run(clock, plan.LedgeTime - QteLead + 0.05f, false);
+
+            Assert.AreEqual(LedgePhase.Qte, clock.Phase);
+
+            Run(clock, jumpDuration, true);
+            Assert.AreEqual(LedgePhase.Passing, clock.Phase);
+            Assert.Less(clock.FrontX, PlayerX - ClearMargin);
+
+            var cleared = clock.Advance(Step, false);
+            Assert.IsTrue((cleared & LedgeSignal.Cleared) != 0);
         }
     }
 }

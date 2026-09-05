@@ -15,13 +15,13 @@ namespace Game.Ledge
 
         [SerializeField] private int hintSection = 1;
         [SerializeField] private float approachSafeTime = 2f;
-        [SerializeField] private float spawnSafeLead = 3.5f;
+        [SerializeField] private float spawnSafeLead = 5.5f;
         [SerializeField] private float postClearSafeTime = 2f;
         [SerializeField] private float stepHeight = 1.1f;
         [SerializeField] private float cameraMoveDuration = 0.7f;
         [SerializeField] private float spawnX = 7.5f;
         [SerializeField] private float retireX = -20f;
-        [SerializeField] private float clearMargin = 1.2f;
+        [SerializeField] private float clearMargin = 3.35f;
         [SerializeField] private bool instantFail;
         [SerializeField] private float environmentRiseAmount = 0.35f;
         [SerializeField] private float environmentSettleDuration = 1.2f;
