@@ -3,7 +3,7 @@
     "folder": "https://drive.google.com/drive/folders/1yBEFFhc4zA2d-8_Pkeqinqvmv877cDkw",
     "subfolder": "Design",
     "target": "Team1004/Assets/Documents",
-    "extensions": [".md", ".txt", ".pdf", ".docx", ".xlsx", ".csv", ".json"],
+    "extensions": [".md", ".txt", ".pdf", ".docx", ".xlsx", ".csv", ".json", ".zip"],
     "google_exports": true,
     "hook": true,
     "hint": "변경된 기획서를 읽고 작업을 시작한다. 이전 내용은 git diff로 확인한다."

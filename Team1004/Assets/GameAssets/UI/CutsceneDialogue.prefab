@@ -78,7 +78,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "Space \u25B6"
+  m_Text: "Enter / \uD074\uB9AD \u25B6"
 --- !u!1 &2560582572885328363
 GameObject:
   m_ObjectHideFlags: 0

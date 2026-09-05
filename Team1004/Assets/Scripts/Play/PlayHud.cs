@@ -12,10 +12,13 @@ namespace Game.Play
         [SerializeField] private Text distanceText;
         [SerializeField] private Button pauseButton;
         [SerializeField] private Text controlHint;
+        [SerializeField] private Text banner;
 
-        private float hintUntil = -1f;
+        private float hintRemaining = -1f;
 
         public bool IsControlHintVisible => controlHint != null && controlHint.gameObject.activeSelf;
+        public bool IsBannerVisible => banner != null && banner.gameObject.activeSelf;
+        public string BannerText => banner != null ? banner.text : string.Empty;
 
         private void Awake()
         {
@@ -24,6 +27,9 @@ namespace Game.Play
 
             if (controlHint != null)
                 controlHint.gameObject.SetActive(false);
+
+            if (banner != null)
+                banner.gameObject.SetActive(false);
         }
 
         public void ShowControlHint(float seconds)
@@ -31,22 +37,64 @@ namespace Game.Play
             if (controlHint == null || seconds <= 0f)
                 return;
 
-            hintUntil = Time.time + seconds;
+            hintRemaining = seconds;
             controlHint.gameObject.SetActive(true);
         }
 
         public void HideControlHint()
         {
-            hintUntil = -1f;
+            hintRemaining = -1f;
 
             if (controlHint != null)
                 controlHint.gameObject.SetActive(false);
         }
 
+        public void ShowBanner(string text)
+        {
+            if (banner == null)
+                return;
+
+            banner.text = text ?? string.Empty;
+            banner.gameObject.SetActive(true);
+        }
+
+        public void HideBanner()
+        {
+            if (banner != null)
+                banner.gameObject.SetActive(false);
+        }
+
+        public async Awaitable ShowBannerAsync(string text, float seconds)
+        {
+            if (banner == null || seconds <= 0f)
+                return;
+
+            ShowBanner(text);
+
+            var remaining = seconds;
+
+            while (this != null && remaining > 0f)
+            {
+                await Awaitable.NextFrameAsync();
+
+                if (this == null)
+                    return;
+
+                remaining -= Time.deltaTime;
+            }
+
+            HideBanner();
+        }
+
         private void Update()
         {
-            if (hintUntil >= 0f && Time.time >= hintUntil)
-                HideControlHint();
+            if (hintRemaining >= 0f)
+            {
+                if (hintRemaining <= 0f)
+                    HideControlHint();
+                else
+                    hintRemaining = Mathf.Max(0f, hintRemaining - Time.deltaTime);
+            }
 
             if (!PlayFlow.TryGetCurrent(out var flow))
                 return;

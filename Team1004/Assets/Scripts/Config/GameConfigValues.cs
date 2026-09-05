@@ -12,22 +12,26 @@ namespace Game.Config
         [SerializeField] private float laneMoveDuration = 0.2f;
         [SerializeField] private float scrollSpeed = 4f;
         [SerializeField] private float[] sectionDurations = { 25f, 30f, 35f, 15f };
-        [SerializeField] private float jumpDuration = 0.8f;
+        [SerializeField] private float jumpDuration = 1.6f;
         [SerializeField] private float jumpCooldown = 1.2f;
-        [SerializeField] private float jumpHeight = 1.6f;
+        [SerializeField] private float jumpHeight = 2.2f;
         [SerializeField] private float waterSurfaceY = 2f;
         [SerializeField] private float hitStopDuration = 0.1f;
         [SerializeField] private float hitPushDistance = 0.4f;
         [SerializeField] private float bossDuration = 30f;
-        [SerializeField] private float bossTelegraphDuration = 0.8f;
-        [SerializeField] private float bossFullLaneTelegraphDuration = 1f;
+        [SerializeField] private float bossTelegraphDuration = 1.2f;
+        [SerializeField] private float bossFullLaneTelegraphDuration = 1.5f;
         [SerializeField] private float bossAttackDuration = 0.6f;
         [SerializeField] private float bossRecoveryDuration = 0.6f;
+        [SerializeField] private float bossLaneBandWidth = 12.8f;
+        [SerializeField] private float bossLaneBandHeight = 0.9f;
+        [SerializeField] private float bossBannerDuration = 1f;
+        [SerializeField] private float bossClearBannerDuration = 1f;
         [SerializeField] private int spawnSeed;
         [SerializeField] private float playerScale = 0.29f;
         [SerializeField] private float playerHitboxScale = 0.87f;
-        [SerializeField] private float bossHitboxAlpha = 0.35f;
         [SerializeField] private float controlHintDuration = 2.5f;
+        [SerializeField] private bool debugEnabled;
         [SerializeField] private bool debugInvincible;
 
         public IReadOnlyList<float> LaneY => laneY;
@@ -48,11 +52,15 @@ namespace Game.Config
         public float BossFullLaneTelegraphDuration => bossFullLaneTelegraphDuration;
         public float BossAttackDuration => bossAttackDuration;
         public float BossRecoveryDuration => bossRecoveryDuration;
+        public float BossLaneBandWidth => bossLaneBandWidth;
+        public float BossLaneBandHeight => bossLaneBandHeight;
+        public float BossBannerDuration => bossBannerDuration;
+        public float BossClearBannerDuration => bossClearBannerDuration;
         public int SpawnSeed => spawnSeed;
         public float PlayerScale => playerScale;
         public float PlayerHitboxScale => playerHitboxScale;
-        public float BossHitboxAlpha => bossHitboxAlpha;
         public float ControlHintDuration => controlHintDuration;
+        public bool DebugEnabled => debugEnabled;
         public bool DebugInvincible => debugInvincible;
 
         [Obsolete("Use GetSectionLength(section) or GetSectionDuration(section). StageLength returns the length of section 1.")]
@@ -155,15 +163,21 @@ namespace Game.Config
                 return false;
             }
 
-            if (playerScale <= 0f || playerHitboxScale <= 0f)
+            if (bossLaneBandWidth <= 0f || bossLaneBandHeight <= 0f)
             {
-                error = "playerScale and playerHitboxScale must be greater than 0.";
+                error = "bossLaneBandWidth and bossLaneBandHeight must be greater than 0.";
                 return false;
             }
 
-            if (bossHitboxAlpha < 0f || bossHitboxAlpha > 1f)
+            if (bossBannerDuration < 0f || bossClearBannerDuration < 0f)
             {
-                error = "bossHitboxAlpha must be between 0 and 1.";
+                error = "bossBannerDuration and bossClearBannerDuration must be 0 or greater.";
+                return false;
+            }
+
+            if (playerScale <= 0f || playerHitboxScale <= 0f)
+            {
+                error = "playerScale and playerHitboxScale must be greater than 0.";
                 return false;
             }
 

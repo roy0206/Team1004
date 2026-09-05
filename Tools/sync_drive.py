@@ -1,8 +1,10 @@
 import argparse
 import hashlib
+import io
 import json
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -105,6 +107,33 @@ def guess_suffix(content):
     return ".txt"
 
 
+def expand(file_id, rel, content, source):
+    if rel.suffix.lower() != ".zip":
+        yield file_id, rel.as_posix(), content
+        return
+    extensions = set(e.lower() for e in source.get("extensions", []))
+    folder = rel.with_suffix("")
+    try:
+        archive = zipfile.ZipFile(io.BytesIO(content))
+    except zipfile.BadZipFile:
+        raise RuntimeError(f"zip 열기 실패 {rel.name}")
+    for info in archive.infolist():
+        if info.is_dir():
+            continue
+        name = info.filename
+        if not info.flag_bits & 0x800:
+            try:
+                name = name.encode("cp437").decode("cp949")
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                pass
+        member = Path(name)
+        if extensions and member.suffix.lower() not in extensions:
+            continue
+        parts = member.parts[1:] if len(member.parts) > 1 and member.parts[0] == folder.name else member.parts
+        key = (folder / Path(*parts)).as_posix()
+        yield f"{file_id}#{member.as_posix()}", key, archive.read(info)
+
+
 def move(target, old_key, new_key):
     for suffix in ("", ".meta"):
         src = target / (old_key + suffix)
@@ -166,23 +195,22 @@ def sync(source, sess):
             continue
         if suffix and rel.suffix.lower() != suffix:
             rel = rel.with_name(rel.name + suffix)
-        key = rel.as_posix()
+        for entry_id, key, data in expand(file.id, rel, content, source):
+            old_key = by_id.get(entry_id)
+            if old_key and old_key != key and (target / old_key).exists():
+                move(target, old_key, key)
+                result["moved"].append(f"{old_key} -> {key}")
+            previous = manifest.get(old_key or key)
 
-        old_key = by_id.get(file.id)
-        if old_key and old_key != key and (target / old_key).exists():
-            move(target, old_key, key)
-            result["moved"].append(f"{old_key} -> {key}")
-        previous = manifest.get(old_key or key)
-
-        digest = hashlib.sha256(content).hexdigest()
-        seen[key] = {"id": file.id, "sha256": digest}
-        dest = target / key
-        if dest.exists() and previous and previous.get("sha256") == digest:
-            result["skipped"] += 1
-            continue
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_bytes(content)
-        result["updated" if previous else "added"].append(key)
+            digest = hashlib.sha256(data).hexdigest()
+            seen[key] = {"id": entry_id, "sha256": digest}
+            dest = target / key
+            if dest.exists() and previous and previous.get("sha256") == digest:
+                result["skipped"] += 1
+                continue
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(data)
+            result["updated" if previous else "added"].append(key)
 
     seen_ids = {v["id"] for v in seen.values()}
     for key, info in manifest.items():

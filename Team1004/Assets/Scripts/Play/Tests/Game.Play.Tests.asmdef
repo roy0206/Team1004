@@ -4,10 +4,13 @@
     "references": [
         "Game.Play",
         "Game.Player",
+        "Game.Boss",
+        "Game.Spawner",
         "Game.Config",
         "Game.Cutscene",
         "Game.Settings",
         "Game.Environment",
+        "Game.Ledge",
         "Game.Water",
         "Core.Pool",
         "UnityEngine.UI",
