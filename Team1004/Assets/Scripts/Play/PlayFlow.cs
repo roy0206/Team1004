@@ -90,7 +90,8 @@ namespace Game.Play
         [SerializeField] private string endingCutsceneId = CutsceneCatalog.Ending;
         [SerializeField] private SceneReference playScene;
         [SerializeField] private SceneReference startScene;
-        [SerializeField] private string[] bossNames = { "낚싯줄", "바다코끼리", "폭포" };
+        [SerializeField] private string[] bossNames = { "낚싯줄", "곰", "폭포" };
+        [SerializeField] private float bossWorldRampDuration = 0.5f;
 
         private readonly List<FlowStep> steps = new();
         private bool listening;
@@ -123,6 +124,8 @@ namespace Game.Play
         public LedgeDirector Ledge => ledgeDirector;
         public ILedgeHandler LedgeHandler { get; set; }
         public bool IsWorldHeld => LedgeHandler != null && LedgeHandler.IsHoldingWorld;
+        public bool IsLedgeQteActive => LedgeHandler != null && LedgeHandler.IsQteActive;
+        public float WorldSpeedScale { get; private set; } = 1f;
         public PlayHud Hud => hud;
         public ResultPanel ResultPanel => resultPanel;
         public bool IsResultVisible => resultPanel != null && resultPanel.gameObject.activeSelf;
@@ -135,6 +138,7 @@ namespace Game.Play
         public static string CheckpointTag => checkpointTag;
 
         public Func<int, Awaitable<bool>> BossHandler { get; set; }
+        public Func<int, bool> BossHoldsWorldQuery { get; set; }
 
         public event Action<PlayState> StateChanged;
         public event Action<int> SectionStarted;
@@ -219,19 +223,18 @@ namespace Game.Play
             if (State != PlayState.Running)
                 return;
 
-            var holding = ledge != null && ledge.IsHoldingWorld;
+            var scale = ledge != null ? Mathf.Max(0f, ledge.WorldSpeedScale) : 1f;
+            var moving = scale > 0f;
 
-            if (scroller != null)
-                scroller.SetScrolling(!holding);
+            ApplyWorldSpeedScale(scale, moving);
 
-            if (environment != null)
-                environment.SetScrolling(!holding);
-
-            if (holding)
+            if (!moving)
                 return;
 
-            Distance += GameConfig.Current.ScrollSpeed * Time.deltaTime;
-            sectionTime += Time.deltaTime;
+            var step = Time.deltaTime * scale;
+
+            Distance += GameConfig.Current.ScrollSpeed * step;
+            sectionTime += step;
 
             if (spawnerReady && player != null)
             {
@@ -239,8 +242,47 @@ namespace Game.Play
 
                 var playerState = SpawnPlayerState.FromPlayer(
                     player, player.JumpCooldownRemaining, player.AirborneRemaining, player.MoveRemaining);
-                spawner.Advance(Time.deltaTime, Distance, playerState);
+                spawner.Advance(step, Distance, playerState);
             }
+        }
+
+        private void ApplyWorldSpeedScale(float scale, bool moving)
+        {
+            WorldSpeedScale = scale;
+
+            if (scroller != null)
+            {
+                scroller.SetScrolling(moving);
+
+                if (!Mathf.Approximately(scroller.SpeedScale, scale))
+                    scroller.SetSpeedScale(scale);
+            }
+
+            if (environment == null)
+                return;
+
+            environment.SetScrolling(moving);
+
+            var target = GameConfig.Current.ScrollSpeed * scale;
+
+            if (!Mathf.Approximately(environment.Speed, target))
+                environment.Speed = target;
+        }
+
+        private void ResetWorldSpeedScale()
+        {
+            WorldSpeedScale = 1f;
+
+            if (scroller != null && !Mathf.Approximately(scroller.SpeedScale, 1f))
+                scroller.SetSpeedScale(1f);
+
+            if (environment == null)
+                return;
+
+            var target = GameConfig.Current.ScrollSpeed;
+
+            if (!Mathf.Approximately(environment.Speed, target))
+                environment.Speed = target;
         }
 
         public void StartRun()
@@ -540,6 +582,7 @@ namespace Game.Play
 
             if (player != null)
             {
+                player.QteCaptureInput = false;
                 player.CancelJump();
                 player.ResetHit();
                 player.ResetJumpCooldown();
@@ -671,6 +714,18 @@ namespace Game.Play
             if (bossTimer != null)
                 bossTimer.SetBossName(GetBossName(index));
 
+            var holdsWorld = BossHoldsWorldQuery != null && BossHoldsWorldQuery(index);
+
+            if (holdsWorld)
+            {
+                await RampEnvironmentSpeedAsync(1f, 0f, bossWorldRampDuration);
+
+                if (this == null || IsTerminal || pendingStep >= 0)
+                    return;
+
+                SetBossHoldsWorld(true);
+            }
+
             await ShowBannerAsync(string.Format(BossBannerFormat, index, GetBossName(index)),
                 GameConfig.Current.BossBannerDuration);
 
@@ -697,6 +752,44 @@ namespace Game.Play
             checkpointTag = string.Empty;
             PlaySfx(BossClearSfxId);
             await ShowBannerAsync(ClearBannerText, GameConfig.Current.BossClearBannerDuration);
+
+            if (this == null || IsTerminal || pendingStep >= 0 || !holdsWorld)
+                return;
+
+            SetBossHoldsWorld(false);
+            await RampEnvironmentSpeedAsync(0f, 1f, bossWorldRampDuration);
+        }
+
+        private async Awaitable RampEnvironmentSpeedAsync(float from, float to, float seconds)
+        {
+            if (environment == null)
+                return;
+
+            var full = GameConfig.Current.ScrollSpeed;
+            environment.SetScrolling(true);
+
+            if (seconds <= 0f)
+            {
+                environment.Speed = full * to;
+                return;
+            }
+
+            var elapsed = 0f;
+
+            while (elapsed < seconds)
+            {
+                if (this == null || IsTerminal || pendingStep >= 0 || State != PlayState.Boss)
+                    return;
+
+                elapsed += Time.deltaTime;
+                environment.Speed = full * Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / seconds));
+                await Awaitable.NextFrameAsync();
+            }
+
+            if (this == null)
+                return;
+
+            environment.Speed = full * to;
         }
 
         private async Awaitable ShowBannerAsync(string text, float seconds)
@@ -867,7 +960,7 @@ namespace Game.Play
 
         private void OnLedgeFailed(int section)
         {
-            Fail();
+            ReportImpact();
         }
 
         private void OnLaneChanged(int lane)
@@ -906,6 +999,9 @@ namespace Game.Play
             State = next;
 
             ApplyInputEnabled();
+
+            if (next != PlayState.Running)
+                ResetWorldSpeedScale();
 
             if (scroller != null)
                 scroller.SetScrolling(next == PlayState.Running);

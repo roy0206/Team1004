@@ -1,4 +1,5 @@
 using System.IO;
+using Game.Tools.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,12 +32,18 @@ namespace Game.Cutscene.Editor
         [MenuItem("Team1004/Generate Cutscene Dialogue Prefab")]
         public static void Generate()
         {
+            if (GeneratorFreeze.Block(nameof(CutsceneSetup)))
+                return;
+
             Run(false);
         }
 
         [MenuItem("Team1004/Regenerate Cutscene Dialogue Prefab (Overwrite)")]
         public static void Regenerate()
         {
+            if (GeneratorFreeze.Block(nameof(CutsceneSetup)))
+                return;
+
             var confirmed = Application.isBatchMode || EditorUtility.DisplayDialog(
                 "Regenerate Cutscene Dialogue Prefab",
                 "CutsceneDialogue.prefab을 다시 만듭니다.\n" +
@@ -50,6 +57,9 @@ namespace Game.Cutscene.Editor
 
         public static void Generate(bool overwrite)
         {
+            if (GeneratorFreeze.Block(nameof(CutsceneSetup)))
+                return;
+
             Run(overwrite);
         }
 

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8e32d4a19a3ecf4eaa7d86fe399d42a, type: 3}
+  m_Name: QteData
+  m_EditorClassIdentifier: Game.Qte::Game.Qte.QteData
+  requiredPresses: 6
+  firstKeyUp: 1
+  pressFlashDuration: 0.18
+  upAction: Player/LaneUp
+  downAction: Player/LaneDown

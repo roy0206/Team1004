@@ -45,8 +45,8 @@ namespace Game.Animation.Tests
             var frames = AnimationAssetGenerator.GetFramePaths(ObstacleClipTable.Fish);
 
             Assert.AreEqual(2, frames.Count);
-            Assert.AreEqual(ObjectArtPostprocessor.ObstacleFishFolder + "/장애물 물고기1.png", frames[0]);
-            Assert.AreEqual(ObjectArtPostprocessor.ObstacleFishFolder + "/장애물 물고기2.png", frames[1]);
+            Assert.AreEqual(ObjectArtPostprocessor.ObstacleFishFolder + "/이빨.png", frames[0]);
+            Assert.AreEqual(ObjectArtPostprocessor.ObstacleFishFolder + "/이빨 2.png", frames[1]);
         }
 
         [Test]
@@ -55,7 +55,7 @@ namespace Game.Animation.Tests
             var frames = AnimationAssetGenerator.GetFramePaths(ObstacleClipTable.Fish);
 
             if (AssetDatabase.LoadAssetAtPath<Texture2D>(frames[0]) == null)
-                Assert.Ignore("장애물 물고기 아트가 없다. Drive 동기화 뒤 다시 돌린다.");
+                Assert.Ignore("이빨물고기 아트가 없다. Drive 동기화 뒤 다시 돌린다.");
 
             for (var i = 0; i < frames.Count; i++)
             {

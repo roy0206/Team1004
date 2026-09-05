@@ -7,19 +7,36 @@ namespace Game.Animation.Editor
     public sealed class ObjectArtPostprocessor : AssetPostprocessor
     {
         public const string ArtFolder = "Assets/GameAssets/Art/오브젝트";
-        public const string ObstacleFishFolder = ArtFolder + "/장애물 물고기";
+        public const string ObstacleFishFolder = ArtFolder + "/이빨물고기";
+        public const string BossArtFolder = "Assets/GameAssets/Art/보스";
 
         private const string Extension = ".png";
 
         private void OnPreprocessTexture()
         {
-            if (!IsObjectArtPath(assetPath))
+            if (!IsObjectArtPath(assetPath) && !IsBossSubfolderArtPath(assetPath))
                 return;
 
             if (assetImporter is not TextureImporter importer)
                 return;
 
             AnimationAssetGenerator.ApplyImportSettings(importer, ResolvePivotCached(assetPath));
+        }
+
+        public static bool IsBossSubfolderArtPath(string assetPath)
+        {
+            if (string.IsNullOrEmpty(assetPath))
+                return false;
+
+            var normalized = assetPath.Replace('\\', '/');
+
+            if (!normalized.StartsWith(BossArtFolder + "/", StringComparison.Ordinal))
+                return false;
+
+            if (!normalized.EndsWith(Extension, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return !BossArtPostprocessor.IsBossArtPath(normalized);
         }
 
         public static bool IsObjectArtPath(string assetPath)

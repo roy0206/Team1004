@@ -18,6 +18,7 @@ using Game.Spawner;
 using Game.Spawner.Editor;
 using Game.Title;
 using Game.View;
+using Game.Tools.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -114,12 +115,18 @@ namespace Game.Bootstrap.Editor
         [MenuItem("Team1004/Generate Core Loop Scenes")]
         public static void Generate()
         {
+            if (GeneratorFreeze.Block(nameof(CoreLoopSetup)))
+                return;
+
             Run(false);
         }
 
         [MenuItem("Team1004/Regenerate Core Loop Scenes (Overwrite)")]
         public static void Regenerate()
         {
+            if (GeneratorFreeze.Block(nameof(CoreLoopSetup)))
+                return;
+
             var confirmed = Application.isBatchMode || EditorUtility.DisplayDialog(
                 "Regenerate Core Loop Scenes",
                 "Start.unity, Play.unity, Bootstrap.unity, SettingsPanel.prefab을 다시 만듭니다.\n" +

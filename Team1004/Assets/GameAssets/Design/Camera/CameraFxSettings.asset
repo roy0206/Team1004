@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ab68f3ec7d91144fbe4703e51b1975a, type: 3}
+  m_Name: CameraFxSettings
+  m_EditorClassIdentifier: Game.View::Game.View.CameraFxSettings
+  minZoomIn: 0.8
+  maxZoomOut: 1.1
+  shakeMaxOffset: 0.36
+  shakeMaxRoll: 1.2
+  shakeDecayPerSecond: 1.6
+  shakeFrequency: 22
+  panMaxOffset: 0.8

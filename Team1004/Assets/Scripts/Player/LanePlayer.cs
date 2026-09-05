@@ -1,6 +1,7 @@
 using System;
 using Game.Animation;
 using Game.Config;
+using Game.Particles;
 using Game.Water;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ namespace Game.Player
         [SerializeField] private CustomAnimation laneDownClip;
         [SerializeField] private CustomAnimation jumpClip;
         [SerializeField] private CustomAnimation hitClip;
+        [SerializeField] private BubbleTrailThing trail;
 
         private LaneMoveModule laneMove;
         private HurtboxModule hurtbox;
@@ -27,6 +29,7 @@ namespace Game.Player
         private WaterInteractorModule water;
         private bool listening;
         private bool inputEnabled = true;
+        private bool qteCaptureInput;
 
         public LaneMoveModule LaneMove => laneMove;
         public HurtboxModule Hurtbox => hurtbox;
@@ -39,13 +42,14 @@ namespace Game.Player
         public CustomAnimation LaneDownClip => laneDownClip;
         public CustomAnimation JumpClip => jumpClip;
         public CustomAnimation HitClip => hitClip;
+        public BubbleTrailThing Trail => trail;
         public int CurrentLane => laneMove != null ? laneMove.CurrentLane : StartLane;
         public bool IsMoving => laneMove != null && laneMove.IsMoving;
         public bool IsAirborne => jump != null && jump.IsAirborne;
         public float JumpCooldownRemaining => jump != null ? jump.CooldownRemaining : 0f;
         public float AirborneRemaining => jump != null ? jump.AirborneRemaining : 0f;
         public float MoveRemaining => laneMove != null ? laneMove.MoveRemaining : 0f;
-        public bool CanJump => jump != null && jump.CanJump && !IsMoving && inputEnabled;
+        public bool CanJump => jump != null && jump.CanJump && !IsMoving && inputEnabled && !qteCaptureInput;
         public bool IsVulnerable => !IsMoving && !IsAirborne && InputEnabled;
         public bool HasHit => hurtbox != null && hurtbox.HasHit;
         public int TopLane => laneMove != null ? laneMove.TopLane : 0;
@@ -67,6 +71,12 @@ namespace Game.Player
                 if (animator != null)
                     animator.IsEnabled = value;
             }
+        }
+
+        public bool QteCaptureInput
+        {
+            get => qteCaptureInput;
+            set => qteCaptureInput = value;
         }
 
         public event Action JumpRequested;
@@ -103,6 +113,8 @@ namespace Game.Player
             water = box != null
                 ? AddModule(new WaterInteractorModule(transform, box, smoothing))
                 : AddModule(new WaterInteractorModule(transform, Vector2.one, Vector2.zero, smoothing));
+
+            trail?.Initialize();
         }
 
         private void Start()
@@ -202,6 +214,21 @@ namespace Game.Player
             jump?.ResetCooldown();
         }
 
+        public bool ForceJump()
+        {
+            if (jump == null)
+                return false;
+
+            if (jump.IsAirborne)
+                return false;
+
+            if (laneMove != null && laneMove.CurrentLane != laneMove.TopLane)
+                SnapToLane(laneMove.TopLane);
+
+            jump.ResetCooldown();
+            return jump.TryJump();
+        }
+
         public void CancelJump()
         {
             if (jump == null || !jump.IsAirborne)
@@ -209,6 +236,7 @@ namespace Game.Player
 
             jump.CancelJump();
             water?.ResetVelocity();
+            trail?.SetEmitting(true);
             PlaySwim();
         }
 
@@ -251,12 +279,13 @@ namespace Game.Player
 
         private bool CanAcceptInput()
         {
-            return laneMove != null && jump != null && inputEnabled &&
+            return laneMove != null && jump != null && inputEnabled && !qteCaptureInput &&
                    !laneMove.IsMoving && !jump.IsAirborne && isActiveAndEnabled;
         }
 
         private void OnModuleLaneChanged(int lane)
         {
+            trail?.BurstSmall();
             LaneChanged?.Invoke(lane);
         }
 
@@ -286,12 +315,20 @@ namespace Game.Player
             if (animator != null && jumpClip != null)
                 animator.Play(jumpClip, GameConfig.Current.JumpDuration);
 
+            trail?.SetEmitting(false);
             Jumped?.Invoke();
         }
 
         private void OnModuleLanded()
         {
             PlaySwim();
+
+            if (trail != null)
+            {
+                trail.SetEmitting(true);
+                trail.BurstLarge();
+            }
+
             Landed?.Invoke();
         }
 

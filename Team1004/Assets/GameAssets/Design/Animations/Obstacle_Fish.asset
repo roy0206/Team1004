@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Obstacle_Fish
   m_EditorClassIdentifier: Game.Animation::Game.Animation.CustomAnimation
   frames:
-  - {fileID: 21300000, guid: 84f698fbc4a714c43a45ffe2dd28d624, type: 3}
-  - {fileID: 21300000, guid: 4ea421259240d72488f6bb313aa7317f, type: 3}
+  - {fileID: 21300000, guid: 2b9f4c81e6a0d5f4ab37c0d29e5148a6, type: 3}
+  - {fileID: 21300000, guid: 6d47a0e2b1c9f83498025de6a7134bf0, type: 3}
   framesPerSecond: 6
   loop: 1
   duration: 0

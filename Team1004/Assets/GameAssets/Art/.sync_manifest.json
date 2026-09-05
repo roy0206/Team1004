@@ -47,6 +47,34 @@
     "id": "1hls93vtxJlyz4mbFbUCvlJkjdjDQFiAp",
     "sha256": "d5eef87e4c8eca6312700507667fdbad185c5ae2a84390534b0400b59f7aea90"
   },
+  "보스/-곰-/곰 발 양옆.png": {
+    "id": "10RKWyHtsM_JZm-KRpIjZfEu7hhTi1v8C",
+    "sha256": "b3eb7cb593f6588cc9016abebf5b07605d5af0eb9de04ef9994706ccaa7febc9"
+  },
+  "보스/-곰-/곰 발 위아래.png": {
+    "id": "1c55gDHV3xHOKRZsT8HMufqPi1z5Vf9zf",
+    "sha256": "330769f9e968d01592af3150c3ff167d7105d88c87093bb6a2008f376e71c319"
+  },
+  "보스/물결/물결 2.png": {
+    "id": "1jhhubsAe4NkjRV3P7NpxxaGlUK_Yarlj",
+    "sha256": "941bdf8b994cfd50382e6973e17c1906641588d6f32c256428ede75bb98dd3cf"
+  },
+  "보스/물결/물결1.png": {
+    "id": "1CecxKOmUADr3yb3z2vrSEIb2sZfi8yS5",
+    "sha256": "763b445c4ff55b5f1b3c49eb11c8d15fb385cd7e4ef6b2fc7ede552a5e8348cf"
+  },
+  "보스/낚시바늘.png": {
+    "id": "1Q_Kr9FcJnWEXMy1hQ918RrcVHsSFPLq8",
+    "sha256": "bea3bffad4ca1bf05c09b0fb9ca26ffbfae55a1b0ce9c0a9069e024be7051c22"
+  },
+  "오브젝트/이빨물고기/이빨 2.png": {
+    "id": "1TzbUA3VlhiZyILvKMezZFAmTLYDSG2Ab",
+    "sha256": "08fb8d1e7bf526a8a136363111013b5b4b78f1a77a8ce9e7b8bdd14d9c748d58"
+  },
+  "오브젝트/이빨물고기/이빨.png": {
+    "id": "1x5an2EEvmTh4QaUwSZRMUusXbZ8FHhdO",
+    "sha256": "c6bee13d3acff79a3f996d0e916239b60a794c37757cb950c2265582476c99ac"
+  },
   "오브젝트/장애물 물고기/장애물 물고기1.png": {
     "id": "1LhJTLnQehhZaW0C6N6_L-Sh6Wkjg2GuO",
     "sha256": "76f1af8c97125f3bec1f6cbb742625fb03e9e89b3a74db16ec845cd8be313f38"
@@ -55,6 +83,10 @@
     "id": "1xsfObzVdDnsSEsss6zzxsf7sBQY9mDyS",
     "sha256": "d9e62cabab311651f99960faeb8032e769b169aa5d23847de5f72fdc3120cf6f"
   },
+  "오브젝트/긴돌.png": {
+    "id": "1djNuJqtMiJVNql0tGqz11Cnq7k8Q-ldc",
+    "sha256": "685bc8571ffcdf4214f216a22888653b61cb1da930f39fa586df837ebc1d3482"
+  },
   "오브젝트/돌 2.png": {
     "id": "1haqk0qDk2nsOKdEi0f-r-BofVnrJhWYF",
     "sha256": "28d22b4321ab858412262f26a336fc6bfa53e7de095f1cb7161a84b82efd60f2"
@@ -62,6 +94,10 @@
   "오브젝트/돌1.png": {
     "id": "1ihvn0BuFwwDZE3VK4Jpb_lnihZiFfNBU",
     "sha256": "28d22b4321ab858412262f26a336fc6bfa53e7de095f1cb7161a84b82efd60f2"
+  },
+  "오브젝트/배.png": {
+    "id": "1JX_S5hYAF-3epTsbM4avg7DeJf_IUJWJ",
+    "sha256": "e71902cae73447f2729c468c6ff3a8570bea84308c332f0b820a549f0769d8bb"
   },
   "오브젝트/통나무.png": {
     "id": "1ZUiALgSV6EdToQpLRDTYFBmlqQM7bNFD",

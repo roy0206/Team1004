@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd536be40e6a8df4ab41b67d53388d13, type: 3}
+  m_Name: LongRock
+  m_EditorClassIdentifier: Game.Spawner::Game.Spawner.ObstacleDefinition
+  id: LongRock
+  prefab: {fileID: 7412903355618250001, guid: 8a2d67f0b5c34e19ae03d7c62185b9f4, type: 3}
+  laneSpan: 3
+  allowedStartLanes: 1
+  fitAxis: 1
+  visualHeight: 3.77
+  bodyLength: 3.35
+  collisionLength: 2.91
+  collisionHeight: 2.9
+  speedMultiplier: 1
+  spawnWeight: 1
+  usableInNormalPatterns: 0
+  usableInJumpPatterns: 1

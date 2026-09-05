@@ -239,12 +239,12 @@ limit = max(cap, |이전 속도|)
 | `WaterInteractor.OnEnable` / `OnSpawned` / `OnReleased` | 기존 `ResetVelocity()`가 이제 워밍업까지 건다. 풀 스폰·보스 세트 활성화는 여기서 자동으로 잡힌다 |
 | `WaterInteractorModule.OnAttached` | 부착 즉시 |
 | `LanePlayer.SnapToLane` | 이미 `water?.ResetVelocity()`를 부르고 있었다. 코드 수정 없이 워밍업이 걸린다(`PlayFlow`의 디버그 점프·재시작도 이 경로다) |
-| `FishingLineBoss.ResetHook` / `StageHook` | `WaterInteractor.NotifyTeleport(hook)` |
+| `FishingLineBoss.ResetHooks` | 바늘마다 `WaterInteractor.NotifyTeleport(root)`. 캐스트·릴은 연속 이동이라 넣지 않았다 |
 | `WalrusBoss.ResetPosition` | `WaterInteractor.NotifyTeleport(body)` |
 | `WaterfallBoss.ParkLane` / `HideWaterfall` | `WaterInteractor.NotifyTeleport(rapid/rock/waterfall)` |
 | `LedgeThing.Schedule` | `WaterInteractor.NotifyTeleport(transform)` |
 
-`static WaterInteractor.NotifyTeleport(Transform)`는 자기와 자식의 `WaterInteractor`를 전부(비활성 포함) 찾아 알린다. 순간이동은 드문 사건이라 `GetComponentsInChildren` 비용을 그대로 둔다. 연속 이동 경로(`PlaceHook`·`PlaceAtX`·`PlaceWaterfall`)에는 **넣지 않았다** — 넣으면 매 프레임 워밍업이 걸려 항적이 아예 사라진다.
+`static WaterInteractor.NotifyTeleport(Transform)`는 자기와 자식의 `WaterInteractor`를 전부(비활성 포함) 찾아 알린다. 순간이동은 드문 사건이라 `GetComponentsInChildren` 비용을 그대로 둔다. 연속 이동 경로(낚싯줄 `UpdateCast`·`UpdateReel`, `PlaceAtX`·`PlaceWaterfall`)에는 **넣지 않았다** — 넣으면 매 프레임 워밍업이 걸려 항적이 아예 사라진다.
 
 `Game.Boss`·`Game.Ledge` asmdef에 `Game.Water`를 추가했다(`Game.Water`는 아무것도 참조하지 않으므로 순환 없음).
 
@@ -313,8 +313,9 @@ limit     = max(|기존 속도|, |vx| × wakeVelocityTransfer)
 | 대상 | 붙은 것 | 바운즈 | `SurfaceInfluence` | 관찰 |
 | --- | --- | --- | --- | --- |
 | 플레이어 | `LanePlayer`가 `WaterInteractorModule` 직접 부착 | `BoxCollider2D` | 기본(1.0) | 점프·착수는 세로 전달. x가 고정이라 항적은 없다 |
+| 장애물 LongRock | `LongRock.prefab` `WaterInteractor`(`wakeOnly`) | 3.34896 × 3.77 (루트 스케일 1이라 로컬 = 월드, 중심 y 0.165) | 1.0 | 강바닥 −1.72에서 수면 위 2.05까지 솟아 **수면을 세로로 관통한다**. 항적만 내고 수면을 위아래로 밀지 않는다(`wakeOnly`) |
 | 장애물 Rock | `Rock.prefab` `WaterInteractor` | 2.44 × 1.10 (로컬 5.6 × 2.52 × 스케일 0.43650794) | 1.0 | **강바닥 바위**라 맨 아랫줄 고정이다. 윗변 −0.55, 수면 2.0까지 2.55라 항적이 나지 않는다(`CollideAll` 세로 조기 탈출). 다른 것들과 형태를 맞추려고 컴포넌트는 남겨 뒀고 비용은 0이다 |
-| 장애물 Fish | `Fish.prefab` `WaterInteractor` | 0.90 × 0.45 (로컬 4.1 × 2.05 × 스케일 0.2195122) | 1.0 | 상단 레인에서 윗변 1.325, proximity 0.325 |
+| 장애물 Fish | `Fish.prefab` `WaterInteractor` | 0.90 × 0.409442 (로컬 6.99 × 3.18 × 스케일 0.1287554) | 1.0 | 상단 레인에서 윗변 1.3047, proximity 0.3047. 2026-09-06 이빨물고기 아트 교체로 세로가 0.45 → 0.409442로 줄었다 |
 | 장애물 Log | `Log.prefab` `WaterInteractor` | 1.80 × 0.976 (로컬 5.31 × 2.8792 × 스케일 0.33898306) | 1.0 | 상단 레인에서 윗변 1.588, proximity 0.588. **셋 중 가장 잘 보인다** |
 | 낚싯대 보스 갈고리 | `FishingLineBoss.prefab` `WaterInteractor`(콜라이더 사용) | 콜라이더 | 기본(1.0) | 훑기(가로 이동)에서 항적이 생긴다 |
 | 바다코끼리 | `WalrusBoss.prefab` `WaterInteractor`(콜라이더 사용) | 콜라이더 | 기본(1.0) | 돌진 속도가 커서 항적이 세다 |
@@ -447,3 +448,64 @@ limit     = max(|기존 속도|, |vx| × wakeVelocityTransfer)
 
 조정은 머티리얼 인스펙터에서 한다. 앞판(`WaterOverlay`)은 그대로 `Sprite-Lit-Default` + 렌더러 색이다.
 
+
+## 물속 흐름 파티클 (`UnderwaterFlow`, 2026-09-06)
+
+물속이 불투명 폴리곤 한 장이라 「물이 흐른다」는 신호가 배경 시차밖에 없었다. 흐름선과 기포를 얹었다. 구현·프로파일 값은 `Docs/Particles.md`가 정본이고 여기에는 환경 쪽 배치만 적는다.
+
+`Environment.prefab`에 자식 한 그루가 늘었다.
+
+```text
+Environment (EnvironmentThing)
+  ...
+  WaterOverlay
+  UnderwaterFlow (UnderwaterFlowThing)   localPosition (0, 0, 0)
+    Streaks / S00..S13   흐름선 14개 (SpriteRenderer, m_Enabled 0)
+    Bubbles / B00..B09   기포 10개
+```
+
+`EnvironmentThing`에 `[SerializeField] private UnderwaterFlowThing underwaterFlow;`와 `float AmbientSpeedScale { get; set; }`(위임)이 붙었고, `Initialize`가 `underwaterFlow?.Initialize()`를 한 줄 부른다. 나머지는 그대로다.
+
+### 정렬은 -4다
+
+| | 정렬 | 관계 |
+| --- | --- | --- |
+| 물 뒤판 `WaterSurface` | -6 | 파티클보다 뒤. 파티클이 물속에 보인다 |
+| `RiverbedLayer`(모래) | -5 | 파티클보다 뒤 |
+| `Homeland` | -4 | 같음(겹치는 픽셀 없음, 고향은 y -3.3~-1.8) |
+| **`UnderwaterFlow`** | **-4** | |
+| 장애물 5 · 보스 4~6 · 플레이어 10 | | 파티클보다 앞. 파티클이 캐릭터를 가리지 않는다 |
+| 물 앞판 `WaterOverlay` | 15 | 파티클 위에 물빛(0.55, 0.8, 0.95, 0.15)이 얹힌다 |
+
+모래(-5)보다 **앞**이지만 문제가 되지 않는다. 흐름선 방출 사각형의 아랫변이 y **-1.6**이고 모래 윗선이 -1.65라 파티클이 모래 위로 내려오는 일이 사실상 없다. 기포는 -1.5부터 위로만 올라간다. 모래 뒤로 넣으려면 정렬을 -6으로 내려야 하는데 그러면 불투명한 물 뒤판에 통째로 가려지므로 -4가 유일한 자리다.
+
+### 흐르는 범위와 속도
+
+| | 방출 사각형(월드) | 흐름 |
+| --- | --- | --- |
+| 흐름선 | x -7 ~ 7, y **-1.6 ~ 1.9** (center (0, 0.15), size 14 × 3.5) | 왼쪽. `flowFactor` 0.6 + 자체 0.08~0.22 u/s |
+| 기포 | x -6.5 ~ 6.5, y **-1.5 ~ 0.7** (center (0, -0.4), size 13 × 2.2) | 왼쪽 `flowFactor` 0.35 + 부력 (0, 0.10) |
+
+화면 폭이 ±6.4이므로 사각형이 화면보다 약간 넓다. 둘 다 `killOutsideBounds`가 켜져 있어 왼쪽으로 빠져나간 파티클은 사라진다.
+
+기포는 `popAtSurface`가 켜져 있고 수면 y를 **`EnvironmentThing.SurfaceY`에서 매 프레임 읽는다.** `SetVerticalOffset`으로 물이 내려가면 터지는 높이도 같이 내려간다. 다만 **방출 사각형 자체는 세로 오프셋을 따라가지 않는다**(`UnderwaterFlow`는 `CacheOffsetRoots`의 7개에 들어 있지 않다). 단차 상승 0.35에서는 눈에 띄지 않는 크기라 그대로 두었다.
+
+### 월드가 멈춰도 물은 흐른다
+
+```text
+scroll    = EnvironmentThing.Speed × ScrollScale                          정상 4.0 × 0.5 = 2.0
+floor     = GameConfig.ScrollSpeed × ScrollScale × holdSpeedScale(0.35)   = 0.7
+FlowSpeed = max(scroll, floor)
+```
+
+`PlayFlow.ApplyWorldSpeedScale`은 월드를 세울 때 `environment.SetScrolling(false)`와 `environment.Speed = 0`을 같이 한다. 파티클은 **`SetScrolling`을 보지 않고** 위 `max`만 본다. 그래서 6번 정리 2절의 「곰 보스 30초 동안 지형은 멈추지만 물속 흐름선·기포는 계속 움직인다」가 코드 변경 없이 성립한다. 단차 QTE 슬로모(`WorldSpeedScale` 0.12 → scroll 0.24)에서도 바닥값 0.7이 이긴다.
+
+더 느리게 하고 싶으면 `EnvironmentThing.AmbientSpeedScale`(기본 1)을 낮춘다. 이 값은 파티클의 **시간 배율**이라 흐름·부력·수명이 전부 같이 느려진다. 0을 넣으면 완전히 멈춘다.
+
+### 조정
+
+- **너무 어수선하다** → 프로파일 `Flow_Streak`/`Flow_Bubble`의 `rate`(3.5 / 2.5)를 내리거나 `alpha`(0.22 / 0.30)를 내린다.
+- **안 보인다** → `alpha`를 올린다. 물 앞판(알파 0.15)이 한 겹 덮으므로 실제 화면 알파는 프로파일 값보다 낮다.
+- **개수를 늘리고 싶다** → `Streaks`/`Bubbles` 밑에 자식 `SpriteRenderer`를 더 만든다(`Docs/Particles.md` 「프리팹에 방출기를 붙이는 법」). 코드는 그대로다.
+- **물살보다 흐름선이 느리다** → `Flow_Streak.flowFactor`(0.6)를 올린다. 1.0이면 배경 층과 같은 2.0 u/s가 된다.
+- **보스 정지 중 물이 너무 빠르다/느리다** → 프리팹 `UnderwaterFlow.holdSpeedScale`(0.35)을 고친다.

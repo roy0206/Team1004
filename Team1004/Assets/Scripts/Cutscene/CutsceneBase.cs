@@ -4,6 +4,7 @@ using DG.Tweening;
 using DG.Tweening.Core;
 using Game.Animation;
 using Game.Dialogue;
+using Game.View;
 using UnityEngine;
 
 namespace Game.Cutscene
@@ -61,9 +62,11 @@ namespace Game.Cutscene
 
         protected virtual float DefaultCharsPerSecond => 30f;
         protected virtual bool RestoreCameraOnFinish => true;
+        protected virtual bool HideActorsOnFinish => true;
 
         protected CutsceneContext Context => context;
         protected Camera StageCamera => context != null ? context.StageCamera : null;
+        protected CameraRig Rig => context != null ? context.Rig : null;
         protected CutsceneDialogueView Dialogue => context != null ? context.Dialogue : null;
         protected CutsceneActor Player => Actor(CutsceneActorIds.Player);
         protected CutsceneActor Boss => Actor(CutsceneActorIds.Boss);
@@ -87,6 +90,17 @@ namespace Game.Cutscene
             cameraCaptured = false;
             dialogueWarned = false;
             active.Clear();
+
+            var rig = cutsceneContext.Rig;
+
+            if (rig != null)
+            {
+                cameraPosition = rig.BasePosition;
+                cameraOrthoSize = rig.BaseSize;
+                cameraCaptured = true;
+                rig.ResetEffects();
+                return;
+            }
 
             var camera = cutsceneContext.StageCamera;
             if (camera == null)
@@ -295,6 +309,14 @@ namespace Game.Cutscene
             if (mode == CutsceneMode.Cancelled)
                 return;
 
+            var rig = Rig;
+
+            if (rig != null)
+            {
+                await CameraToRig(rig, position, orthoSize, duration, ease, relative);
+                return;
+            }
+
             var camera = StageCamera;
             if (camera == null)
             {
@@ -323,10 +345,54 @@ namespace Game.Cutscene
             await Play(sequence);
         }
 
+        private async Awaitable CameraToRig(
+            CameraRig rig,
+            Vector2 position,
+            float orthoSize,
+            float duration,
+            Ease ease,
+            bool relative)
+        {
+            var destination = Resolve(rig.BasePosition, position, relative);
+
+            if (duration <= 0f || mode != CutsceneMode.Running)
+            {
+                rig.BasePosition = destination;
+
+                if (orthoSize > 0f)
+                    rig.BaseSize = orthoSize;
+
+                return;
+            }
+
+            DOGetter<Vector3> positionGetter = () => rig.BasePosition;
+            DOSetter<Vector3> positionSetter = value => rig.BasePosition = value;
+            var sequence = DOTween.Sequence()
+                .Append(DOTween.To(positionGetter, positionSetter, destination, duration).SetEase(ease));
+
+            if (orthoSize > 0f)
+            {
+                DOGetter<float> sizeGetter = () => rig.BaseSize;
+                DOSetter<float> sizeSetter = value => rig.BaseSize = value;
+                sequence.Join(DOTween.To(sizeGetter, sizeSetter, orthoSize, duration).SetEase(ease));
+            }
+
+            await Play(sequence);
+        }
+
         protected async Awaitable Shake(float duration, float strength)
         {
             if (mode != CutsceneMode.Running || duration <= 0f || strength <= 0f)
                 return;
+
+            var rig = Rig;
+
+            if (rig != null && rig.Shake != null)
+            {
+                rig.Shake.ShakeUnits(duration, strength);
+                await Play(DOTween.Sequence().AppendInterval(duration));
+                return;
+            }
 
             var camera = StageCamera;
             if (camera == null)
@@ -567,19 +633,42 @@ namespace Game.Cutscene
             if (dialogue != null)
                 dialogue.HideImmediate();
 
+            if (HideActorsOnFinish && mode != CutsceneMode.Cancelled)
+                HideStageActors();
+
             if (RestoreCameraOnFinish && cameraCaptured && mode != CutsceneMode.Cancelled)
             {
-                var camera = StageCamera;
-                if (camera != null)
+                var rig = Rig;
+
+                if (rig != null)
                 {
-                    camera.transform.position = cameraPosition;
-                    camera.orthographicSize = cameraOrthoSize;
+                    rig.SetBase(cameraPosition, cameraOrthoSize);
+                    rig.ResetEffects();
+                }
+                else
+                {
+                    var camera = StageCamera;
+                    if (camera != null)
+                    {
+                        camera.transform.position = cameraPosition;
+                        camera.orthographicSize = cameraOrthoSize;
+                    }
                 }
             }
 
             active.Clear();
             mode = CutsceneMode.Idle;
             context = null;
+        }
+
+        private void HideStageActors()
+        {
+            foreach (var id in new[] { CutsceneActorIds.Boss, CutsceneActorIds.Landmark, CutsceneActorIds.Child })
+            {
+                var actor = Actor(id);
+                if (actor != null)
+                    actor.SetVisible(false);
+            }
         }
 
         private void WarnNoCamera()

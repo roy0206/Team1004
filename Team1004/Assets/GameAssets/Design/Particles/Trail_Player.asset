@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fd8628e9bd4842383dd6136d33e3829, type: 3}
+  m_Name: Trail_Player
+  m_EditorClassIdentifier: Game.Particles::Game.Particles.ParticleProfile
+  sprite: {fileID: 21300000, guid: 47bd35908cda703600501d6e1b91e969, type: 3}
+  color: {r: 0.92, g: 0.98, b: 1, a: 1}
+  sortingOrder: 9
+  spawnMode: 0
+  rate: 2.5
+  emitCenter: {x: 0, y: 0}
+  emitSize: {x: 0.1, y: 0.34}
+  lifetimeRange: {x: 0.6, y: 1}
+  speedRange: {x: 0.18, y: 0.4}
+  directionRange: {x: 60, y: 120}
+  sizeRange: {x: 0.04, y: 0.09}
+  endSizeScale: 1.45
+  alpha: 0.5
+  fadeIn: 0.1
+  fadeOut: 0.4
+  acceleration: {x: 0, y: 0.3}
+  constantVelocity: {x: -1.2, y: 0}
+  flowFactor: 0
+  driftAmplitude: 0.09
+  driftFrequency: 1.8
+  popAtSurface: 1
+  surfaceMargin: 0.05
+  killOutsideBounds: 0
+  boundsMargin: 1
+  burstSmall: 6
+  burstLarge: 10

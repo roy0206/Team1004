@@ -6,6 +6,7 @@
         "Core.Foundation",
         "Game.Config",
         "Game.Water",
-        "Unity.2D.SpriteShape.Runtime"
+        "Unity.2D.SpriteShape.Runtime",
+        "Game.Particles"
     ]
 }

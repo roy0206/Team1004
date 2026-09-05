@@ -206,68 +206,68 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9181599541384123968}
     m_Modifications:
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6184261736925552263, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+    - target: {fileID: 8300000000000000001, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
       propertyPath: m_Name
-      value: WalrusBoss
+      value: BearBoss
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
 --- !u!4 &7808571276366514805 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+  m_CorrespondingSourceObject: {fileID: 8300000000000000002, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
   m_PrefabInstance: {fileID: 5362869642666120893}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &8702237274414927294 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3650223811170491139, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+  m_CorrespondingSourceObject: {fileID: 8300000000000000003, guid: 4b0a7c9d5e1f42a3b6c8d0e2f4a6b8c1, type: 3}
   m_PrefabInstance: {fileID: 5362869642666120893}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3111076a729fdf149860e7662680b1f9, type: 3}
+  m_Script: {fileID: 11500000, guid: 91e1622ad26946dfbddb4b6c1bbbfd92, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Game.Boss::Game.Boss.WalrusBoss
+  m_EditorClassIdentifier: Game.Boss::Game.Boss.BearBoss

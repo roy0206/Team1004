@@ -110,3 +110,5 @@ CLAUDE.md
 CLAUDE.local.md
 Tools/.drive_sync_state.json
 .idea/
+
+__pycache__/

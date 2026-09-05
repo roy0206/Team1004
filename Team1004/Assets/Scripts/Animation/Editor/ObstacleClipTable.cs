@@ -5,7 +5,8 @@ namespace Game.Animation.Editor
     public static class ObstacleClipTable
     {
         public const string FishClipName = "Obstacle_Fish";
-        public const string FishFolderName = "장애물 물고기";
+        public const string FishFolderName = "이빨물고기";
+        public const string FishFramePrefix = "이빨";
 
         private static readonly FlipbookClipDefinition[] Definitions =
         {
@@ -13,7 +14,7 @@ namespace Game.Animation.Editor
                 FishClipName,
                 ObjectArtPostprocessor.ArtFolder,
                 FishFolderName,
-                FishFolderName,
+                FishFramePrefix,
                 2,
                 6f,
                 true,

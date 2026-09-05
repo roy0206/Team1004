@@ -10,10 +10,12 @@ namespace Game.Spawner.Tests
         private const float RockAlphaHeight = 252f;
         private const float LogAlphaWidth = 531f;
         private const float LogAlphaHeight = 288f;
-        private const float FishAlphaWidth = 410f;
-        private const float FishAlphaHeight = 205f;
+        private const float FishAlphaWidth = 699f;
+        private const float FishAlphaHeight = 318f;
         private const float FishBodyLength = 0.9f;
         private const float FishCollisionLength = 0.78f;
+        private const float LongRockAlphaWidth = 692f;
+        private const float LongRockAlphaHeight = 779f;
 
         private const float PlayerAlphaWidth = 531f;
         private const float PlayerAlphaHeight = 280f;
@@ -42,14 +44,14 @@ namespace Game.Spawner.Tests
         {
             var scale = ObstacleVisual.UniformScale(FishAlphaWidth, FishBodyLength);
 
-            Assert.AreEqual(0.219512f, scale, 0.00001f);
+            Assert.AreEqual(0.1287554f, scale, 0.00001f);
             Assert.AreEqual(FishBodyLength, FishAlphaWidth / ObstacleVisual.PixelsPerUnit * scale, 0.0001f);
         }
 
         [Test]
         public void VisualHeight_KeepsTheFishAspect()
         {
-            Assert.AreEqual(0.45f, ObstacleVisual.VisualHeight(FishAlphaWidth, FishAlphaHeight, FishBodyLength), 0.0001f);
+            Assert.AreEqual(0.409442f, ObstacleVisual.VisualHeight(FishAlphaWidth, FishAlphaHeight, FishBodyLength), 0.0001f);
             Assert.LessOrEqual(ObstacleVisual.VisualHeight(FishAlphaWidth, FishAlphaHeight, FishBodyLength), 1.0f);
         }
 
@@ -76,6 +78,12 @@ namespace Game.Spawner.Tests
                 var box = ArtBox(obstacle.Id);
                 var size = ObstacleVisual.VisualWorldSize(obstacle, box.x, box.y);
                 var band = obstacle.LaneSpan * SpawnerDefaults.LaneSpacing;
+
+                if (obstacle.Id == SpawnerDefaults.LongRockId)
+                {
+                    Assert.Greater(size.y, band, "긴 돌은 강바닥에서 수면 위까지 솟아 레인 대역보다 높다(v8 05절).");
+                    continue;
+                }
 
                 Assert.LessOrEqual(size.y, band + 0.001f, obstacle.Id + " 그림 높이는 레인 높이를 넘지 않는다.");
             }
@@ -163,7 +171,7 @@ namespace Game.Spawner.Tests
         {
             Assert.AreEqual(0.87f, ObstacleVisual.HitboxScale, 0.0001f);
             Assert.AreEqual(0.3915f, ObstacleVisual.CollisionHeight(RockAlphaWidth, RockAlphaHeight, 1.0f, ObstacleVisual.HitboxScale), 0.0001f);
-            Assert.AreEqual(0.3915f, ObstacleVisual.CollisionHeight(FishAlphaWidth, FishAlphaHeight, FishBodyLength, ObstacleVisual.HitboxScale), 0.0001f);
+            Assert.AreEqual(0.356215f, ObstacleVisual.CollisionHeight(FishAlphaWidth, FishAlphaHeight, FishBodyLength, ObstacleVisual.HitboxScale), 0.0001f);
             Assert.AreEqual(0.849356f, ObstacleVisual.CollisionHeight(LogAlphaWidth, LogAlphaHeight, 1.8f, ObstacleVisual.HitboxScale), 0.0001f);
         }
 
@@ -189,6 +197,21 @@ namespace Game.Spawner.Tests
 
                 Assert.AreEqual(obstacle.CollisionLength, local.x * scale, 0.0001f, obstacle.Id + " collider width");
                 Assert.AreEqual(obstacle.CollisionHeight, local.y * scale, 0.0001f, obstacle.Id + " collider height");
+
+                if (obstacle.Id == SpawnerDefaults.LongRockId)
+                {
+                    Assert.Less(
+                        obstacle.CollisionHeight,
+                        visual.y * ObstacleVisual.HitboxScale,
+                        "긴 돌 충돌 높이는 아트가 아니라 점프 궤적에서 나오므로 아트 × 0.87보다 낮다.");
+                    Assert.AreEqual(
+                        visual.x * ObstacleVisual.HitboxScale,
+                        obstacle.CollisionLength,
+                        0.006f,
+                        obstacle.Id + " 충돌 길이는 아트에서 나온다.");
+                    continue;
+                }
+
                 Assert.AreEqual(
                     visual.y * ObstacleVisual.HitboxScale,
                     obstacle.CollisionHeight,
@@ -208,8 +231,8 @@ namespace Game.Spawner.Tests
             var scale = ObstacleVisual.UniformScale(FishAlphaWidth, FishBodyLength);
             var size = ObstacleVisual.LocalSize(scale, FishCollisionLength, SpawnerDefaults.FishCollisionHeight);
 
-            Assert.AreEqual(3.5533f, size.x, 0.001f);
-            Assert.AreEqual(1.7767f, size.y, 0.001f);
+            Assert.AreEqual(6.058f, size.x, 0.001f);
+            Assert.AreEqual(2.796f, size.y, 0.001f);
             Assert.AreEqual(FishCollisionLength, size.x * scale, 0.0001f);
             Assert.AreEqual(SpawnerDefaults.FishCollisionHeight, size.y * scale, 0.0001f);
         }
@@ -230,6 +253,46 @@ namespace Game.Spawner.Tests
             Assert.AreEqual(FishBodyLength, fish.BodyLength, 0.0001f);
             Assert.AreEqual(FishCollisionLength, fish.CollisionLength, 0.0001f);
             Assert.AreEqual(SpawnerDefaults.FishCollisionHeight, fish.CollisionHeight, 0.0001f);
+        }
+
+        [Test]
+        public void LongRock_ReachesFromTheRiverbedToTheWaterSurface()
+        {
+            var longRock = Find(SpawnerDefaults.LongRockId);
+            var scale = ObstacleVisual.UniformScale(longRock, LongRockAlphaWidth, LongRockAlphaHeight);
+            var size = ObstacleVisual.VisualWorldSize(longRock, LongRockAlphaWidth, LongRockAlphaHeight);
+
+            Assert.AreEqual(ObstacleFitAxis.Height, longRock.FitAxis);
+            Assert.AreEqual(0.4839538f, scale, 0.00001f, "LongRock.prefab의 Visual m_LocalScale");
+            Assert.AreEqual(3.77f, size.y, 0.0005f);
+            Assert.AreEqual(3.34896f, size.x, 0.0005f);
+            Assert.AreEqual(size.x, longRock.BodyLength, 0.005f, "몸길이는 반올림한 아트 가로다.");
+            Assert.AreEqual(
+                SpawnerDefaults.LongRockVisualBottomY,
+                SpawnerDefaults.LongRockVisualCenterY - size.y * 0.5f,
+                0.0005f,
+                "아랫변 -1.72는 강바닥 -1.65보다 조금 아래다.");
+            Assert.AreEqual(
+                SpawnerDefaults.LongRockVisualTopY,
+                SpawnerDefaults.LongRockVisualCenterY + size.y * 0.5f,
+                0.0005f,
+                "윗변 2.05는 수면 2.0 위다.");
+        }
+
+        [Test]
+        public void LongRockCollider_CoversEveryLaneBandAndStaysUnderTheJumpArc()
+        {
+            var longRock = Find(SpawnerDefaults.LongRockId);
+            var half = longRock.CollisionHeight * 0.5f;
+            var playerHalf = SpawnerDefaults.PlayerHitboxHeight * 0.5f;
+            var topLaneY = 1.1f;
+            var bottomLaneY = -1.1f;
+            var apexBottom = topLaneY + 2.2f - playerHalf;
+
+            Assert.Greater(half, topLaneY - playerHalf, "상단 레인의 연어에 닿는다.");
+            Assert.Greater(half, -bottomLaneY - playerHalf, "하단 레인의 연어에 닿는다.");
+            Assert.Less(half, apexBottom, "점프 정점의 연어 아랫변은 콜라이더 윗변보다 높다.");
+            Assert.IsFalse(longRock.ReachesNeighbourLane(SpawnerDefaults.LaneSpacing, SpawnerDefaults.PlayerHitboxHeight));
         }
 
         [Test]
@@ -264,6 +327,9 @@ namespace Game.Spawner.Tests
 
             if (id == SpawnerDefaults.FishId)
                 return new Vector2(FishAlphaWidth, FishAlphaHeight);
+
+            if (id == SpawnerDefaults.LongRockId)
+                return new Vector2(LongRockAlphaWidth, LongRockAlphaHeight);
 
             return new Vector2(LogAlphaWidth, LogAlphaHeight);
         }

@@ -2,6 +2,21 @@
 
 `Game.Animation`은 `SpriteRenderer.sprite`를 시간에 따라 갈아끼우는 스프라이트 플립북 재생기다. `Assets/Scripts/Animation/`에 있고 asmdef는 `Game.Animation`, 네임스페이스도 같다. 참조는 `Core.Modules` 하나뿐이라 플레이어·컷신·보스 어디서든 순환 참조 없이 쓸 수 있다.
 
+## 2026-09-06 아트 갱신
+
+`python Tools/sync_drive.py --source 아트`로 **추가 4 / 갱신 0 / 이동 0 / 삭제 0 / 유지 17**. 새로 온 것과 간 곳.
+
+| 파일 | 알파 박스(px) | 간 곳 | 상태 |
+| --- | --- | --- | --- |
+| `보스/낚시바늘.png` | 102 × 956 (바늘만 102 × 169) | 보스 1 `Hook/HookSprite` | **배선 완료**(보스 담당, 2026-09-06). 배 아트가 같이 와서 스케일 규칙이 바뀌었다 — `Docs/Boss.md` 「보스 1 낚싯줄」 |
+| `보스/물결/물결1.png` | 1887 × 335 (2장 합집합) | 보스 3 `Rapid0..2` + `Boss_Rapid.asset` | 클립까지. 프리팹 배선 대기 |
+| `보스/물결/물결 2.png` | 1887 × 332 | 같음 | 같음 |
+| `오브젝트/긴돌.png` | 692 × 779 | **상류 단차 앞면** `LedgeSet.prefab` `Ledge1~3/Step` | **적용 완료**(`Docs/Ledge.md` 「단차 모양 (긴 돌)」) |
+
+이번 갱신으로 **연어 12장은 하나도 바뀌지 않았다** — 합집합 알파 박스 `x=[755,1282] y=[266,545]`(528 × 280)와 pivot `(0.5307292, 0.37592593)`이 그대로다. 장애물 다섯 장도 그대로라 `Docs/Spawner.md` 「프리팹 비주얼」의 스케일·콜라이더 숫자가 전부 유지된다.
+
+곰 보스 아트(`보스/-곰-/곰 발 양옆.png`, `곰 발 위아래.png`)는 다른 에이전트가 맡고 있어 손대지 않았다.
+
 ## 규칙
 
 - **Unity `Animator`·`AnimationClip`·`Animation` 컴포넌트를 쓰지 않는다.** 사용자 결정이다. 상태 머신은 이미 `Game.StateMachine`이, 연출 트윈은 DOTween이 맡고 있어서 Animator를 더하면 같은 일을 하는 축이 셋이 된다. 프레임 교체만 필요한 2D 플립북에 Animator Controller·`.anim` 에셋·머신 상태를 얹으면 이진 에셋이 늘어 병합 충돌이 생기고, 재생 길이를 코드에서 `JumpDuration`에 맞추기도 어렵다. 프레임 배열과 fps만 있으면 되는 문제라서 `ScriptableObject` + `Module`로 끝낸다.
@@ -22,10 +37,12 @@
 | `Editor/SalmonClipTable.cs` | 에디터 | `FlipbookClipDefinition`·`FlipbookClipDuration`(클립 한 줄의 정의)과 연어 클립 표(에셋 이름, 아트 루트·하위 폴더, 프레임 접두사, 프레임 수, fps, loop, duration 출처) |
 | `Editor/ObstacleClipTable.cs` | 에디터 | 장애물 클립 표. 지금은 `Obstacle_Fish` 하나. 루트가 `Art/오브젝트`라 연어 표와 같은 정의 타입을 다른 루트로 쓴다 |
 | `Editor/SalmonFrameMatcher.cs` | 에디터, 순수 C# | 파일명 → 프레임 번호. 인덱스 앞뒤 공백과 **`-` 없음**을 관대하게 읽는다. 1프레임 클립용으로 **번호가 아예 없는 이름**(`충돌.png`)을 고르는 `IsSingleFrame`·`FindSingleFrame`도 있다 |
-| `Editor/SharedPivotFolder.cs` | 에디터 | 「폴더 하나가 pivot 하나를 쓴다」 묶음. 합집합 알파 박스·30초 캐시·경로 판정. `SharedPivotFolders`가 연어 폴더와 `장애물 물고기` 폴더를 등록한다 |
+| `Editor/SharedPivotFolder.cs` | 에디터 | 「폴더 하나가 pivot 하나를 쓴다」 묶음. 합집합 알파 박스·30초 캐시·경로 판정. `SharedPivotFolders`가 연어 폴더와 `이빨물고기` 폴더를 등록한다 |
 | `Editor/SalmonArtPostprocessor.cs` | `AssetPostprocessor` | 연어 아트 폴더 PNG를 임포트할 때마다 임포트 설정을 다시 걸고, **합집합 pivot이 어긋난 형제 프레임을 스스로 재임포트 예약**한다 |
 | `Editor/ObjectArtPostprocessor.cs` | `AssetPostprocessor` | 오브젝트 아트 폴더(`Art/오브젝트/**`, 하위 폴더 포함) PNG에 같은 설정 + 폴더 규칙에 맞는 pivot을 다시 건다 |
-| `Tests/FlipbookClockTests.cs`, `Tests/CustomAnimationTests.cs`, `Tests/SalmonClipTableTests.cs`, `Tests/ObstacleClipTableTests.cs`, `Tests/SharedPivotFolderTests.cs`, `Tests/ObjectArtImportTests.cs` | EditMode | 클록·클립 데이터 + 파일명 매칭·클립 표·아트 에셋·폴더 pivot 묶음·오브젝트 아트 임포트 설정 검증 |
+| `Editor/ObstacleClipTable.cs` 옆 `Editor/BossClipTable.cs` | 에디터 | 보스 클립 표. 지금은 `Boss_Rapid` 하나. 루트가 `Art/보스`다 |
+| `Editor/BossArtPostprocessor.cs` | `AssetPostprocessor` | **보스 아트 세 장**(`물결/*.png`, `낚시바늘.png`)에 같은 설정 + 규칙 pivot을 다시 건다. 낚싯바늘만 고정 pivot(`HookPivot`) |
+| `Tests/FlipbookClockTests.cs`, `Tests/CustomAnimationTests.cs`, `Tests/SalmonClipTableTests.cs`, `Tests/ObstacleClipTableTests.cs`, `Tests/SharedPivotFolderTests.cs`, `Tests/ObjectArtImportTests.cs`, `Tests/BossArtImportTests.cs` | EditMode | 클록·클립 데이터 + 파일명 매칭·클립 표·아트 에셋·폴더 pivot 묶음·오브젝트 아트 임포트 설정 검증 |
 
 ## CustomAnimation
 
@@ -95,7 +112,7 @@ var unscaled = AddModule(new SpriteAnimatorModule(renderer, useUnscaledTime: tru
 
 코드에서는 `AnimationAssetGenerator.Generate()`(= `Generate(false)`), `Generate(bool overwrite)`, 배치용 `RegenerateAllBatch()`를 쓴다.
 
-한 번 돌 때 하는 일 순서: ① 폴더 pivot 캐시를 버리고 연어 합집합 pivot을 다시 계산한다 → ② 연어 12장에 임포트 설정을 다시 걸고 `SaveAndReimport`한다(**합집합이 바뀌면 12장 전부가 다시 임포트된다**) → ③ 장애물 클립이 쓰는 오브젝트 아트 프레임에 같은 일을 한다(폴더 묶음이면 합집합 pivot) → ④ 옛 `Player_Idle.asset`을 지운다 → ⑤ 연어 표와 장애물 표의 클립을 굽는다.
+한 번 돌 때 하는 일 순서: ① 폴더 pivot 캐시를 버리고 연어 합집합 pivot을 다시 계산한다 → ② 연어 12장에 임포트 설정을 다시 걸고 `SaveAndReimport`한다(**합집합이 바뀌면 12장 전부가 다시 임포트된다**) → ③ 장애물 클립이 쓰는 오브젝트 아트 프레임에 같은 일을 한다(폴더 묶음이면 합집합 pivot) → ④ 보스 클립이 쓰는 프레임(물결 2장)과 `낚시바늘.png`에 같은 일을 한다 → ⑤ 옛 `Player_Idle.asset`을 지운다 → ⑥ 연어·장애물·보스 표의 클립을 굽는다.
 
 배치 실행:
 
@@ -119,7 +136,7 @@ Unity.exe -batchmode -nographics -projectPath "D:/Unity/Team1004/Team1004" -quit
 
 `충돌/`은 **번호가 없는 파일 한 장**이라 `SalmonFrameMatcher.TryGetFrameIndex`가 걸러낸다(접두사만 있고 숫자가 없으면 프레임이 아니다 — 그 판정은 그대로 둔다). 대신 `GetFramePath`가 프레임 수 1짜리 클립에 한해 `FindSingleFrame`으로 **접두사와 파일명이 완전히 같은 한 장**을 받아들인다. 그래서 `충돌/충돌.png`가 `Player_Hit`의 유일한 프레임이 된다.
 
-**파일명이 일정하지 않다.** 인덱스 앞에 공백이 있는 것(`물고기 올라가기 -1.png`)과 없는 것(`물고기 올라가기-2.png`)이 섞여 있고, 장애물 물고기는 `-`가 아예 없다(`장애물 물고기1.png`). 그래서 경로를 문자열로 조립하지 않고 폴더의 `*.png`를 훑어 `SalmonFrameMatcher`로 고른다. 규칙은 「접두사 → 공백 몇 개든 → `-`(**있어도 없어도 된다**) → 공백 몇 개든 → 1 이상의 십진수」이고 이름은 NFC로 정규화해 비교한다. `-`가 선택이라도 접두사 바로 뒤에 숫자가 아닌 글자가 붙은 이름(`물고기 기본자세-1`, `장애물 물고기알1`)은 걸리지 않는다. 못 찾으면 `접두사-번호.png`를 그대로 쓰고 경고를 남긴다.
+**파일명이 일정하지 않다.** 인덱스 앞에 공백이 있는 것(`물고기 올라가기 -1.png`)과 없는 것(`물고기 올라가기-2.png`)이 섞여 있고, 장애물 물고기(이빨물고기)는 `-`가 아예 없고 1번 프레임에는 번호도 없다(`이빨.png`, `이빨 2.png`). 그래서 경로를 문자열로 조립하지 않고 폴더의 `*.png`를 훑어 `SalmonFrameMatcher`로 고른다. 규칙은 「접두사 → 공백 몇 개든 → `-`(**있어도 없어도 된다**) → 공백 몇 개든 → 1 이상의 십진수」이고 이름은 NFC로 정규화해 비교한다. `-`가 선택이라도 접두사 바로 뒤에 숫자가 아닌 글자가 붙은 이름(`물고기 기본자세-1`, `장애물 물고기알1`)은 걸리지 않는다. 못 찾으면 `접두사-번호.png`를 그대로 쓰고 경고를 남긴다. **1번 프레임만은 번호 없는 이름(`접두사.png`)도 받는다** — `GetFramePath`의 단일 프레임 대체 경로를 `FrameCount == 1`에서 `index == 0`으로 넓혔다(2026-09-06 이빨물고기). 번호가 붙은 1번 프레임이 있으면 그쪽이 먼저다.
 
 옛 경로 `Assets/GameAssets/Art/점프/`는 Drive에서 `물고기 애니메이팅/점프/`로 옮겨졌다. 빈 폴더와 그 `.meta`는 지웠고, `Tools/sync_drive.py`는 이제 이동·삭제 뒤 빈 폴더와 `.meta`를 스스로 정리한다(`prune_empty_dirs`).
 
@@ -180,7 +197,8 @@ Unity.exe -batchmode -nographics -projectPath "D:/Unity/Team1004/Team1004" -quit
 | `Player_LaneDown.asset` | `물고기 애니메이팅/내려가기/` | 2 | 10 | false | **`LaneMoveDuration`(0.2)** | 레인 아래로 이동 |
 | `Player_Jump.asset` | `물고기 애니메이팅/점프/` | 5 | 12 | false | **`JumpDuration`(0.8)** | |
 | `Player_Hit.asset` | `물고기 애니메이팅/충돌/` | **1** | 6 | false | 0 | 피격·사망 포즈(눈이 X). 한 장이라 사실상 정지 포즈다. 길이 = 1/6 ≈ 0.167초지만 `SetFrame(hitClip, 0)`으로 쓰면 길이가 무의미하다 |
-| `Obstacle_Fish.asset` | `오브젝트/장애물 물고기/` | 2 | 6 | **true** | 0 | 길이 ≈ 0.333초. 장애물 물고기가 헤엄치는 루프. `Fish.prefab`의 `ObstacleThing.swimClip`에 생성기가 연결한다(`Docs/Spawner.md` 「프리팹 비주얼」) |
+| `Obstacle_Fish.asset` | `오브젝트/이빨물고기/` | 2 | 6 | **true** | 0 | 길이 ≈ 0.333초. 장애물 물고기가 헤엄치는 루프. `Fish.prefab`의 `ObstacleThing.swimClip`에 생성기가 연결한다(`Docs/Spawner.md` 「프리팹 비주얼」) |
+| `Boss_Rapid.asset` | `보스/물결/` | 2 | 6 | **true** | 0 | 길이 ≈ 0.333초. 폭포 보스의 강한 물줄기(급류) 루프. `WaterfallBoss.rapidClip`에 연결하고 `rapidRenderers` 3개가 같은 클립을 돈다(`Docs/Boss.md` 「보스 3」) |
 
 duration은 생성기가 `Assets/GameAssets/Design/GameConfig.asset`의 `GameConfigValues`에서 읽어 굽는다(`SalmonClipDuration.LaneMove`/`Jump`). 에셋이 없으면 `GameConfigValues` 기본값(0.2 / 0.8)을 쓴다. 플레이어는 재생할 때 `Play(clip, GameConfig.Current.XxxDuration)`으로 길이를 다시 넘기므로 런타임 config를 바꿔도 어긋나지 않고, 에셋 값은 컷신·미리보기용 기본값이다.
 
@@ -243,22 +261,57 @@ duration은 생성기가 `Assets/GameAssets/Design/GameConfig.asset`의 `GameCon
 | 묶음 | 폴더 | 하위 폴더 | 프레임 | 공유 pivot |
 | --- | --- | --- | --- | --- |
 | `SharedPivotFolders.Salmon` | `Art/물고기 애니메이팅` | 본다 | 12장(클립 표에서 받는다 — `충돌/` 포함) | `(0.5307292, 0.37592593)` |
-| `SharedPivotFolders.ObstacleFish` | `Art/오브젝트/장애물 물고기` | 안 본다 | 2장(폴더의 `*.png`) | `(0.5270833, 0.4912037)` |
+| `SharedPivotFolders.ObstacleFish` | `Art/오브젝트/이빨물고기` | 안 본다 | 2장(폴더의 `*.png`) | `(0.4945312, 0.5518519)` |
+| `SharedPivotFolders.BossWave` | `Art/보스/물결` | 안 본다 | 2장(폴더의 `*.png`) | `(0.5085937, 0.36712963)` |
 
-이 표에 없는 PNG는 **파일별** pivot이다(돌 `(0.18125, 0.11667)`, 통나무 `(0.56693, 0.39352)`). 새 애니메이션 오브젝트가 오면 하위 폴더를 하나 만들고 `SharedPivotFolders`에 한 줄 더하면 된다.
+이 표에 없는 PNG는 **파일별** pivot이다(돌 `(0.18125, 0.11667)`, 통나무 `(0.56693, 0.39352)`, 긴돌 `(0.6557292, 0.36064816)`). 새 애니메이션 오브젝트가 오면 하위 폴더를 하나 만들고 `SharedPivotFolders`에 한 줄 더하면 된다.
 
-| | `SalmonArtPostprocessor` | `ObjectArtPostprocessor` |
-| --- | --- | --- |
-| 대상 | `Art/물고기 애니메이팅/**/*.png` | `Art/오브젝트/**/*.png`(하위 폴더 포함) |
-| 판정 | `AnimationAssetGenerator.IsSalmonFramePath` | `ObjectArtPostprocessor.IsObjectArtPath` |
-| pivot | 항상 `SharedPivotFolders.Salmon`(12장 합집합, 30초 캐시) | `SharedPivotFolders.Find(경로)`가 묶음을 찾으면 그 합집합, 없으면 그 파일의 알파 박스 중심 |
-| 이유 | 클립을 넘길 때 연어가 튀면 안 된다 | 돌·통나무는 서로 다른 오브젝트라 공유할 이유가 없고, 한 오브젝트의 애니메이션 프레임끼리는 공유해야 튀지 않는다 |
-| 형제 재임포트 | 한다(`FindStaleSiblings` + `delayCall` 1회) | 안 한다 |
-| 나머지 설정 | Sprite, Single, PPU 100, Tight, 밉맵 없음, 무압축, 2048, Custom pivot | 같음 |
+| | `SalmonArtPostprocessor` | `ObjectArtPostprocessor` | `BossArtPostprocessor` |
+| --- | --- | --- | --- |
+| 대상 | `Art/물고기 애니메이팅/**/*.png` | `Art/오브젝트/**/*.png`(하위 폴더 포함) | **`Art/보스/물결/*.png`와 `Art/보스/낚시바늘.png` 딱 이 셋뿐** |
+| 판정 | `AnimationAssetGenerator.IsSalmonFramePath` | `ObjectArtPostprocessor.IsObjectArtPath` | `BossArtPostprocessor.IsBossArtPath` |
+| pivot | 항상 `SharedPivotFolders.Salmon`(12장 합집합, 30초 캐시) | `SharedPivotFolders.Find(경로)`가 묶음을 찾으면 그 합집합, 없으면 그 파일의 알파 박스 중심 | 낚시바늘은 고정 `HookPivot`, 물결은 `SharedPivotFolders.BossWave` 합집합 |
+| 이유 | 클립을 넘길 때 연어가 튀면 안 된다 | 돌·통나무는 서로 다른 오브젝트라 공유할 이유가 없고, 한 오브젝트의 애니메이션 프레임끼리는 공유해야 튀지 않는다 | 물결 2프레임은 튀면 안 되고, 낚싯바늘은 pivot이 **그림의 중심이 아니라 바늘**이어야 한다 |
+| 형제 재임포트 | 한다(`FindStaleSiblings` + `delayCall` 1회) | 안 한다 | 안 한다 |
+| 나머지 설정 | Sprite, Single, PPU 100, Tight, 밉맵 없음, 무압축, 2048, Custom pivot | 같음 | 같음 |
+
+**`BossArtPostprocessor`의 대상이 좁은 이유.** `Art/보스/` 아래에는 다른 작업자(곰 보스)의 아트도 들어온다(`Art/보스/-곰-/`). 폴더 전체를 잡으면 남의 pivot 규칙을 덮어쓰므로, 판정을 **내가 쓰는 세 파일로 한정**했다. 곰 보스 아트가 자기 규칙을 갖게 되면 그쪽에서 묶음을 하나 더 등록하면 된다.
 
 오브젝트 아트를 쓰는 쪽은 `Game.Spawner.Editor`다(`Game.Animation`·`Game.Animation.Editor`를 참조한다. 반대 방향 참조가 없어 순환이 아니다). 스포너 생성기는 `ObjectArtPostprocessor.TryGetAlphaSizePixels`로 알파 박스 크기를 받아 프리팹 스케일을 계산하고, 스프라이트가 아직 Sprite로 임포트되지 않았으면 `ObjectArtPostprocessor.Reimport`로 강제한다. **`TryGetAlphaSizePixels`도 폴더 묶음을 따른다** — 묶음에 속한 파일은 합집합 크기를 돌려주므로 pivot과 스케일이 같은 박스에서 나온다. 자세한 계산은 `Docs/Spawner.md`의 「프리팹 비주얼」에 있다.
 
 `Tests/ObjectArtImportTests.cs`가 폴더(하위 폴더 포함) 안 모든 PNG에 대해 알파 박스가 잡히는지, 임포트 결과가 Sprite/Single/PPU 100/Tight/밉맵 없음/무압축인지, `spritePivot`이 폴더 규칙이 정한 값과 같은지, 물고기 pivot이 돌·통나무와 다른지를 본다. `Tests/SharedPivotFolderTests.cs`가 묶음 판정·합집합·연어 `.meta` 일치를 본다. 폴더가 비면 `Assert.Ignore`로 넘어간다. 2026-09-06에 넷을 더했다: `SalmonFolder_ListsTwelveFramesIncludingTheHitPose`(12장·`충돌/충돌.png` 포함·`Find`가 연어 묶음을 돌려주는지), `SalmonUnion_MatchesTheRecordedBoxAndPivot`(박스 `x=[755,1282] y=[266,545]`, 528×280, pivot `(0.5307292, 0.37592593)`, `SalmonFallbackPivot`도 같은 값인지), `SalmonUnion_ContainsEveryFrameBox`, `StaleSiblings_AreQueuedOnlyWhenThePivotActuallyDiffers`(맞은 상태에서는 빈 목록, 일부러 0.01 어긋내면 자기 자신을 뺀 11장). `Tests/SalmonClipTableTests.cs`에는 `TableHasFiveClips`(5클립·12프레임), `HitIsOneHeldFrame`, `HitFramePathIsTheDashlessSingleFile`, `FindSingleFrameTakesTheExactName`이 들어갔다.
+
+## 보스 아트 (2026-09-06)
+
+Drive에서 보스 아트 세 장이 왔다. **임포트 설정과 클립까지만 만들어 두었고 프리팹에는 붙이지 않았다** — `Assets/GameAssets/Boss/`와 `Assets/Scripts/Boss/`는 같은 시각에 곰 보스 작업이 돌고 있어 손대지 않기로 했다. 아래가 붙일 때 쓸 값이다.
+
+> **2026-09-06 배선 완료.** 보스 담당이 두 프리팹에 붙였다. 보스 3(물결)은 아래 표 그대로다. 보스 1(낚시바늘)은 **같은 날 배 아트(`Art/오브젝트/배.png`)가 와서 아래 표의 「`HookSprite` `localScale` 0.55 / 콜라이더 0.561 × 0.9295」가 쓰이지 않았다** — 줄 앵커가 수면 위 가상의 점에서 배의 낚싯대 끝으로 바뀌면서 줄 길이가 레인마다 달라졌고, 그래서 스케일을 줄 길이에서 역산하게 됐다(상단 0.375 / 중단 0.474 / 하단 0.584, 콜라이더는 중단 기준 0.484 × 0.802). 실제 값은 `Docs/Boss.md` 「보스 1 낚싯줄」에 있다. 아래 표는 배가 없었을 때의 계산으로 남겨 둔다.
+
+| 파일 | 알파 박스(px) | GUID | pivot | 쓸 곳 |
+| --- | --- | --- | --- | --- |
+| `Art/보스/낚시바늘.png` | 102 × 956 (전체) / 바늘만 102 × 169 | `4fca2523f07885141bbcaa1480150719` | **`(0.5390625, 0.19305556)`** = 바늘 부분의 중심 | 보스 1 `FishingLineBoss` / `Hook/HookSprite` |
+| `Art/보스/물결/물결1.png` | 1887 × 335 (2장 합집합) | `709530025c24efe4680c74ff7ee127ab` | `(0.5085937, 0.36712963)` | 보스 3 `WaterfallBoss` / `Rapid0..2` |
+| `Art/보스/물결/물결 2.png` | 1887 × 332 | `85dae4647b71228419663f0416763a8b` | 같음(합집합) | 위와 같음 |
+
+**낚싯바늘.** 한 장에 **줄과 바늘이 같이** 그려져 있다(줄이 캔버스 위 끝부터 y 787까지 폭 2 px, 그 아래가 바늘). 그래서 pivot을 그림 중심이 아니라 **바늘의 중심**에 두어야 `Hook` 오브젝트를 레인 y에 놓았을 때 바늘이 레인에 온다. 알파 박스 중심으로 잡으면 바늘이 레인보다 4 unit 아래로 내려간다. 이 pivot은 계산으로 나오지 않으므로 `BossArtPostprocessor.HookPivot` 상수로 박아 두었다.
+
+붙일 때 값(계산해 둔 것):
+
+| 대상 | 값 |
+| --- | --- |
+| `HookSprite` `localScale` | **0.55** (균등). 바늘이 0.561 × 0.9295 unit이 되고, 그림 안의 줄이 pivot 위로 4.79 unit 올라가 어느 레인에서든 화면 위(3.6)를 넘어간다 |
+| `Hook`의 `BoxCollider2D.m_Size` | **0.561 × 0.9295** (수면 반응용. `WaterInteractor`가 `shape`로 이 콜라이더를 쓴다) |
+| `Line` 오브젝트 | **비활성**. 그림이 줄까지 그려 주므로 코드가 그리던 흰 막대(`LineWidth` 0.06)와 겹친다. `FishingLineBoss.UpdateLine`은 비활성 transform을 옮길 뿐이라 코드 변경이 필요 없다 |
+| `Rapid0..2` `localScale` | **0.2686567** (균등). 합집합 335 px = 3.35 unit을 레인 띠 높이 0.9에 맞춘 값. 화면 크기 5.07 × 0.90 |
+| `Rapid0..2` `SpriteRenderer.m_Color` | 흰색 (아트 원색). 지금은 흰 사각형에 `(0.5, 0.75, 1, 0.6)`을 곱하고 있다 |
+| `Rapid0..2` `WaterInteractor.size` | **18.87 × 3.35** (로컬 단위. 균등 스케일이 곱해져 월드 5.07 × 0.90이 된다. 지금 값 0.64 × 0.64는 옛 사각형 스프라이트 기준이다) |
+| 애니메이션 | `Boss_Rapid.asset`(아래)을 `WaterfallBoss`에 `[SerializeField] CustomAnimation rapidClip` + `SpriteRenderer[] rapidRenderers`로 받아 `OnBegin`에서 렌더러마다 `AddModule(new SpriteAnimatorModule(...)).Play(rapidClip)`. `Game.Boss.asmdef`에 `Game.Animation` 참조를 더해야 한다(`Game.Animation`은 `Core.Modules`만 참조하므로 순환 없음) |
+
+`Boss_Rapid.asset`(GUID `1d3f8c47a05b4e42a71d6e9c58b3f0d7`)은 `Player_Hit.asset`과 같은 이유로 **YAML을 직접 썼다**(에디터가 열려 있어 생성기를 돌릴 수 없었다). 구조는 `Player_Swim.asset`과 같고 프레임이 물결 2장, fps 6, loop다. `BossClipTable`에 등록해 두었으므로 다음에 `Generate`를 돌려도 프레임 수·슬롯이 맞아 다시 구워지지 않는다.
+
+**보스 아트 `.meta` 세 장은 손으로 썼다.** Unity 기본 임포터가 이 세 장을 `spriteMode: Multiple`로 잡고 자동 슬라이스까지 해 두어(물결1은 7조각) 스프라이트 참조가 `internalID`에 묶이는 상태였다. `통나무.png.meta`를 본으로 Single / PPU 100 / Tight / 밉맵 없음 / 무압축 / 2048 / Custom pivot으로 다시 쓰고 GUID는 Unity가 이미 준 값을 그대로 두었다. 이후로는 `BossArtPostprocessor`가 같은 값을 다시 계산해 덮으므로 결과가 달라지지 않는다. 연어 `충돌.png.meta`와 같은 예외 처리다.
+
+**곰 보스 아트(`Art/보스/-곰-/*.png`)는 건드리지 않았다.** 후처리기 판정도 일부러 그 폴더를 잡지 않는다(위 「후처리기 범위」).
 
 ## 임시값
 

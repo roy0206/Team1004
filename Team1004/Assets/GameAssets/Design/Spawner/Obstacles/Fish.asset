@@ -20,8 +20,8 @@ MonoBehaviour:
   visualHeight: 0
   bodyLength: 0.9
   collisionLength: 0.78
-  collisionHeight: 0.39
+  collisionHeight: 0.36
   speedMultiplier: 1.25
   spawnWeight: 3
   usableInNormalPatterns: 1
-  usableInJumpPatterns: 1
+  usableInJumpPatterns: 0

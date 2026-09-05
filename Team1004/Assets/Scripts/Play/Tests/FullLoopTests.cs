@@ -28,7 +28,6 @@ namespace Game.Play.Tests
         private const float CutsceneSkipFallbackSeconds = 20f;
         private const float WaterSampleRadius = 0.4f;
         private const int BossInputPeriod = 24;
-        private const int LedgeInputPeriod = 8;
 
         private static readonly PlayState[] ExpectedStates =
         {
@@ -89,14 +88,14 @@ namespace Game.Play.Tests
             flow.SectionStarted += sections.Add;
 
             var ledgeExpected = new HashSet<int>();
-            var ledgeBlocked = new HashSet<int>();
+            var ledgeQte = new HashSet<int>();
             var ledgeCleared = new HashSet<int>();
             var ledgeFinished = new HashSet<int>();
             var ledge = flow.LedgeHandler;
             Assert.IsNotNull(ledge, "PlayFlow has no ledge handler. LedgeSet.prefab is not wired into the play scene.");
             Assert.IsNotNull(flow.Ledge, "PlayFlow.ledgeDirector is not wired.");
             Assert.IsNotNull(flow.Ledge.Data, "LedgeDirector has no LedgeData.");
-            ledge.Blocked += section => ledgeBlocked.Add(section);
+            ledge.QteStarted += section => ledgeQte.Add(section);
             ledge.Cleared += section => ledgeCleared.Add(section);
             ledge.Finished += section => ledgeFinished.Add(section);
 
@@ -108,6 +107,7 @@ namespace Game.Play.Tests
             var waterfallBoss = UnityEngine.Object.FindAnyObjectByType<Game.Boss.WaterfallBoss>(FindObjectsInactive.Include);
             Assert.IsNotNull(waterfallBoss, "WaterfallBoss is not in the play scene.");
             var upHeld = false;
+            var qteKeyHeld = false;
             var bossTimerSeen = new HashSet<int>();
             var hintSeen = false;
             var waterChecked = false;
@@ -157,12 +157,29 @@ namespace Game.Play.Tests
                             yield return JumpAndSampleWater(flow, keyboard, value => waterDisplacement = Mathf.Max(waterDisplacement, value));
                         }
 
-                        if (ledge.IsHoldingWorld)
+                        if (ledge.IsQteActive)
                         {
-                            if (frame % LedgeInputPeriod == 0)
-                                Press(keyboard.upArrowKey);
-                            else if (frame % LedgeInputPeriod == 2)
+                            if (qteKeyHeld)
+                            {
                                 Release(keyboard.upArrowKey);
+                                Release(keyboard.downArrowKey);
+                                qteKeyHeld = false;
+                            }
+                            else
+                            {
+                                if (flow.Ledge.QteExpectsUp)
+                                    Press(keyboard.upArrowKey);
+                                else
+                                    Press(keyboard.downArrowKey);
+
+                                qteKeyHeld = true;
+                            }
+                        }
+                        else if (qteKeyHeld)
+                        {
+                            Release(keyboard.upArrowKey);
+                            Release(keyboard.downArrowKey);
+                            qteKeyHeld = false;
                         }
 
                         break;
@@ -208,6 +225,7 @@ namespace Game.Play.Tests
 
             Release(keyboard.enterKey);
             Release(keyboard.upArrowKey);
+            Release(keyboard.downArrowKey);
             Time.timeScale = 1f;
 
             Assert.IsNotNull(flow, "PlayFlow was destroyed during the loop.");
@@ -222,7 +240,7 @@ namespace Game.Play.Tests
             CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, bossTimerSeen, "Boss timer view was not shown for every boss.");
             Assert.IsTrue(hintSeen, "The control hint was not shown when section 1 started.");
             CollectionAssert.AreEquivalent(ledgeExpected, ledgeCleared,
-                "Ledges were not cleared in every section that schedules one. Blocked: " + string.Join(", ", ledgeBlocked) +
+                "Ledges were not cleared in every section that schedules one. Qte: " + string.Join(", ", ledgeQte) +
                 " cleared: " + string.Join(", ", ledgeCleared));
             CollectionAssert.AreEquivalent(ledgeExpected, ledgeFinished, "Ledges did not finish rising in every scheduled section.");
             Assert.IsFalse(ledge.IsActive, "A ledge is still active after the loop.");

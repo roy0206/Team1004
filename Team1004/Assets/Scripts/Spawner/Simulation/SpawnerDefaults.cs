@@ -8,9 +8,9 @@ namespace Game.Spawner
         public const string RockId = "Rock";
         public const string FishId = "Fish";
         public const string LogId = "Log";
+        public const string LongRockId = "LongRock";
         public const int SectionCount = 4;
         public const int DefaultSeed = 12345;
-        public const float NormalSectionJumpRatio = 0f;
         public const float JumpDurationSeconds = 1.6f;
 
         public const float LaneSpacing = 1.1f;
@@ -21,19 +21,30 @@ namespace Game.Spawner
         public const float RockSpawnWeight = 5f;
         public const float FishSpawnWeight = 3f;
         public const float LogSpawnWeight = 2f;
+        public const float LongRockSpawnWeight = 1f;
 
         public const float RockVisualHeight = LaneSpacing;
         public const float RockBodyLength = 2.44f;
         public const float RockCollisionLength = 2.13f;
         public const float RockCollisionHeight = 0.96f;
-        public const float FishCollisionHeight = 0.39f;
+        public const float FishCollisionHeight = 0.36f;
         public const float LogCollisionHeight = 0.85f;
+
+        public const int LongRockLaneSpan = 3;
+        public const float LongRockVisualHeight = 3.77f;
+        public const float LongRockBodyLength = 3.35f;
+        public const float LongRockCollisionLength = 2.91f;
+        public const float LongRockCollisionHeight = 2.9f;
+        public const float LongRockVisualCenterY = 0.165f;
+        public const float LongRockVisualBottomY = -1.72f;
+        public const float LongRockVisualTopY = 2.05f;
 
         private const int Top = 0;
         private const int Middle = 1;
         private const int Bottom = 2;
 
         private static readonly float[] SectionDurations = { 25f, 30f, 35f, 15f };
+        private static readonly float[] SectionJumpRatios = { 0.05f, 0.10f, 0.15f, 0f };
 
         public static SimulationConfig CreateConfig()
         {
@@ -45,13 +56,19 @@ namespace Game.Spawner
             return SectionDurations[Math.Clamp(sectionIndex, 0, SectionDurations.Length - 1)];
         }
 
+        public static float GetSectionJumpRatio(int sectionIndex)
+        {
+            return SectionJumpRatios[Math.Clamp(sectionIndex, 0, SectionJumpRatios.Length - 1)];
+        }
+
         public static List<ObstacleSpec> CreateObstacles()
         {
             return new List<ObstacleSpec>
             {
-                new ObstacleSpec(RockId, RockId, 1, LaneMask.Of(Bottom), RockBodyLength, RockCollisionLength, RockCollisionHeight, 1.0f, RockSpawnWeight, true, true, ObstacleFitAxis.Height, RockVisualHeight),
-                new ObstacleSpec(FishId, FishId, 1, LaneMask.All(3), 0.9f, 0.78f, FishCollisionHeight, 1.25f, FishSpawnWeight, true, true),
-                new ObstacleSpec(LogId, LogId, 1, LaneMask.All(3), 1.8f, 1.566f, LogCollisionHeight, 0.8f, LogSpawnWeight, true, true)
+                new ObstacleSpec(RockId, RockId, 1, LaneMask.Of(Bottom), RockBodyLength, RockCollisionLength, RockCollisionHeight, 1.0f, RockSpawnWeight, true, false, ObstacleFitAxis.Height, RockVisualHeight),
+                new ObstacleSpec(FishId, FishId, 1, LaneMask.All(3), 0.9f, 0.78f, FishCollisionHeight, 1.25f, FishSpawnWeight, true, false),
+                new ObstacleSpec(LogId, LogId, 1, LaneMask.All(3), 1.8f, 1.566f, LogCollisionHeight, 0.8f, LogSpawnWeight, true, false),
+                new ObstacleSpec(LongRockId, LongRockId, LongRockLaneSpan, LaneMask.Of(Top), LongRockBodyLength, LongRockCollisionLength, LongRockCollisionHeight, 1.0f, LongRockSpawnWeight, false, true, ObstacleFitAxis.Height, LongRockVisualHeight)
             };
         }
 
@@ -60,6 +77,7 @@ namespace Game.Spawner
             var rock = Find(obstacles, RockId);
             var fish = Find(obstacles, FishId);
             var log = Find(obstacles, LogId);
+            var longRock = Find(obstacles, LongRockId);
 
             return new List<PatternSpec>
             {
@@ -98,7 +116,9 @@ namespace Game.Spawner
 
                 Pattern("Jump_FishTop_FishMiddle_RockBottom", true, Entry(fish, Top, 0f), Entry(fish, Middle, 0f), Entry(rock, Bottom, 0f)),
                 Pattern("Jump_LogTop_FishMiddle_RockBottom", true, Entry(log, Top, 0f), Entry(fish, Middle, 0f), Entry(rock, Bottom, 0f)),
-                Pattern("Jump_FishTop_LogMiddle_RockBottom", true, Entry(fish, Top, 0f), Entry(log, Middle, 0.2f), Entry(rock, Bottom, 0.2f))
+                Pattern("Jump_FishTop_LogMiddle_RockBottom", true, Entry(fish, Top, 0f), Entry(log, Middle, 0.2f), Entry(rock, Bottom, 0.2f)),
+
+                Pattern("LongRock_Solo", true, Entry(longRock, Top, 0f))
             };
         }
 
@@ -107,23 +127,23 @@ namespace Game.Spawner
             switch (sectionIndex)
             {
                 case 0:
-                    start = new DifficultySample(1.00f, 2.5f, 1.3f, NormalSectionJumpRatio, 1.0f, 0.20f, 0.00f, true);
-                    end = new DifficultySample(1.00f, 2.0f, 1.3f, NormalSectionJumpRatio, 1.0f, 0.50f, 0.15f, true);
+                    start = new DifficultySample(1.00f, 2.5f, 1.3f, GetSectionJumpRatio(0), 1.0f, 0.20f, 0.00f, true);
+                    end = new DifficultySample(1.00f, 2.0f, 1.3f, GetSectionJumpRatio(0), 1.0f, 0.50f, 0.15f, true);
                     spawnStopProgress = 1f;
                     break;
                 case 1:
-                    start = new DifficultySample(1.00f, 2.0f, 1.0f, NormalSectionJumpRatio, 0.6f, 1.00f, 0.30f, true);
-                    end = new DifficultySample(1.00f, 1.6f, 1.0f, NormalSectionJumpRatio, 0.4f, 1.00f, 0.60f, true);
+                    start = new DifficultySample(1.00f, 2.0f, 1.0f, GetSectionJumpRatio(1), 0.6f, 1.00f, 0.30f, true);
+                    end = new DifficultySample(1.00f, 1.6f, 1.0f, GetSectionJumpRatio(1), 0.4f, 1.00f, 0.60f, true);
                     spawnStopProgress = 1f;
                     break;
                 case 2:
-                    start = new DifficultySample(1.00f, 1.7f, 0.8f, NormalSectionJumpRatio, 0.3f, 1.00f, 0.80f, true);
-                    end = new DifficultySample(1.00f, 1.3f, 0.8f, NormalSectionJumpRatio, 0.2f, 1.00f, 1.20f, true);
+                    start = new DifficultySample(1.00f, 1.7f, 0.8f, GetSectionJumpRatio(2), 0.3f, 1.00f, 0.80f, true);
+                    end = new DifficultySample(1.00f, 1.3f, 0.8f, GetSectionJumpRatio(2), 0.2f, 1.00f, 1.20f, true);
                     spawnStopProgress = 1f;
                     break;
                 default:
-                    start = new DifficultySample(1.00f, 2.5f, 1.3f, NormalSectionJumpRatio, 1.0f, 0.30f, 0.00f, true);
-                    end = new DifficultySample(1.00f, 3.0f, 1.3f, NormalSectionJumpRatio, 1.0f, 0.10f, 0.00f, true);
+                    start = new DifficultySample(1.00f, 2.5f, 1.3f, GetSectionJumpRatio(3), 1.0f, 0.30f, 0.00f, true);
+                    end = new DifficultySample(1.00f, 3.0f, 1.3f, GetSectionJumpRatio(3), 1.0f, 0.10f, 0.00f, true);
                     spawnStopProgress = 0.7f;
                     break;
             }

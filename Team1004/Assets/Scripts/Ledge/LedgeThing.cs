@@ -19,10 +19,12 @@ namespace Game.Ledge
         public LedgePhase Phase => gate != null ? gate.Phase : LedgePhase.Idle;
         public float Time => gate != null ? gate.Time : 0f;
         public float FrontX => gate != null ? gate.FrontX : parkX;
+        public float FrontDistance => gate != null ? gate.FrontDistance : float.PositiveInfinity;
+        public float ImpactRemaining => gate != null ? gate.ImpactRemaining : 0f;
         public float RiseProgress01 => gate != null ? gate.RiseProgress01 : 0f;
         public float SettleProgress01 => gate != null ? gate.SettleProgress01 : 1f;
         public bool IsActive => gate != null && gate.IsActive;
-        public bool IsHoldingWorld => gate != null && gate.IsHoldingWorld;
+        public bool IsQteActive => gate != null && gate.IsQteActive;
         public bool IsSpawnSuspended => gate != null && gate.IsSpawnSuspended;
         public float VerticalOffset => scroll != null ? scroll.VerticalOffset : 0f;
 

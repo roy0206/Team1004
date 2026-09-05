@@ -1,6 +1,7 @@
 using System.IO;
 using Game.Config;
 using Game.Environment.Editor;
+using Game.Tools.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -34,12 +35,18 @@ namespace Game.Ledge.Editor
         [MenuItem("Team1004/Generate Ledge Assets")]
         public static void Generate()
         {
+            if (GeneratorFreeze.Block(nameof(LedgeSetup)))
+                return;
+
             Generate(false);
         }
 
         [MenuItem("Team1004/Regenerate Ledge Prefab (Overwrite)")]
         public static void RegeneratePrefab()
         {
+            if (GeneratorFreeze.Block(nameof(LedgeSetup)))
+                return;
+
             if (!Application.isBatchMode && !EditorUtility.DisplayDialog(
                     "Regenerate Ledge Prefab",
                     $"{PrefabPath} will be overwritten. {DataPath} and placeholder textures are kept.",
@@ -52,6 +59,9 @@ namespace Game.Ledge.Editor
 
         public static void Generate(bool overwrite)
         {
+            if (GeneratorFreeze.Block(nameof(LedgeSetup)))
+                return;
+
             EnsureFolder(LedgeFolder);
             EnsureFolder(DesignFolder);
 

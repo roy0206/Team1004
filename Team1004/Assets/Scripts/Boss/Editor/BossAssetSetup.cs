@@ -3,6 +3,7 @@ using Game.Boss.Integration;
 using Game.Config;
 using Game.Player;
 using Game.Water;
+using Game.Tools.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,6 +20,8 @@ namespace Game.Boss.Editor
         private const string FishingLineDataPath = DesignFolder + "/FishingLineBossData.asset";
         private const string WalrusDataPath = DesignFolder + "/WalrusBossData.asset";
         private const string WaterfallDataPath = DesignFolder + "/WaterfallBossData.asset";
+        private const string BearDataPath = DesignFolder + "/BearBossData.asset";
+        private const string BearPrefabPath = BossFolder + "/BearBoss.prefab";
         private const string FishingLinePrefabPath = BossFolder + "/FishingLineBoss.prefab";
         private const string WalrusPrefabPath = BossFolder + "/WalrusBoss.prefab";
         private const string WaterfallPrefabPath = BossFolder + "/WaterfallBoss.prefab";
@@ -34,8 +37,6 @@ namespace Game.Boss.Editor
         private const float TelegraphBrightAlpha = 0.45f;
 
         private static readonly Color TelegraphColor = new(1f, 0.2f, 0.2f, 0.35f);
-        private static readonly Color HookColor = new(0.85f, 0.85f, 0.85f, 1f);
-        private static readonly Color LineColor = new(0.95f, 0.95f, 0.95f, 0.9f);
         private static readonly Color WalrusColor = new(0.55f, 0.4f, 0.3f, 1f);
         private static readonly Color WaterfallColor = new(0.75f, 0.9f, 1f, 0.9f);
         private static readonly Color RapidColor = new(0.5f, 0.75f, 1f, 0.6f);
@@ -51,12 +52,18 @@ namespace Game.Boss.Editor
         [MenuItem("Team1004/Generate Boss Assets")]
         public static void Generate()
         {
+            if (GeneratorFreeze.Block(nameof(BossAssetSetup)))
+                return;
+
             Run(false);
         }
 
         [MenuItem("Team1004/Regenerate Boss Prefabs (Overwrite)")]
         public static void RegeneratePrefabs()
         {
+            if (GeneratorFreeze.Block(nameof(BossAssetSetup)))
+                return;
+
             if (!EditorUtility.DisplayDialog(
                     "Regenerate Boss Prefabs",
                     "Boss prefabs in Assets/GameAssets/Boss will be overwritten. Boss data assets are kept.",
@@ -69,6 +76,9 @@ namespace Game.Boss.Editor
 
         public static void Generate(bool overwritePrefabs)
         {
+            if (GeneratorFreeze.Block(nameof(BossAssetSetup)))
+                return;
+
             Run(overwritePrefabs);
         }
 
@@ -91,12 +101,10 @@ namespace Game.Boss.Editor
                 return;
             }
 
-            var fishingData = EnsureData<FishingLineBossData>(FishingLineDataPath);
             var walrusData = EnsureData<WalrusBossData>(WalrusDataPath);
             var waterfallData = EnsureData<WaterfallBossData>(WaterfallDataPath);
-
-            if (ShouldBuildPrefab(FishingLinePrefabPath, overwritePrefabs))
-                BuildFishingLinePrefab(context, fishingData);
+            EnsureData<FishingLineBossData>(FishingLineDataPath);
+            EnsureData<BearBossData>(BearDataPath);
 
             if (ShouldBuildPrefab(WalrusPrefabPath, overwritePrefabs))
                 BuildWalrusPrefab(context, walrusData);
@@ -145,51 +153,6 @@ namespace Game.Boss.Editor
             data.EnsureDefaultPatterns();
             EditorUtility.SetDirty(data);
             return data;
-        }
-
-        private static void BuildFishingLinePrefab(Context context, FishingLineBossData data)
-        {
-            var config = context.Config;
-            var root = new GameObject("FishingLineBoss");
-
-            try
-            {
-                var boss = root.AddComponent<FishingLineBoss>();
-                var telegraph = CreateTelegraph(context, root.transform);
-                var laneHazard = CreateLaneHazard(context, root.transform, "FishingHook");
-
-                var parkY = config.WaterSurfaceY + data.HookParkOffset;
-                var hook = new GameObject("Hook");
-                hook.transform.SetParent(root.transform, false);
-                hook.transform.position = new Vector3(data.HookExitX, parkY, 0f);
-                AddWaterBody(hook, new Vector2(0.5f, 0.6f));
-
-                var hookSprite = CreateSprite("HookSprite", hook.transform, context.Circle, HookColor,
-                    hook.transform.position, new Vector2(0.5f, 0.5f), 6);
-                var hookRenderer = hookSprite.GetComponent<SpriteRenderer>();
-                hookRenderer.enabled = false;
-
-                var lineSprite = CreateSprite("Line", root.transform, context.Square, LineColor,
-                    hook.transform.position, new Vector2(data.LineWidth, 1f), 5);
-                var lineRenderer = lineSprite.GetComponent<SpriteRenderer>();
-                lineRenderer.enabled = false;
-
-                var serialized = new SerializedObject(boss);
-                serialized.FindProperty("data").objectReferenceValue = data;
-                serialized.FindProperty("telegraph").objectReferenceValue = telegraph;
-                serialized.FindProperty("laneHazard").objectReferenceValue = laneHazard;
-                serialized.FindProperty("hook").objectReferenceValue = hook.transform;
-                serialized.FindProperty("hookRenderer").objectReferenceValue = hookRenderer;
-                serialized.FindProperty("line").objectReferenceValue = lineSprite.transform;
-                serialized.FindProperty("lineRenderer").objectReferenceValue = lineRenderer;
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-
-                SavePrefab(root, FishingLinePrefabPath);
-            }
-            finally
-            {
-                Object.DestroyImmediate(root);
-            }
         }
 
         private static void BuildWalrusPrefab(Context context, WalrusBossData data)
@@ -288,7 +251,7 @@ namespace Game.Boss.Editor
                 var bosses = new BossThing[]
                 {
                     InstantiateBoss(FishingLinePrefabPath, root.transform),
-                    InstantiateBoss(WalrusPrefabPath, root.transform),
+                    InstantiateBoss(BearPrefabPath, root.transform),
                     InstantiateBoss(WaterfallPrefabPath, root.transform)
                 };
 

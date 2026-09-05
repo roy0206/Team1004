@@ -42,12 +42,29 @@ namespace Game.Boss
         public event Action Began;
         public event Action<BossOutcome> Finished;
         public event Action Impact;
+        public event Action TelegraphImminent;
+        public event Action AttackBegan;
 
         protected void RaiseImpact()
         {
+            Raise(Impact);
+        }
+
+        protected void RaiseTelegraphImminent()
+        {
+            Raise(TelegraphImminent);
+        }
+
+        protected void RaiseAttackBegan()
+        {
+            Raise(AttackBegan);
+        }
+
+        private void Raise(Action handler)
+        {
             try
             {
-                Impact?.Invoke();
+                handler?.Invoke();
             }
             catch (Exception exception)
             {

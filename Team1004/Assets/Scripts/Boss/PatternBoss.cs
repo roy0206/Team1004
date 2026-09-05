@@ -134,6 +134,7 @@ namespace Game.Boss
         public void PlayAttackSfx()
         {
             PlaySfx(AttackSfxId);
+            RaiseAttackBegan();
         }
 
         private static void PlaySfx(string id)
@@ -146,6 +147,8 @@ namespace Game.Boss
         {
             if (telegraph != null)
                 telegraph.Brighten();
+
+            RaiseTelegraphImminent();
         }
 
         public void HideTelegraph()

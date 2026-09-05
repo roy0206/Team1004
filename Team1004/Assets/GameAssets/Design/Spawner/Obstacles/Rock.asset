@@ -24,4 +24,4 @@ MonoBehaviour:
   speedMultiplier: 1
   spawnWeight: 5
   usableInNormalPatterns: 1
-  usableInJumpPatterns: 1
+  usableInJumpPatterns: 0

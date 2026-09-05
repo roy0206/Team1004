@@ -16,6 +16,7 @@ namespace Game.Environment
         [SerializeField] private EnvironmentLayer riverbed = new();
         [SerializeField] private EnvironmentLayer homeland = new();
         [SerializeField] private WaterSurface surface;
+        [SerializeField] private UnderwaterFlowThing underwaterFlow;
         [SerializeField] private SpriteShapeController overlayShape;
         [SerializeField] private SpriteShapeRenderer overlayRenderer;
         [SerializeField] private float overlayAlpha = 0.15f;
@@ -68,6 +69,18 @@ namespace Game.Environment
         public WaterSurface Surface => surface;
         public float SurfaceY => surface != null ? surface.transform.position.y : GameConfig.Current.WaterSurfaceY;
         public float VerticalOffset => verticalOffset;
+        public UnderwaterFlowThing UnderwaterFlow => underwaterFlow;
+
+        public float AmbientSpeedScale
+        {
+            get => underwaterFlow != null ? underwaterFlow.AmbientSpeedScale : 1f;
+            set
+            {
+                if (underwaterFlow != null)
+                    underwaterFlow.AmbientSpeedScale = value;
+            }
+        }
+
         public float OverlayAlpha => overlayAlpha;
         public bool IsOverlayLinked => waterOverlay != null && waterOverlay.IsUsable;
 
@@ -101,6 +114,8 @@ namespace Game.Environment
 
             var sourceShape = surface != null ? surface.GetComponent<SpriteShapeController>() : null;
             waterOverlay = AddModule(new WaterOverlayModule(sourceShape, overlayShape));
+
+            underwaterFlow?.Initialize();
 
             ApplyOverlayAlpha();
             CacheOffsetRoots();

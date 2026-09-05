@@ -122,6 +122,7 @@ namespace Game.Boss.Integration
 
             flow = current;
             flow.BossHandler = RunBossAsync;
+            flow.BossHoldsWorldQuery = section => GetBoss(section) != null && GetBoss(section).HoldsWorld;
             hooked = true;
         }
 
@@ -133,7 +134,10 @@ namespace Game.Boss.Integration
             hooked = false;
 
             if (flow != null && flow.BossHandler != null && ReferenceEquals(flow.BossHandler.Target, this))
+            {
                 flow.BossHandler = null;
+                flow.BossHoldsWorldQuery = null;
+            }
 
             flow = null;
         }

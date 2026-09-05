@@ -39,8 +39,8 @@ namespace Game.Animation.Tests
         [Test]
         public void IsObjectArtPath_CoversSubfolders()
         {
-            Assert.IsTrue(ObjectArtPostprocessor.IsObjectArtPath(ObjectArtPostprocessor.ObstacleFishFolder + "/장애물 물고기1.png"));
-            Assert.IsTrue(ObjectArtPostprocessor.IsObjectArtPath(ObjectArtPostprocessor.ObstacleFishFolder + "/장애물 물고기2.png"));
+            Assert.IsTrue(ObjectArtPostprocessor.IsObjectArtPath(ObjectArtPostprocessor.ObstacleFishFolder + "/이빨.png"));
+            Assert.IsTrue(ObjectArtPostprocessor.IsObjectArtPath(ObjectArtPostprocessor.ObstacleFishFolder + "/이빨 2.png"));
         }
 
         [Test]
@@ -151,7 +151,7 @@ namespace Game.Animation.Tests
             var fishFrames = AnimationAssetGenerator.GetFramePaths(ObstacleClipTable.Fish);
 
             if (fishFrames.Count == 0 || AssetDatabase.LoadAssetAtPath<Texture2D>(fishFrames[0]) == null)
-                Assert.Ignore("장애물 물고기 아트가 없다. Drive 동기화 뒤 다시 돌린다.");
+                Assert.Ignore("이빨물고기 아트가 없다. Drive 동기화 뒤 다시 돌린다.");
 
             var fishPivot = ObjectArtPostprocessor.ResolvePivot(fishFrames[0]);
 

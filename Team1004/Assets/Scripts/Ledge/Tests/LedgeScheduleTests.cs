@@ -13,7 +13,9 @@ namespace Game.Ledge.Tests
         private const float RiseDuration = 0.7f;
         private const float SettleDuration = 1.2f;
         private const float RetireX = -20f;
-        private const float ClearMargin = 1.2f;
+        private const float ClearMargin = 3.35f;
+        private const float QteDistance = 2.5f;
+        private const float QteLead = QteDistance / Speed;
         private const float Step = 1f / 60f;
 
         private static LedgePlan CreatePlan()
@@ -21,10 +23,10 @@ namespace Game.Ledge.Tests
             return LedgePlan.Create(LedgeTime, SafeTime, Speed, PlayerX, SpawnX);
         }
 
-        private static LedgeClock CreateClock(bool instantFail = false)
+        private static LedgeClock CreateClock()
         {
             var clock = new LedgeClock();
-            Assert.IsTrue(clock.Begin(CreatePlan(), RiseDuration, SettleDuration, RetireX, ClearMargin, instantFail));
+            Assert.IsTrue(clock.Begin(CreatePlan(), RiseDuration, SettleDuration, RetireX, ClearMargin, QteDistance));
             return clock;
         }
 
@@ -114,45 +116,90 @@ namespace Game.Ledge.Tests
             Assert.IsTrue((toApproach & LedgeSignal.Approaching) != 0);
             Assert.AreEqual(LedgePhase.Approaching, clock.Phase);
             Assert.IsTrue(clock.IsSpawnSuspended);
+            Assert.IsFalse(clock.IsQteActive);
         }
 
         [Test]
-        public void Clock_Blocks_WhenPlayerIsGrounded_AndHoldsFrontAtPlayer()
+        public void Clock_StartsQte_WhenTheFrontComesWithinTheQteDistance()
+        {
+            var clock = CreateClock();
+
+            var beforeQte = Run(clock, LedgeTime - QteLead - 0.2f, false);
+            Assert.AreEqual(LedgePhase.Approaching, clock.Phase);
+            Assert.IsFalse((beforeQte & LedgeSignal.QteStarted) != 0);
+            Assert.Greater(clock.FrontDistance, QteDistance);
+
+            var started = Run(clock, 0.3f, false);
+
+            Assert.IsTrue((started & LedgeSignal.QteStarted) != 0);
+            Assert.AreEqual(LedgePhase.Qte, clock.Phase);
+            Assert.IsTrue(clock.IsQteActive);
+            Assert.IsTrue(clock.IsSpawnSuspended);
+            Assert.LessOrEqual(clock.FrontDistance, QteDistance);
+            Assert.Greater(clock.ImpactRemaining, 0f);
+        }
+
+        [Test]
+        public void Clock_KeepsMovingTheWorld_DuringQte()
+        {
+            var clock = CreateClock();
+            Run(clock, LedgeTime - 0.4f, false);
+
+            Assert.AreEqual(LedgePhase.Qte, clock.Phase);
+
+            var before = clock.Time;
+            var frontBefore = clock.FrontX;
+            Run(clock, 0.1f, false);
+
+            Assert.Greater(clock.Time, before);
+            Assert.Less(clock.FrontX, frontBefore);
+        }
+
+        [Test]
+        public void Clock_Fails_WhenTheFrontReachesThePlayerDuringQte()
         {
             var clock = CreateClock();
             var signals = Run(clock, LedgeTime + 0.5f, false);
 
-            Assert.IsTrue((signals & LedgeSignal.Blocked) != 0);
-            Assert.AreEqual(LedgePhase.Blocked, clock.Phase);
-            Assert.IsTrue(clock.IsHoldingWorld);
+            Assert.IsTrue((signals & LedgeSignal.QteStarted) != 0);
+            Assert.IsTrue((signals & LedgeSignal.Failed) != 0);
+            Assert.AreEqual(LedgePhase.Failed, clock.Phase);
+            Assert.IsFalse(clock.IsActive);
+            Assert.IsFalse(clock.IsQteActive);
             Assert.AreEqual(LedgeTime, clock.Time, 1e-3f);
             Assert.AreEqual(PlayerX, clock.FrontX, 1e-3f);
+            Assert.AreEqual(0f, clock.ImpactRemaining, 1e-3f);
         }
 
         [Test]
-        public void Clock_DoesNotAdvanceTime_WhileBlocked()
+        public void Clock_LeavesQte_WhenThePlayerJumps()
         {
             var clock = CreateClock();
-            Run(clock, LedgeTime + 0.1f, false);
+            Run(clock, LedgeTime - 0.3f, false);
 
-            var held = clock.Time;
-            Run(clock, 3f, false);
-
-            Assert.AreEqual(held, clock.Time, 1e-4f);
-            Assert.AreEqual(LedgePhase.Blocked, clock.Phase);
-        }
-
-        [Test]
-        public void Clock_ResumesFromBlocked_WhenPlayerJumps()
-        {
-            var clock = CreateClock();
-            Run(clock, LedgeTime + 0.1f, false);
+            Assert.AreEqual(LedgePhase.Qte, clock.Phase);
 
             var resumed = clock.Advance(Step, true);
 
             Assert.IsTrue((resumed & LedgeSignal.Resumed) != 0);
             Assert.AreEqual(LedgePhase.Passing, clock.Phase);
-            Assert.IsFalse(clock.IsHoldingWorld);
+            Assert.IsFalse(clock.IsQteActive);
+        }
+
+        [Test]
+        public void Clock_SkipsQte_WhenThePlayerJumpedBeforeTheWindow()
+        {
+            var clock = CreateClock();
+            Run(clock, LedgeTime - QteLead - 0.1f, false);
+
+            var airborne = Run(clock, QteLead + 0.05f, true);
+
+            Assert.IsFalse((airborne & LedgeSignal.QteStarted) != 0);
+            Assert.AreEqual(LedgePhase.Approaching, clock.Phase);
+
+            Run(clock, 0.2f, true);
+
+            Assert.AreEqual(LedgePhase.Passing, clock.Phase);
         }
 
         [Test]
@@ -162,7 +209,7 @@ namespace Game.Ledge.Tests
             var plan = clock.Plan;
 
             Run(clock, plan.LedgeTime - 0.5f, false);
-            Run(clock, 1f, true);
+            Run(clock, 1.5f, true);
 
             Assert.AreEqual(LedgePhase.Passing, clock.Phase);
             Assert.Less(clock.FrontX, PlayerX - ClearMargin);
@@ -174,7 +221,7 @@ namespace Game.Ledge.Tests
         }
 
         [Test]
-        public void Clock_ReBlocks_WhenPlayerLandsBeforeTheWallPasses()
+        public void Clock_Fails_WhenPlayerLandsBeforeTheWallPasses()
         {
             var clock = CreateClock();
             var plan = clock.Plan;
@@ -185,10 +232,10 @@ namespace Game.Ledge.Tests
             Assert.AreEqual(LedgePhase.Passing, clock.Phase);
             Assert.Greater(clock.FrontX, PlayerX - ClearMargin);
 
-            var blocked = clock.Advance(Step, false);
+            var failed = clock.Advance(Step, false);
 
-            Assert.IsTrue((blocked & LedgeSignal.Blocked) != 0);
-            Assert.AreEqual(LedgePhase.Blocked, clock.Phase);
+            Assert.IsTrue((failed & LedgeSignal.Failed) != 0);
+            Assert.AreEqual(LedgePhase.Failed, clock.Phase);
         }
 
         [Test]
@@ -196,7 +243,7 @@ namespace Game.Ledge.Tests
         {
             var clock = CreateClock();
             Run(clock, LedgeTime - 0.5f, false);
-            Run(clock, 1f, true);
+            Run(clock, 1.5f, true);
             clock.Advance(Step, false);
 
             Assert.AreEqual(LedgePhase.Rising, clock.Phase);
@@ -211,7 +258,6 @@ namespace Game.Ledge.Tests
             Assert.IsTrue((finished & LedgeSignal.Finished) != 0);
             Assert.AreEqual(LedgePhase.Retiring, clock.Phase);
             Assert.IsFalse(clock.IsSpawnSuspended);
-            Assert.IsFalse(clock.IsHoldingWorld);
         }
 
         [Test]
@@ -219,7 +265,7 @@ namespace Game.Ledge.Tests
         {
             var clock = CreateClock();
             Run(clock, LedgeTime - 0.5f, false);
-            Run(clock, 1f, true);
+            Run(clock, 1.5f, true);
             clock.Advance(Step, false);
             Run(clock, RiseDuration + 0.1f, false);
 
@@ -234,28 +280,32 @@ namespace Game.Ledge.Tests
         }
 
         [Test]
-        public void Clock_InstantFail_RaisesFailedInsteadOfBlocking()
+        public void Clock_WithoutQteDistance_FailsExactlyOnArrival()
         {
-            var clock = CreateClock(true);
-            var signals = Run(clock, LedgeTime + 0.5f, false);
+            var clock = new LedgeClock();
+            Assert.IsTrue(clock.Begin(CreatePlan(), RiseDuration, SettleDuration, RetireX, ClearMargin, 0f));
+
+            Run(clock, LedgeTime - 0.1f, false);
+            Assert.AreEqual(LedgePhase.Approaching, clock.Phase);
+
+            var signals = Run(clock, 0.2f, false);
 
             Assert.IsTrue((signals & LedgeSignal.Failed) != 0);
+            Assert.IsFalse((signals & LedgeSignal.QteStarted) != 0);
             Assert.AreEqual(LedgePhase.Failed, clock.Phase);
-            Assert.IsFalse(clock.IsHoldingWorld);
-            Assert.IsFalse(clock.IsActive);
         }
 
         [Test]
         public void Clock_Reset_ReturnsToIdle()
         {
             var clock = CreateClock();
-            Run(clock, LedgeTime + 0.5f, false);
+            Run(clock, LedgeTime - 0.3f, false);
             clock.Reset();
 
             Assert.AreEqual(LedgePhase.Idle, clock.Phase);
             Assert.AreEqual(0f, clock.Time, 1e-4f);
             Assert.IsFalse(clock.IsActive);
-            Assert.IsFalse(clock.IsHoldingWorld);
+            Assert.IsFalse(clock.IsQteActive);
             Assert.IsFalse(clock.IsSpawnSuspended);
             Assert.AreEqual(LedgeSignal.None, clock.Advance(Step, false));
         }
@@ -279,6 +329,24 @@ namespace Game.Ledge.Tests
                 Assert.AreEqual(15f, data.GetLedgeTime(2), 1e-4f);
                 Assert.AreEqual(1, data.HintSection);
                 Assert.AreEqual(0, data.HintEntryIndex);
+            }
+            finally
+            {
+                Object.DestroyImmediate(data);
+            }
+        }
+
+        [Test]
+        public void Data_ReportsQteDefaults()
+        {
+            var data = ScriptableObject.CreateInstance<LedgeData>();
+
+            try
+            {
+                Assert.AreEqual(QteDistance, data.QteStartDistance, 1e-4f);
+                Assert.AreEqual(0.12f, data.QteWorldSpeedScale, 1e-4f);
+                Assert.Greater(data.QteWorldSpeedScale, 0f);
+                Assert.Less(data.QteWorldSpeedScale, 1f);
             }
             finally
             {
@@ -313,7 +381,7 @@ namespace Game.Ledge.Tests
             var plan = CreatePlan();
             var clock = new LedgeClock();
 
-            Assert.IsTrue(clock.Begin(plan, RiseDuration, SettleDuration, RetireX, ClearMargin, false, plan.StartTime));
+            Assert.IsTrue(clock.Begin(plan, RiseDuration, SettleDuration, RetireX, ClearMargin, QteDistance, plan.StartTime));
             Assert.AreEqual(plan.StartTime, clock.Time, 1e-4f);
             Assert.AreEqual(plan.StartX, clock.FrontX, 1e-3f);
 
@@ -322,9 +390,13 @@ namespace Game.Ledge.Tests
             Assert.IsTrue((spawned & LedgeSignal.Spawned) != 0);
             Assert.AreEqual(LedgePhase.Incoming, clock.Phase);
 
-            Run(clock, LedgeTime - clock.Time + 0.1f, false);
+            Run(clock, LedgeTime - clock.Time - 0.3f, false);
 
-            Assert.AreEqual(LedgePhase.Blocked, clock.Phase);
+            Assert.AreEqual(LedgePhase.Qte, clock.Phase);
+
+            Run(clock, 0.5f, false);
+
+            Assert.AreEqual(LedgePhase.Failed, clock.Phase);
             Assert.AreEqual(LedgeTime, clock.Time, 1e-2f);
         }
 
@@ -336,10 +408,10 @@ namespace Game.Ledge.Tests
 
             var first = LedgePlan.Create(firstLedgeTime, SafeTime, Speed, PlayerX, SpawnX);
             var clock = new LedgeClock();
-            Assert.IsTrue(clock.Begin(first, RiseDuration, SettleDuration, RetireX, ClearMargin, false));
+            Assert.IsTrue(clock.Begin(first, RiseDuration, SettleDuration, RetireX, ClearMargin, QteDistance));
 
             Run(clock, firstLedgeTime - 0.5f, false);
-            Run(clock, 1f, true);
+            Run(clock, 1.5f, true);
             clock.Advance(Step, false);
             Run(clock, 12f, false);
 
@@ -347,6 +419,53 @@ namespace Game.Ledge.Tests
 
             var second = LedgePlan.Create(secondLedgeTime, SafeTime, Speed, PlayerX, SpawnX);
             Assert.Less(clock.Time, second.StartTime);
+        }
+
+        [Test]
+        public void Step_FillsTheRiverbedToTheWaterSurface()
+        {
+            const float alphaWidthPixels = 692f;
+            const float alphaHeightPixels = 779f;
+            const float riverbedTopY = -1.65f;
+            const float waterSurfaceY = 2f;
+            const float bottomY = -1.72f;
+            const float topY = 2.05f;
+
+            var scale = (topY - bottomY) / (alphaHeightPixels / 100f);
+            var width = alphaWidthPixels / 100f * scale;
+
+            Assert.AreEqual(0.4839538f, scale, 1e-6f, "긴 돌 균등 스케일");
+            Assert.AreEqual(3.34896f, width, 1e-4f, "긴 돌 폭");
+            Assert.AreEqual(ClearMargin, width, 0.002f, "clearMargin은 돌 폭이어야 넘은 판정이 그림과 맞는다.");
+            Assert.AreEqual(0.165f, (topY + bottomY) * 0.5f, 1e-4f, "Step 로컬 y");
+            Assert.AreEqual(width * 0.5f, 1.67448f, 1e-4f, "Step 로컬 x는 폭의 절반이라 왼쪽 변이 단차 앞면에 온다.");
+            Assert.Less(bottomY, riverbedTopY, "아랫변이 강바닥에 조금 묻힌다.");
+            Assert.Greater(topY, waterSurfaceY, "윗변이 수면 위로 나온다.");
+        }
+
+        [Test]
+        public void QteJump_LandsAfterTheWiderWallHasPassed()
+        {
+            const float jumpDuration = 1.6f;
+
+            var earliest = jumpDuration - QteLead;
+
+            Assert.Greater(earliest * Speed, ClearMargin,
+                "QTE 성공 점프는 가장 이른 경우에도 폭 " + ClearMargin + "짜리 돌을 넘긴 뒤 착지해야 한다.");
+
+            var clock = CreateClock();
+            var plan = clock.Plan;
+
+            Run(clock, plan.LedgeTime - QteLead + 0.05f, false);
+
+            Assert.AreEqual(LedgePhase.Qte, clock.Phase);
+
+            Run(clock, jumpDuration, true);
+            Assert.AreEqual(LedgePhase.Passing, clock.Phase);
+            Assert.Less(clock.FrontX, PlayerX - ClearMargin);
+
+            var cleared = clock.Advance(Step, false);
+            Assert.IsTrue((cleared & LedgeSignal.Cleared) != 0);
         }
     }
 }

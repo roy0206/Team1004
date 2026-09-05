@@ -1,0 +1,10 @@
+{
+    "name": "Game.Qte",
+    "rootNamespace": "Game.Qte",
+    "references": [
+        "Core.Foundation",
+        "Core.Modules",
+        "Core.Input",
+        "UnityEngine.UI"
+    ]
+}

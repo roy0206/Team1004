@@ -93,7 +93,11 @@ def guess_suffix(content):
     if content.startswith(b"%PDF"):
         return ".pdf"
     if content[:2] == b"PK":
-        return ".docx"
+        try:
+            names = zipfile.ZipFile(io.BytesIO(content)).namelist()
+        except zipfile.BadZipFile:
+            return ".zip"
+        return ".docx" if "word/document.xml" in names else ".zip"
     try:
         text = content.decode("utf-8")
     except UnicodeDecodeError:
@@ -116,16 +120,28 @@ def expand(file_id, rel, content, source):
     try:
         archive = zipfile.ZipFile(io.BytesIO(content))
     except zipfile.BadZipFile:
-        raise RuntimeError(f"zip 열기 실패 {rel.name}")
+        guessed = guess_suffix(content)
+        if extensions and guessed not in extensions:
+            raise RuntimeError(f"zip 열기 실패 {rel.name}")
+        yield file_id, folder.with_name(folder.name + guessed).as_posix(), content
+        return
     for info in archive.infolist():
         if info.is_dir():
             continue
         name = info.filename
         if not info.flag_bits & 0x800:
             try:
-                name = name.encode("cp437").decode("cp949")
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                pass
+                raw = name.encode("cp437")
+            except UnicodeEncodeError:
+                raw = None
+            if raw is not None:
+                try:
+                    name = raw.decode("utf-8")
+                except UnicodeDecodeError:
+                    try:
+                        name = raw.decode("cp949")
+                    except UnicodeDecodeError:
+                        pass
         member = Path(name)
         if extensions and member.suffix.lower() not in extensions:
             continue

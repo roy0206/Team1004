@@ -2,6 +2,7 @@
     "name": "Game.View",
     "rootNamespace": "Game.View",
     "references": [
-        "Core.Modules"
+        "Core.Modules",
+        "Core.Foundation"
     ]
 }

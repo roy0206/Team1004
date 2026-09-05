@@ -14,25 +14,29 @@ namespace Game.Ledge
         private float settleDuration;
         private float retireX;
         private float clearMargin;
-        private bool instantFail;
+        private float qteStartDistance;
 
         public LedgePhase Phase { get; private set; } = LedgePhase.Idle;
         public LedgePlan Plan => plan;
         public float Time => time;
         public float RiseDuration => riseDuration;
         public float SettleDuration => settleDuration;
+        public float QteStartDistance => qteStartDistance;
         public float FrontX => plan.IsValid ? plan.FrontXAt(time) : float.PositiveInfinity;
         public float RiseProgress01 => riseDuration <= 0f ? 1f : Mathf.Clamp01(riseTime / riseDuration);
         public float SettleProgress01 => settleDuration <= 0f ? 1f : Mathf.Clamp01(settleTime / settleDuration);
 
+        public float ImpactRemaining => plan.IsValid ? Mathf.Max(0f, plan.LedgeTime - time) : 0f;
+        public float FrontDistance => plan.IsValid ? FrontX - plan.PlayerX : float.PositiveInfinity;
+
         public bool IsActive => Phase != LedgePhase.Idle && Phase != LedgePhase.Done && Phase != LedgePhase.Failed;
         public bool IsVisible => Phase != LedgePhase.Idle && Phase != LedgePhase.Waiting && Phase != LedgePhase.Done;
-        public bool IsHoldingWorld => Phase == LedgePhase.Blocked;
+        public bool IsQteActive => Phase == LedgePhase.Qte;
 
         public bool IsSpawnSuspended =>
             Phase == LedgePhase.Approaching ||
+            Phase == LedgePhase.Qte ||
             Phase == LedgePhase.Passing ||
-            Phase == LedgePhase.Blocked ||
             Phase == LedgePhase.Rising;
 
         public void Reset()
@@ -45,7 +49,7 @@ namespace Game.Ledge
             settleDuration = 0f;
             retireX = 0f;
             clearMargin = 0f;
-            instantFail = false;
+            qteStartDistance = 0f;
             Phase = LedgePhase.Idle;
         }
 
@@ -55,7 +59,7 @@ namespace Game.Ledge
             float settleSeconds,
             float retirePositionX,
             float clearMarginX,
-            bool failOnBlock,
+            float qteStartDistanceX,
             float startTime = 0f)
         {
             Reset();
@@ -69,7 +73,7 @@ namespace Game.Ledge
             settleDuration = Mathf.Max(0f, settleSeconds);
             retireX = retirePositionX;
             clearMargin = Mathf.Max(0f, clearMarginX);
-            instantFail = failOnBlock;
+            qteStartDistance = Mathf.Max(0f, qteStartDistanceX);
             Phase = LedgePhase.Waiting;
             return true;
         }
@@ -81,8 +85,7 @@ namespace Game.Ledge
 
             var step = Mathf.Max(0f, deltaTime);
 
-            if (Phase != LedgePhase.Blocked)
-                time += step;
+            time += step;
 
             if (Phase == LedgePhase.Rising)
                 riseTime += step;
@@ -122,35 +125,31 @@ namespace Game.Ledge
                     return true;
 
                 case LedgePhase.Approaching:
-                    if (time < plan.LedgeTime)
+                    if (time >= plan.LedgeTime)
+                        return Arrive(playerAirborne, ref signal);
+
+                    if (playerAirborne)
                         return false;
 
+                    if (FrontDistance > qteStartDistance)
+                        return false;
+
+                    Phase = LedgePhase.Qte;
+                    signal |= LedgeSignal.QteStarted;
+                    return true;
+
+                case LedgePhase.Qte:
                     if (playerAirborne)
                     {
                         Phase = LedgePhase.Passing;
+                        signal |= LedgeSignal.Resumed;
                         return true;
                     }
 
-                    if (instantFail)
-                    {
-                        time = plan.LedgeTime;
-                        Phase = LedgePhase.Failed;
-                        signal |= LedgeSignal.Failed;
-                        return false;
-                    }
-
-                    time = plan.LedgeTime;
-                    Phase = LedgePhase.Blocked;
-                    signal |= LedgeSignal.Blocked;
-                    return false;
-
-                case LedgePhase.Blocked:
-                    if (!playerAirborne)
+                    if (time < plan.LedgeTime)
                         return false;
 
-                    Phase = LedgePhase.Passing;
-                    signal |= LedgeSignal.Resumed;
-                    return false;
+                    return Arrive(false, ref signal);
 
                 case LedgePhase.Passing:
                     if (playerAirborne)
@@ -158,8 +157,9 @@ namespace Game.Ledge
 
                     if (FrontX > plan.PlayerX - clearMargin)
                     {
-                        Phase = LedgePhase.Blocked;
-                        signal |= LedgeSignal.Blocked;
+                        time = Mathf.Max(time, plan.LedgeTime);
+                        Phase = LedgePhase.Failed;
+                        signal |= LedgeSignal.Failed;
                         return false;
                     }
 
@@ -188,6 +188,20 @@ namespace Game.Ledge
                 default:
                     return false;
             }
+        }
+
+        private bool Arrive(bool playerAirborne, ref LedgeSignal signal)
+        {
+            if (playerAirborne)
+            {
+                Phase = LedgePhase.Passing;
+                return true;
+            }
+
+            time = plan.LedgeTime;
+            Phase = LedgePhase.Failed;
+            signal |= LedgeSignal.Failed;
+            return false;
         }
     }
 }

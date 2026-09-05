@@ -30,13 +30,13 @@ Material:
     m_Ints: []
     m_Floats:
     - PixelSnap: 0
-    - _Depth: 6.5
+    - _Depth: 3.6
     - _EnableExternalAlpha: 0
-    - _Falloff: 1.3
+    - _Falloff: 1
     - _ZWrite: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _DeepColor: {r: 0.03, g: 0.14, b: 0.32, a: 1}
+    - _DeepColor: {r: 0.02, g: 0.1, b: 0.28, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
-    - _ShallowColor: {r: 0.36, g: 0.72, b: 0.92, a: 1}
+    - _ShallowColor: {r: 0.45, g: 0.8, b: 0.95, a: 1}
   m_BuildTextureStacks: []

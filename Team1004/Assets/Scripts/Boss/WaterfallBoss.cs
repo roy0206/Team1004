@@ -1,3 +1,5 @@
+using System;
+using Game.Animation;
 using Game.StateMachine;
 using Game.Water;
 using UnityEngine;
@@ -10,6 +12,10 @@ namespace Game.Boss
         [SerializeField] private SpriteRenderer waterfallRenderer;
         [SerializeField] private Transform[] rapids;
         [SerializeField] private Transform[] rocks;
+        [SerializeField] private SpriteRenderer[] rapidRenderers;
+        [SerializeField] private CustomAnimation rapidClip;
+
+        private SpriteAnimatorModule[] rapidAnimators;
 
         public Transform Waterfall => waterfall;
         public bool IsWaterfallVisible => waterfallRenderer != null && waterfallRenderer.enabled;
@@ -106,6 +112,38 @@ namespace Game.Boss
 
             if (rock != null && rock.gameObject.activeSelf != visible)
                 rock.gameObject.SetActive(visible);
+
+            SetRapidPlaying(lane, visible);
+        }
+
+        private void SetRapidPlaying(int lane, bool playing)
+        {
+            if (!playing)
+            {
+                if (rapidAnimators != null && lane >= 0 && lane < rapidAnimators.Length)
+                    rapidAnimators[lane]?.Stop();
+
+                return;
+            }
+
+            var animator = EnsureRapidAnimator(lane);
+            animator?.Play(rapidClip);
+        }
+
+        private SpriteAnimatorModule EnsureRapidAnimator(int lane)
+        {
+            if (rapidClip == null || rapidRenderers == null || lane < 0 || lane >= rapidRenderers.Length)
+                return null;
+
+            var renderer = rapidRenderers[lane];
+
+            if (renderer == null)
+                return null;
+
+            if (rapidAnimators == null || rapidAnimators.Length != rapidRenderers.Length)
+                rapidAnimators = new SpriteAnimatorModule[rapidRenderers.Length];
+
+            return rapidAnimators[lane] ??= AddModule(new SpriteAnimatorModule(renderer));
         }
 
         public void LaunchLane(int lane)
@@ -178,10 +216,21 @@ namespace Game.Boss
             return !Player.IsAirborne && Player.JumpCooldownRemaining <= seconds;
         }
 
+        public event Action FinalApproachBegan;
+
         public void BeginFinalApproach()
         {
             IsFinalApproach = true;
             FinalApproachElapsed = 0f;
+
+            try
+            {
+                FinalApproachBegan?.Invoke();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
         }
 
         public void AdvanceFinalApproach(float deltaTime)
