@@ -1,0 +1,14 @@
+{
+    "name": "Game.Environment.Editor",
+    "rootNamespace": "Game.Environment.Editor",
+    "references": [
+        "Game.Environment",
+        "Game.Config",
+        "Game.Water",
+        "Core.Modules",
+        "Unity.2D.SpriteShape.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "name": "Game.Environment",
+    "rootNamespace": "Game.Environment",
+    "references": [
+        "Core.Modules",
+        "Core.Foundation",
+        "Game.Config",
+        "Game.Water",
+        "Unity.2D.SpriteShape.Runtime"
+    ]
+}
