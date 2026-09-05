@@ -6,7 +6,8 @@
         "Game.Config",
         "Game.Water",
         "Core.Modules",
-        "Unity.2D.SpriteShape.Runtime"
+        "Unity.2D.SpriteShape.Runtime",
+        "Game.Tools.Editor"
     ],
     "includePlatforms": [
         "Editor"

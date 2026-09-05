@@ -3,6 +3,7 @@
     "rootNamespace": "Game.Cutscene.Tests",
     "references": [
         "Game.Cutscene",
+        "Game.View",
         "Game.Dialogue",
         "Core.Modules",
         "UnityEngine.TestRunner",

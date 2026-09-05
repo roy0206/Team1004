@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Game.Animation;
+using Game.View;
 using UnityEngine;
 
 namespace Game.Cutscene
@@ -10,6 +11,9 @@ namespace Game.Cutscene
         private readonly Dictionary<string, CutsceneActor> lookup = new(StringComparer.Ordinal);
         private readonly HashSet<string> missingWarnings = new(StringComparer.Ordinal);
         private readonly Dictionary<string, CustomAnimation> clips = new(StringComparer.Ordinal);
+
+        private GameCamera rigHost;
+        private bool rigHostResolved;
 
         public CutsceneContext(
             Camera stageCamera,
@@ -66,6 +70,22 @@ namespace Game.Cutscene
         public Camera StageCamera { get; }
         public CutsceneDialogueView Dialogue { get; }
         public GameObject Link { get; }
+
+        public CameraRig Rig
+        {
+            get
+            {
+                if (!rigHostResolved)
+                {
+                    rigHostResolved = true;
+
+                    if (StageCamera != null)
+                        rigHost = StageCamera.GetComponent<GameCamera>();
+                }
+
+                return rigHost != null ? rigHost.Rig : null;
+            }
+        }
 
         public CutsceneActor Player => Actor(CutsceneActorIds.Player);
         public CutsceneActor Boss => Actor(CutsceneActorIds.Boss);

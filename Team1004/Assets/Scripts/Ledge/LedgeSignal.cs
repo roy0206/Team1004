@@ -8,7 +8,7 @@ namespace Game.Ledge
         None = 0,
         Spawned = 1 << 0,
         Approaching = 1 << 1,
-        Blocked = 1 << 2,
+        QteStarted = 1 << 2,
         Resumed = 1 << 3,
         Cleared = 1 << 4,
         Finished = 1 << 5,

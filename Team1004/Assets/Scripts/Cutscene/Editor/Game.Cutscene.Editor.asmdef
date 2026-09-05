@@ -4,7 +4,8 @@
     "references": [
         "Game.Cutscene",
         "Core.Modules",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Game.Tools.Editor"
     ],
     "includePlatforms": [
         "Editor"

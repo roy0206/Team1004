@@ -1,5 +1,6 @@
 using System.IO;
 using Game.Config;
+using Game.Tools.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.U2D;
@@ -64,12 +65,18 @@ namespace Game.Environment.Editor
         [MenuItem("Team1004/Generate Environment Assets")]
         public static void Generate()
         {
+            if (GeneratorFreeze.Block(nameof(EnvironmentSetup)))
+                return;
+
             Generate(false);
         }
 
         [MenuItem("Team1004/Regenerate Environment Prefab (Overwrite)")]
         public static void RegeneratePrefab()
         {
+            if (GeneratorFreeze.Block(nameof(EnvironmentSetup)))
+                return;
+
             if (!Application.isBatchMode && !EditorUtility.DisplayDialog(
                     "Regenerate Environment Prefab",
                     $"{PrefabPath} will be overwritten. Placeholder textures are kept.",
@@ -82,6 +89,9 @@ namespace Game.Environment.Editor
 
         public static void Generate(bool overwrite)
         {
+            if (GeneratorFreeze.Block(nameof(EnvironmentSetup)))
+                return;
+
             EnsureFolder(PlaceholderFolder);
             EnsureFolder(EnvironmentFolder);
 

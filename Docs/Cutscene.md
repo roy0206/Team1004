@@ -86,8 +86,8 @@ public abstract class CutsceneBase
 | `FadeActor(actor, alpha, duration = 0, ease = Linear)` | `SpriteRenderer.color` 알파 | 목표 알파 |
 | `Animate(actor, clip, duration = 0)` | 배우의 `SpriteAnimatorModule`(`CutsceneActor.Animator`, `SpriteRenderer`가 있을 때 지연 생성)로 `PlayAsync(clip, duration)`. 원샷은 마지막 프레임까지, 루프는 한 바퀴 뒤 반환하고 계속 돈다 | 원샷은 마지막 프레임을 즉시 표시, 루프는 그대로 재생 시작. `Cancel`이면 `Stop()`만 |
 | `SetPose(actor, clip, frameIndex)` | `SetFrame(clip, index)`. 정지 포즈 | 그대로 적용 |
-| `CameraTo(position, orthoSize = 0, duration = 0, ease = InOutSine, relative = false)` | 카메라 `DOMove`(z 유지) + `orthoSize > 0`이면 `DOOrthoSize` | 목표 위치·크기 |
-| `Shake(duration, strength)` | `Camera.DOShakePosition(duration, strength, 10, 90, fadeOut: true)` | 아무것도 하지 않는다(흔들림은 원위치로 끝난다) |
+| `CameraTo(position, orthoSize = 0, duration = 0, ease = InOutSine, relative = false)` | 카메라 리그가 있으면 `DOTween.To`로 **`CameraRig.BasePosition`·`BaseSize`**를 트윈한다(리그가 없으면 예전대로 `DOMove` + `DOOrthoSize`) | 목표 위치·크기 |
+| `Shake(duration, strength)` | 리그가 있으면 `CameraRig.Shake.ShakeUnits(duration, strength)`(`strength`는 여전히 월드 unit) + 같은 길이 대기. 없으면 `Camera.DOShakePosition(duration, strength, 10, 90, fadeOut: true)` | 아무것도 하지 않는다(흔들림은 원위치로 끝난다) |
 | `FadeScreen(alpha, duration = 0, ease = Linear)` | 대사 프리팹의 전체 화면 검은 이미지 알파 | 목표 알파. 컷신이 끝나도 남으므로 되돌리려면 마지막에 `FadeScreen(0f)` |
 | `Wait(seconds)` | 대기 | 아무것도 하지 않는다 |
 | `Together(params Awaitable[])` | 이미 시작된 헬퍼들을 전부 기다린다. 걸리는 시간은 가장 긴 것 하나 | 전부 즉시 완료 |
@@ -293,6 +293,10 @@ PlayMode 스모크(`Play/Tests/CoreLoopSmokeTests`)는 부트스트랩→플레�
 ```
 
 `PlayCutsceneAsync(id)`가 `CutsceneCatalog.TryCreate`로 인스턴스를 만들고, 이미 본 컷신(`SeenCutscenes`)이면 `ApplyFinalState(instance)`로 최종 상태만 남긴다. 자세한 흐름은 `Docs/CoreLoop.md` 「컷신 연결」.
+
+## 카메라 리그 경유
+
+`CameraTo`·`Shake`는 스테이지 카메라에 `GameCamera`가 붙어 있으면 `CameraRig`를 지난다(`CutsceneContext.Rig`가 지연 조회). 카메라 트랜스폼을 직접 만지지 않기 때문에 게임플레이 흔들림·줌과 서로 지우지 않고 곹친다. `Begin`이 리그의 base를 기억하고 효과를 지우며, `RestoreCameraOnFinish`가 `rig.SetBase(...)` + `ResetEffects()`로 되돌린다. 컷신 클래스(`Scenes/*.cs`)는 고칠 게 없다. 자세한 것은 `Docs/Camera.md` 「컷신 연동」.
 
 ## DOTween 참조 방식
 

@@ -9,7 +9,8 @@
         "Game.Player",
         "Core.Foundation",
         "Core.Modules",
-        "Core.Pool"
+        "Core.Pool",
+        "Game.Tools.Editor"
     ],
     "includePlatforms": [
         "Editor"

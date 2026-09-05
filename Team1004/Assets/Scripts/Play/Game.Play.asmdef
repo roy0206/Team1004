@@ -15,6 +15,7 @@
         "Game.Spawner",
         "Game.Environment",
         "Game.Ledge",
+        "Game.Qte",
         "Unity.InputSystem",
         "UnityEngine.UI"
     ]

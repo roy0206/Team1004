@@ -1,5 +1,6 @@
 using System;
 using Game.Animation;
+using Game.Particles;
 using Game.Player;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ namespace Game.Spawner
         [SerializeField] private SpriteRenderer visual;
         [SerializeField] private Sprite[] variants = Array.Empty<Sprite>();
         [SerializeField] private CustomAnimation swimClip;
+        [SerializeField] private BubbleTrailThing trail;
 
         private SpriteAnimatorModule animator;
 
@@ -34,17 +36,31 @@ namespace Game.Spawner
                 visual.sprite = sprite;
         }
 
+        public BubbleTrailThing Trail => trail;
+
         public void OnSpawned()
         {
             ClearModules();
             animator = null;
             PlaySwimClip();
+
+            if (trail == null)
+                return;
+
+            trail.Clear();
+            trail.SetEmitting(true);
         }
 
         public void OnReleased()
         {
             StopSwimClip();
             ClearModules();
+
+            if (trail == null)
+                return;
+
+            trail.SetEmitting(false);
+            trail.Clear();
         }
 
         private void PlaySwimClip()

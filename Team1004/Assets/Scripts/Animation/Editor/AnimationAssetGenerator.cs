@@ -73,6 +73,13 @@ namespace Game.Animation.Editor
             for (var i = 0; i < objectFramePaths.Count; i++)
                 ConfigureSpriteImporter(objectFramePaths[i], ObjectArtPostprocessor.ResolvePivotCached(objectFramePaths[i]));
 
+            var bossFramePaths = EnumerateBossFramePaths();
+
+            for (var i = 0; i < bossFramePaths.Count; i++)
+                ConfigureSpriteImporter(bossFramePaths[i], BossArtPostprocessor.ResolvePivotCached(bossFramePaths[i]));
+
+            ConfigureSpriteImporter(BossArtPostprocessor.HookPath, BossArtPostprocessor.HookPivot);
+
             AssetDatabase.Refresh();
             DeleteLegacyAssets();
 
@@ -80,6 +87,7 @@ namespace Game.Animation.Editor
 
             EnsureClips(SalmonClipTable.All, config, overwrite);
             EnsureClips(ObstacleClipTable.All, config, overwrite);
+            EnsureClips(BossClipTable.All, config, overwrite);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -139,6 +147,11 @@ namespace Game.Animation.Editor
         public static IReadOnlyList<string> EnumerateObjectFramePaths()
         {
             return EnumerateFramePaths(ObstacleClipTable.All, ObstacleClipTable.TotalFrameCount);
+        }
+
+        public static IReadOnlyList<string> EnumerateBossFramePaths()
+        {
+            return EnumerateFramePaths(BossClipTable.All, BossClipTable.TotalFrameCount);
         }
 
         public static IReadOnlyList<string> EnumerateFramePaths(IReadOnlyList<FlipbookClipDefinition> definitions, int capacity)

@@ -33,7 +33,8 @@
         "Unity.InputSystem",
         "UnityEngine.UI",
         "Unity.RenderPipelines.Universal.Runtime",
-        "Unity.RenderPipelines.Universal.2D.Runtime"
+        "Unity.RenderPipelines.Universal.2D.Runtime",
+        "Game.Tools.Editor"
     ],
     "includePlatforms": [
         "Editor"

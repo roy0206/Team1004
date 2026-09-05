@@ -7,6 +7,7 @@
         "Core.Input",
         "Game.Config",
         "Game.Animation",
-        "Game.Water"
+        "Game.Water",
+        "Game.Particles"
     ]
 }

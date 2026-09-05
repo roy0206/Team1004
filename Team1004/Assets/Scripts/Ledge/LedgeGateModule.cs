@@ -9,12 +9,14 @@ namespace Game.Ledge
         public LedgeClock Clock => clock;
         public LedgePhase Phase => clock.Phase;
         public float FrontX => clock.FrontX;
+        public float FrontDistance => clock.FrontDistance;
         public float Time => clock.Time;
+        public float ImpactRemaining => clock.ImpactRemaining;
         public float RiseProgress01 => clock.RiseProgress01;
         public float SettleProgress01 => clock.SettleProgress01;
         public bool IsActive => clock.IsActive;
         public bool IsVisible => clock.IsVisible;
-        public bool IsHoldingWorld => clock.IsHoldingWorld;
+        public bool IsQteActive => clock.IsQteActive;
         public bool IsSpawnSuspended => clock.IsSpawnSuspended;
 
         protected override ModuleTick Ticks => ModuleTick.None;
@@ -30,7 +32,7 @@ namespace Game.Ledge
                 data.EnvironmentSettleDuration,
                 data.RetireX,
                 data.ClearMargin,
-                data.InstantFail,
+                data.QteStartDistance,
                 startTime);
         }
 

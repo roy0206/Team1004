@@ -6,6 +6,7 @@
         "Core.Foundation",
         "Core.Audio",
         "Game.StateMachine",
+        "Game.Animation",
         "Game.Player",
         "Game.Config",
         "Game.Water"

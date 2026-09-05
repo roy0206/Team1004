@@ -8,7 +8,8 @@
         "Game.Environment.Editor",
         "Game.Player",
         "Core.Foundation",
-        "Core.Modules"
+        "Core.Modules",
+        "Game.Tools.Editor"
     ],
     "includePlatforms": [
         "Editor"

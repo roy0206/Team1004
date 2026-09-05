@@ -7,6 +7,7 @@
         "Game.Config",
         "Game.Environment",
         "Game.Player",
+        "Game.Qte",
         "Game.Water"
     ]
 }

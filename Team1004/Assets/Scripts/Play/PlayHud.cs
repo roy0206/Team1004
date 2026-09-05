@@ -1,3 +1,4 @@
+using Game.Qte;
 using Game.Settings;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,9 +14,12 @@ namespace Game.Play
         [SerializeField] private Button pauseButton;
         [SerializeField] private Text controlHint;
         [SerializeField] private Text banner;
+        [SerializeField] private QtePanel qtePanel;
 
         private float hintRemaining = -1f;
 
+        public QtePanel Qte => qtePanel;
+        public bool IsQteVisible => qtePanel != null && qtePanel.IsVisible;
         public bool IsControlHintVisible => controlHint != null && controlHint.gameObject.activeSelf;
         public bool IsBannerVisible => banner != null && banner.gameObject.activeSelf;
         public string BannerText => banner != null ? banner.text : string.Empty;

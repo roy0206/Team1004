@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: def36853d95dcf045b09d4671c785bf6, type: 3}
   m_Name: FishingLineBossData
   m_EditorClassIdentifier: Game.Boss::Game.Boss.FishingLineBossData
-  displayName: 
+  displayName:
   useGameConfigTiming: 1
   duration: 30
   telegraphDuration: 1.2
@@ -28,22 +28,43 @@ MonoBehaviour:
   patterns:
   - label: Top
     laneMask: 1
-    weight: 1
+    weight: 3
     requiresJump: 0
   - label: Middle
     laneMask: 2
-    weight: 1
+    weight: 3
     requiresJump: 0
   - label: Bottom
     laneMask: 4
-    weight: 1
+    weight: 3
     requiresJump: 0
-  hookParkOffset: 1.5
-  hookEnterX: 6
-  hookExitX: -7.5
-  hookSweepDuration: 1.5
-  hookBobAmplitude: 0.12
-  hookBobFrequency: 1.8
+  - label: TopMiddle
+    laneMask: 3
+    weight: 2
+    requiresJump: 0
+  - label: MiddleBottom
+    laneMask: 6
+    weight: 2
+    requiresJump: 0
+  - label: TopBottom
+    laneMask: 5
+    weight: 2
+    requiresJump: 0
+  boatX: 2.5
+  boatEnterOffsetX: 6
+  boatEnterDuration: 0.8
+  boatFloatOffset: 0.623
+  boatTiltScale: 1
+  boatSlopeSpan: 0.8
+  boatFloatSmoothing: 12
+  rodTipOffset: {x: -1.825, y: 2.06}
   lineAnchorOffset: 1.2
-  lineDragOffset: 0.9
-  lineWidth: 0.06
+  hookScale: 0.55
+  hookRestOffset: 0.3
+  castDuration: 0.6
+  castArcHeight: 0.35
+  reelDuration: 0.25
+  lineSag: 0.08
+  lineWidth: 0.03
+  lineSegments: 6
+  lineColor: {r: 0.94, g: 0.96, b: 1, a: 0.85}

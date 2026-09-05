@@ -21,6 +21,8 @@ MonoBehaviour:
     time: 15
   hintSection: 1
   approachSafeTime: 2
+  spawnSafeLead: 3.5
+  postClearSafeTime: 2
   stepHeight: 1.1
   cameraMoveDuration: 0.7
   spawnX: 7.5
@@ -30,3 +32,6 @@ MonoBehaviour:
   environmentRiseAmount: 0.35
   environmentSettleDuration: 1.2
   sectionEndMargin: 3
+  qteData: {fileID: 11400000, guid: 1352c3d43f6d41fda47ea90e8e9b40d9, type: 2}
+  qteStartDistance: 2.5
+  qteWorldSpeedScale: 0.12

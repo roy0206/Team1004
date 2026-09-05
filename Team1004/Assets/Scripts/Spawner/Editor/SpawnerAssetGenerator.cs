@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Game.Animation;
 using Game.Animation.Editor;
+using Game.Tools.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -36,12 +37,18 @@ namespace Game.Spawner.Editor
         [MenuItem("Team1004/Generate Spawner Assets")]
         public static void GenerateMissing()
         {
+            if (GeneratorFreeze.Block(nameof(SpawnerAssetGenerator)))
+                return;
+
             Generate(false);
         }
 
         [MenuItem("Team1004/Regenerate Spawner Assets (Overwrite)")]
         public static void RegenerateAll()
         {
+            if (GeneratorFreeze.Block(nameof(SpawnerAssetGenerator)))
+                return;
+
             if (!EditorUtility.DisplayDialog(
                     "Regenerate Spawner Assets",
                     "장애물 프리팹과 Design/Spawner 에셋을 기본값으로 다시 씁니다. 손으로 고친 값이 사라집니다. 계속할까요?",
@@ -54,11 +61,17 @@ namespace Game.Spawner.Editor
 
         public static void RegenerateAllBatch()
         {
+            if (GeneratorFreeze.Block(nameof(SpawnerAssetGenerator)))
+                return;
+
             Generate(true);
         }
 
         public static void Generate(bool overwrite)
         {
+            if (GeneratorFreeze.Block(nameof(SpawnerAssetGenerator)))
+                return;
+
             EnsureFolder(PlaceholderFolder);
             EnsureFolder(ObstacleFolder);
             EnsureFolder(DesignFolder);

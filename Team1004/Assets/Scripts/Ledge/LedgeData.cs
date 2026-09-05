@@ -1,3 +1,4 @@
+using Game.Qte;
 using UnityEngine;
 
 namespace Game.Ledge
@@ -14,6 +15,8 @@ namespace Game.Ledge
 
         [SerializeField] private int hintSection = 1;
         [SerializeField] private float approachSafeTime = 2f;
+        [SerializeField] private float spawnSafeLead = 3.5f;
+        [SerializeField] private float postClearSafeTime = 2f;
         [SerializeField] private float stepHeight = 1.1f;
         [SerializeField] private float cameraMoveDuration = 0.7f;
         [SerializeField] private float spawnX = 7.5f;
@@ -23,10 +26,15 @@ namespace Game.Ledge
         [SerializeField] private float environmentRiseAmount = 0.35f;
         [SerializeField] private float environmentSettleDuration = 1.2f;
         [SerializeField] private float sectionEndMargin = 3f;
+        [SerializeField] private QteData qteData;
+        [SerializeField] private float qteStartDistance = 2.5f;
+        [SerializeField] private float qteWorldSpeedScale = 0.12f;
 
         public int EntryCount => ledgeEntries?.Length ?? 0;
         public int HintSection => hintSection;
         public float ApproachSafeTime => approachSafeTime;
+        public float SpawnSafeLead => spawnSafeLead;
+        public float PostClearSafeTime => postClearSafeTime;
         public float StepHeight => stepHeight;
         public float CameraMoveDuration => cameraMoveDuration;
         public float SpawnX => spawnX;
@@ -36,6 +44,9 @@ namespace Game.Ledge
         public float EnvironmentRiseAmount => environmentRiseAmount;
         public float EnvironmentSettleDuration => environmentSettleDuration;
         public float SectionEndMargin => sectionEndMargin;
+        public QteData Qte => qteData;
+        public float QteStartDistance => Mathf.Max(0f, qteStartDistance);
+        public float QteWorldSpeedScale => Mathf.Clamp(qteWorldSpeedScale, 0.01f, 1f);
 
         public int HintEntryIndex
         {

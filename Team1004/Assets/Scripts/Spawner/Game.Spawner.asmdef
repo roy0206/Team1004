@@ -7,6 +7,7 @@
         "Core.Pool",
         "Game.Animation",
         "Game.Config",
-        "Game.Player"
+        "Game.Player",
+        "Game.Particles"
     ]
 }

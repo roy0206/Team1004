@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 010b6938307a44589f22b0efdfbcd48e, type: 3}
+  m_Name: BearBossData
+  m_EditorClassIdentifier: Game.Boss::Game.Boss.BearBossData
+  displayName: 
+  useGameConfigTiming: 1
+  duration: 30
+  telegraphDuration: 1.2
+  attackDuration: 0.6
+  recoveryDuration: 0.6
+  fullLaneTelegraphDuration: 1.5
+  telegraphImminentLead: 0.2
+  introDuration: 1
+  outroDuration: 0.8
+  allowRepeatPattern: 0
+  holdsWorld: 1
+  seed: 0
+  patterns:
+  - label: BEAR_BACKHAND_SEQUENCE_123
+    laneMask: 7
+    weight: 25
+    requiresJump: 0
+  - label: BEAR_SIDE_1
+    laneMask: 1
+    weight: 15
+    requiresJump: 0
+  - label: BEAR_SIDE_2
+    laneMask: 2
+    weight: 15
+    requiresJump: 0
+  - label: BEAR_SIDE_3
+    laneMask: 4
+    weight: 15
+    requiresJump: 0
+  - label: BEAR_SIDE_12
+    laneMask: 3
+    weight: 15
+    requiresJump: 0
+  - label: BEAR_SIDE_23
+    laneMask: 6
+    weight: 15
+    requiresJump: 0
+  sequentialStepInterval: 0.5
+  sequenceHitActiveTime: 0.18
+  sequenceArmLead: 0.12
+  armEnterDuration: 0.12
+  armReturnDuration: 0.13
+  armHeight: 0.9
+  backStrikeOffset: 0
+  sidePassOffset: 1.5
+  armParkX: 9
+  laneSpawnX:
+  - 7.5
+  - 7.5
+  - 7.5
+  shadowAlpha: 0.7
+  shadowFadeIn: 0.8
+  shadowFadeOut: 0.5
+  shadowPulseAmplitude: 0.05
+  shadowPulsePeriod: 2
+  shadowExitDistance: 12

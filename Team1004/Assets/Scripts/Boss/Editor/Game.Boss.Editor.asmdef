@@ -7,7 +7,8 @@
         "Game.Player",
         "Game.Config",
         "Game.Water",
-        "Core.Modules"
+        "Core.Modules",
+        "Game.Tools.Editor"
     ],
     "includePlatforms": [
         "Editor"

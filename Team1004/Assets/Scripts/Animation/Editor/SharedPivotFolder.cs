@@ -145,14 +145,21 @@ namespace Game.Animation.Editor
             false,
             new Vector2(0.5270833f, 0.4912037f));
 
+        private static readonly SharedPivotFolder BossWaveFolder = new(
+            BossArtPostprocessor.WaveFolder,
+            false,
+            BossArtPostprocessor.WaveFallbackPivot);
+
         private static readonly SharedPivotFolder[] Folders =
         {
             SalmonFolder,
-            ObstacleFishFolder
+            ObstacleFishFolder,
+            BossWaveFolder
         };
 
         public static SharedPivotFolder Salmon => SalmonFolder;
         public static SharedPivotFolder ObstacleFish => ObstacleFishFolder;
+        public static SharedPivotFolder BossWave => BossWaveFolder;
         public static IReadOnlyList<SharedPivotFolder> All => Folders;
 
         public static SharedPivotFolder Find(string assetPath)

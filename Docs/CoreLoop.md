@@ -27,7 +27,7 @@
 | `Assets/GameAssets/Placeholder/Square.png`, `Circle.png` | 64x64 흰 스프라이트(PPU 100). 없을 때만 |
 | `Assets/GameAssets/Placeholder/Fonts/MonaS12.ttf` | 생성기가 만들지 않고 저장소에 둔 TTF. 없으면 오류 로그 후 내장 `LegacyRuntime.ttf`(한글 미표시) |
 | `Assets/GameAssets/Design/GameConfig.asset` | `GameConfigAsset`. 없을 때만 만들며 값은 보존된다 |
-| `Assets/GameAssets/UI/SettingsPanel.prefab` | 설정 패널(볼륨 슬라이더 3개, 닫기·타이틀로·게임 종료·개발자 설정) + 안쪽 `ConfigPanel` |
+| `Assets/GameAssets/UI/SettingsPanel.prefab` | 설정 패널(볼륨 슬라이더 3개, 닫기·타이틀로·게임 종료·개발자 설정) + 안쪽 `ConfigPanel`(값별 입력 행 26개). **생성기의 `ConfigPanel` 부분은 낡았다.** 아래 「개발자 설정 패널」 |
 | `Assets/Scenes/Start.unity` | 시작 씬 |
 | `Assets/Scenes/Play.unity` | 플레이 씬 |
 | `Assets/Scenes/Bootstrap.unity` | Manager 배치 씬. 게임 씬이 아니며 `SceneSettings.scenes`에 넣지 않는다 |
@@ -79,7 +79,7 @@ Bootstrap (GameBootstrap: inputActions=GameInput.inputactions, audioManifest, co
 
 ```text
 Letterbox Camera (검정, cullingMask 0)
-Main Camera (orthographic 3.6, GameCamera[AspectModule], AudioListener 없음)
+Main Camera (orthographic 3.6, GameCamera[AspectModule, CameraShake, CameraZoom, CameraPan, CameraRig], AudioListener 없음)
 Canvas (Screen Space Camera, 1920x1080)
   Title "초지일관 : 귀향 (임시)"
   StartButton / SettingsButton / QuitButton
@@ -94,7 +94,7 @@ EventSystem (InputSystemUIInputModule)
 
 ```text
 Letterbox Camera
-Main Camera (GameCamera[AspectModule])
+Main Camera (GameCamera[AspectModule, CameraShake, CameraZoom, CameraPan, CameraRig] + CameraFxDirector(DomainSingleton, 큐 프리셋 17개). Docs/Camera.md)
 Global Light 2D (Global, intensity 1) ── 기본 스프라이트 머티리얼이 Lit이라 없으면 검게 나온다
 Environment (프리팹 인스턴스, EnvironmentThing 호스트: Sky/Far/Mid/Near/Homeland/Flow 층 + WaterSurface(Game.Water) + CalmOverlay. 정렬 -9~-1. 옛 Background 사각형은 없앴다)
 LaneGuides/LaneGuide0..2 (레인 y에 옅은 가로선 -5. 환경 층 사이에 들어가 그대로 둠)
@@ -107,12 +107,17 @@ CutscenePlayer (MonoThing 호스트[CutscenePlaybackModule], actors 4(player/bos
 BossSet (프리팹 인스턴스: BossDirector + FishingLineBoss/WalrusBoss/WaterfallBoss 비활성. 보스마다 Telegraph(레인 띠) + LaneHazard(레인마다 같은 크기의 판정 밴드), 바늘·바다코끼리 몸에 WaterInteractor)
 LedgeSet (프리팹 인스턴스, ScrollRoot 밖: LedgeDirector[environment·player 연결] + Ledge1/Ledge2/Ledge3 비활성. 상류 단차 = 작은 폭포. 구간 1 5초·12.5초, 구간 2 15초. Docs/Ledge.md)
 PlayFlow (DomainSingleton, environment·ledgeDirector 참조)
+CameraCues (CameraCueBinder 호스트. 큐 프리셋 17개 연결. 레인 이동·점프·피격·구간·보스·단차에 카메라 연출을 붙인다. Docs/Camera.md)
 HudCanvas (Screen Space Camera, PlayHud)
   ProgressBar/Fill (fillAmount = Progress01)
   Distance "구간 {0} · 남은 {1:0}초"
   PauseButton "일시정지"
   ControlHint "↑↓ : 레인 이동 · 가장 위에서 ↑ : 점프" (구간 1 시작 시 controlHintDuration 초, 기본 비활성)
   Banner "BOSS 1 — 낚싯줄" / "CLEAR" (화면 중앙, 기본 비활성)
+  QtePanel (항상 활성 루트 + QtePanel. 자식 Content가 기본 비활성)
+    Content/Arrow      큰 ↑/↓ (KOTRA 200pt, 중앙 y +110)
+    Content/Dot0..Dot5 진행 점 6개 (Placeholder/Circle 44×44, 간격 70, y −60)
+    Content/TimeBar    남은 시간 막대 (Placeholder/Square 720×22, y −145) / Fill (Filled Horizontal)
   JumpCooldown (JumpCooldownView: Gauge, Icon)
   BossTimer (BossTimerView, 상단 중앙, 비활성 자리)
   PausePanel (비활성: 계속 / 설정 / 타이틀로)
@@ -137,7 +142,8 @@ EventSystem
 | `Game.Settings` | `Assets/Scripts/Settings/` | `SettingsData` | master/bgm/sfx 볼륨. Newtonsoft가 읽도록 `[JsonProperty]` 프로퍼티 |
 | | | `SettingsService` | 정적. `SaveService<SettingsData>(PlayerPrefsSaveStorage, Shared("Settings"), 1)`. `LoadAsync`/`SaveAsync`/`Apply`(AudioManager 볼륨) |
 | | | `SettingsPanel` | 슬라이더 즉시 반영, 닫을 때 저장. 타이틀로(참조 없으면 숨김), 게임 종료, 개발자 설정 |
-| | | `ConfigPanel` | `GameConfig.ToJson()` 편집 → 적용(`TryApplyJson`+`SaveOverride`) / 초기화(`ResetOverride`) |
+| | | `ConfigPanel` | 값별 입력 행(`ConfigFieldRow`) 목록. 적용(행 → JSON → `TryApplyJson`+`SaveOverride`) / 초기화(`ResetOverride`) |
+| | | `ConfigFieldRow` | 한 값 = 한 행. `key`(JSON 키), `kind`(Float/Int/Bool/FloatArray), 한글 라벨 Text, 키 힌트 Text, `InputField` 또는 `Toggle`. `Bind(JToken)` / `TryBuild(out JToken, out string)` / `SetInvalid(bool)` |
 | | | `RecordData`, `RecordService` | 메타 기록. `SaveService<RecordData>(PlayerPrefs, Shared("Records"), 1)`. `ClearCount`만 저장. `ReportClearAsync()`, `Changed` |
 | | | `UiSound` | `ui_click` 재생 헬퍼 |
 | `Game.Play` | `Assets/Scripts/Play/` | `PlayFlow` | 구간 프레임(시작 스토리→진행 1→컷신 1→보스 1→…→진행 4→엔딩)을 데이터(`FlowStep` 목록)로 돌린다. `Distance`(총 거리), `Section`, `Progress01`(구간 진행도), 체크포인트, 충돌 연출→실패, 기록 갱신, 스포너 호출, 일시정지, 재도전/타이틀 |
@@ -306,6 +312,7 @@ Underwater(top lane) ──↑, CanJump──▶ Airborne(JumpDuration) ──t�
 | 좌측 하단 | 원형 점프 쿨타임 UI | `JumpCooldownView` |
 | 우측 상단 | 일시정지 버튼 | `PlayHud` |
 | 화면 중앙 | 보스 시작·클리어 배너(`BOSS 1 — 낚싯줄`, `CLEAR`). 기본 비활성. `ShowBanner`/`HideBanner`/`ShowBannerAsync(text, 초)`. 읽기용 `IsBannerVisible`, `BannerText` | `PlayHud` |
+| 화면 중앙 아래 | **QTE 패널**(단차 QTE). 큰 화살표(다음에 누를 키) + 진행 점 `requiredPresses`개 + 줄어드는 시간 막대. 기본 비활성. `Show`/`Hide`/`SetExpected`/`SetProgress`/`SetRemaining01`/`Punch`. 색·번쩍임 길이는 직렬화 필드. `PlayHud.qtePanel`로 씬에서 연결하고 `LedgeDirector`는 `QtePanel.TryGetCurrent`로 찾는다. `Docs/Qte.md` | `Game.Qte.QtePanel` |
 
 ## 기록 (2판 28~29절, roy0206 결정으로 축소)
 
@@ -350,6 +357,7 @@ Underwater(top lane) ──↑, CanJump──▶ Airborne(JumpDuration) ──t�
 | 보스 | 연결됨. `BossSet.prefab`(`BossDirector` + 보스 3개)을 생성기가 Play 씬 루트에 둔다. `BossDirector`가 `BossHandler`를 채우고 `PlayFlow.BossTimer`를 갱신한다. 예고·공격 효과음(`boss_telegraph`/`boss_attack`)과 히트박스 표시 겸 판정(`LaneTelegraph` + `LaneHazard`)은 보스 모듈이 한다. `PlayFlow.IsBossInterrupted`가 true면 `BossDirector`가 보스를 `Abort()`한다(디버그 점프) |
 | 환경 | 연결됨. `Environment.prefab`을 루트에 두고 `PlayFlow.environment`로 스크롤·고향 전환. 단차가 `SetVerticalOffset`으로 배경을 잠깐 내렸다 되돌린다 |
 | 상류 단차 | 연결됨. `LedgeSet.prefab`(`LedgeDirector` + 단차 3개)을 생성기가 Play 씬 루트에 두고 `PlayFlow.ledgeDirector`·`LedgeHandler`(`ILedgeHandler`)로 붙는다. `Docs/Ledge.md` 「통합 절차」 전부 반영 |
+| QTE | 연결됨. `Game.Qte`(`QteSequence`/`QteModule`/`QtePanel`/`QteData`)는 단차 밖에서도 쓰라고 만든 공용 부품이다. 새 이벤트에 붙이는 법은 `Docs/Qte.md` 「다른 이벤트에 재사용하기」. 플레이어 입력을 잠깐 뺏을 때는 `LanePlayer.QteCaptureInput` |
 | 애니메이션 | 연결됨. `LanePlayer`(수영 루프 / 레인 위·아래 이동 / 점프)와 `CutsceneBase.Animate/SetPose`(`player_jump`, `player_swim`, `player_lane_up`, `player_lane_down`) |
 | 점프 연출 | `LanePlayer.Jumped`/`Landed`, `JumpModule.Progress01`, `GameConfig.WaterSurfaceY`. 수면 반응은 `WaterInteractorModule`이 이미 한다 |
 | 보스 3 마지막 폭포 | `LanePlayer.ResetJumpCooldown()`(→ `JumpModule.ResetCooldown()`). `WaterfallBreakthroughState.OnEnter`가 호출한다. 30초 뒤 마지막 폭포가 3초에 걸쳐 다가오고 닿으면 실패, 넘으면 통과다(`Docs/Boss.md` 「마지막 폭포 = 닿으면 실패」). 실패는 `BossThing.Impact` → `BossDirector` → `PlayFlow.ReportImpact()`로 일반 피격과 같은 연출을 탄다. 체크포인트는 `PlayFlow.CheckpointTag` |
@@ -381,7 +389,7 @@ Underwater(top lane) ──↑, CanJump──▶ Airborne(JumpDuration) ──t�
 | `playerHitboxScale` | `0.87` | 히트박스 = 알파 박스 × 이 값(4번 17절 G: 스프라이트보다 10~15% 작게) |
 | `controlHintDuration` | `2.5` | 구간 1 시작 시 조작 힌트 표시 초(4번 11절 2~3초) |
 | `debugEnabled` | `false` | **디버그.** true여야 숫자키 1~8 구간 점프가 동작한다(v4 23절 `DEBUG` 플래그). 꺼진 상태에서 누르면 경고 로그만 남는다 |
-| `debugInvincible` | `false` | **디버그.** true면 `HurtboxModule`이 판정하지 않는다. 개발자 설정 패널 JSON으로 켠다 |
+| `debugInvincible` | `false` | **디버그.** true면 `HurtboxModule`이 판정하지 않는다. 개발자 설정 패널 「디버그 > 무적」 토글로 켠다 |
 
 `LaneCount`는 `laneY` 길이, `SectionCount`는 `sectionDurations` 길이다. `StageLength`는 `[Obsolete]`(구간 1 길이 = 시간 × ScrollSpeed).
 
@@ -389,11 +397,32 @@ Underwater(top lane) ──↑, CanJump──▶ Airborne(JumpDuration) ──t�
 
 ### 빌드에서 값 바꾸기 (개발자 설정 패널)
 
-설정 → 개발자 설정을 누르면 `GameConfig.ToJson()`이 멀티라인 InputField에 표시된다. 값을 고치고 적용을 누르면 `TryApplyJson`이 검증 후 `Current`를 교체하고 `SaveOverride`가 `Application.persistentDataPath/config_override.json`에 저장한다. 다음 실행부터 `GameConfig.Load`가 에셋 값을 복사한 뒤 이 파일로 덮어쓴다. 초기화는 파일을 지우고 에셋 값으로 되돌린다. 실패 사유는 상태 텍스트에 나온다. 값 변경은 `GameConfig.Changed` 이벤트로 알린다.
+설정 → 개발자 설정을 누르면 값마다 한 줄인 폼이 나온다. 기획·아트도 JSON을 몰라도 쓸 수 있게 한글 라벨을 왼쪽에, 회색으로 영문 키를 그 옆에, 편집기를 오른쪽에 둔다. 줄이 26개라 목록은 `ScrollRect`(마우스 휠, `m_ScrollSensitivity: 25`)로 스크롤한다. 아래는 버튼 3개(적용·초기화·닫기)와 상태 텍스트다.
+
+| 구역 | 키 → 라벨 |
+| --- | --- |
+| 이동 | `laneY` 레인 높이(위·중·아래) · `playerX` 연어 x 위치 · `laneMoveDuration` 레인 이동 시간(초) · `scrollSpeed` 스크롤 속도 |
+| 점프 | `jumpDuration` 점프 지속(초) · `jumpCooldown` 점프 쿨타임(초) · `jumpHeight` 점프 높이 · `waterSurfaceY` 수면 높이 |
+| 구간 | `sectionDurations` 구간 시간(1~4, 초) · `spawnSeed` 스폰 시드(0=매번 랜덤) · `hitStopDuration` 피격 정지(초) · `hitPushDistance` 피격 밀림 거리 |
+| 보스 | `bossDuration` 보스 시간(초) · `bossTelegraphDuration` 보스 예고(초) · `bossFullLaneTelegraphDuration` 전체 레인 예고(초) · `bossAttackDuration` 보스 공격(초) · `bossRecoveryDuration` 보스 휴식(초) · `bossLaneBandWidth` 보스 판정 띠 폭 · `bossLaneBandHeight` 보스 판정 띠 높이 · `bossBannerDuration` 보스 배너(초) · `bossClearBannerDuration` 클리어 배너(초) |
+| 표시 | `playerScale` 연어 크기 배율 · `playerHitboxScale` 연어 판정 배율 · `controlHintDuration` 조작 안내 시간(초) |
+| 디버그 | `debugEnabled` 디버그 모드(숫자키 구간 이동) · `debugInvincible` 무적 |
+
+편집기는 값 종류로 정한다. `float`은 `InputField`(ContentType `DecimalNumber`), `int`는 `InputField`(`IntegerNumber`), `bool`은 `Toggle`, `float[]`은 쉼표로 구분한 `InputField`(ContentType `Standard`, 예: `1.1, 0, -1.1`)다. 소수점·자릿수 파싱은 항상 `CultureInfo.InvariantCulture`라 OS 지역 설정에 영향받지 않는다.
+
+파이프라인은 예전 JSON 패널과 같다. 열 때 `ConfigPanel`이 `GameConfig.ToJson()`을 Newtonsoft `JObject`로 파싱해 각 행의 `key`로 값을 채운다(`ConfigFieldRow.Bind`). 적용을 누르면 행들이 `JObject`를 다시 만들고(`TryBuild`) `TryApplyJson`이 검증 후 `Current`를 교체하며 `SaveOverride`가 `Application.persistentDataPath/config_override.json`에 저장한다. 다음 실행부터 `GameConfig.Load`가 에셋 값을 복사한 뒤 이 파일로 덮어쓴다. 초기화는 파일을 지우고 에셋 값으로 되돌린다. 값 변경은 `GameConfig.Changed` 이벤트로 알린다. 검증 파일 형식이 그대로라 기존 `config_override.json`도 계속 읽힌다.
+
+오류는 두 단계로 보여 준다. 숫자가 아닌 입력은 적용 전에 그 행이 걸러 `입력 오류: 레인 높이(위·중·아래): 2번째 값이 숫자가 아닙니다 ("a")`처럼 상태 텍스트에 뜨고 그 행의 라벨이 빨개진다. `GameConfigValues.Validate` 실패는 `적용 실패: scrollSpeed must be greater than 0.`으로 뜨고, 메시지에 키 이름이 들어 있으므로 해당 행 라벨도 빨개진다(`ConfigPanel.MarkInvalidByError`).
 
 Windows에서 `persistentDataPath`는 `%USERPROFILE%\AppData\LocalLow\<회사>\<제품>\`이다.
 
-다른 방법과의 비교: 필드별 슬라이더 패널은 보기 쉽지만 필드가 늘 때마다 UI를 고쳐야 하고, 명령줄 인자는 실행 환경을 바꿔야 하며 값 변경마다 재시작이 필요하고, 원격 설정(Remote Config)은 서버와 계정이 필요해 프로토타입에 과하다. JSON 패널은 `GameConfigValues`에 필드를 추가하면 UI 수정 없이 바로 편집·저장·복원이 되고 빌드 중에도 즉시 반영되므로 이 단계에 맞다. 필드가 확정되면 슬라이더 패널로 바꿀 수 있다.
+#### 행 추가하기
+
+행은 런타임에 만들지 않는다(씬 오브젝트 규칙). `GameConfigValues`에 `[SerializeField]` 필드를 추가하면 패널이 열릴 때 `[ConfigPanel] 행이 없는 설정 키 …` 경고가 한 번 뜬다. 그때 `Tools/config_panel_rows.py`의 `SECTIONS`에 `(키, 한글 라벨, 종류)`를 넣고 `python Tools/config_panel_rows.py`를 돌리면 `SettingsPanel.prefab`의 `ConfigPanel/Window/FieldList/Viewport/Content` 아래에 행 오브젝트가 다시 만들어지고 `ConfigPanel.rows`가 다시 연결된다. 스크립트는 기존 `FieldList` 서브트리를 지우고 새로 쓰므로 몇 번을 돌려도 결과가 같다(fileID는 노드 경로 해시라 고정). 에디터를 닫고 돌린 뒤 열어서 확인한다.
+
+주의: `Team1004 > Regenerate`(`Assets/Scripts/Bootstrap/Editor/CoreLoopSetup.cs`의 `EnsureSettingsPanelPrefab`/`CreateConfigPanel`)는 아직 옛 JSON 텍스트 상자를 만든다. 덮어쓰기로 돌리면 이 행들이 사라지고, `serialized.FindProperty("jsonField")`가 이제 `null`이라 `NullReferenceException`이 난다. 생성기를 고치거나 `ConfigPanel` 생성을 빼기 전까지 `SettingsPanel.prefab` 덮어쓰기 재생성을 하지 않는다. 레이아웃도 임시(플레이스홀더) 배치라 UI 담당이 다듬을 여지가 있다(`Docs/Requests.md`).
+
+다른 방법과의 비교: 명령줄 인자는 실행 환경을 바꿔야 하고 값 변경마다 재시작이 필요하며, 원격 설정(Remote Config)은 서버와 계정이 필요해 프로토타입에 과하다. 날 JSON 상자는 필드가 늘어도 UI를 안 고쳐도 되지만 개발자가 아니면 못 쓴다. 필드가 확정된 지금은 행 폼이 낫고, 새 필드는 위 「행 추가하기」로 스크립트 한 번이면 된다.
 
 ## 통합 지도
 
@@ -401,17 +430,18 @@ Play 씬에서 무엇이 무엇을 들고 있는지.
 
 | 오브젝트 | 호스트 / 모듈 | 참조·연결 | 상태 연결 |
 | --- | --- | --- | --- |
-| `PlayFlow` | `DomainSingleton` | `player`, `scroller`, `spawner`, `hud`, `bossTimer`, `pausePanel`, `resultPanel`, `cutscene`, `environment`, `ledgeDirector`, `playScene`, `startScene`, 컷신 id 5개 | 상태 전이마다 입력·스크롤·환경·HUD를 켜고 끈다. 구간 시작 → 스포너·단차·고향·힌트, 보스 → `BossHandler`. `Running` 중 `LedgeHandler.Tick` → 월드 정지/스폰 중단 |
-| `LedgeSet` | `LedgeDirector` + `Ledge1`/`Ledge2`/`Ledge3`(`LedgeThing`[LedgeScroll, LedgeGate, LedgeHint]) | `data`(Design/Ledge/LedgeData, `ledgeEntries` 3개), `ledges[3]`, `environment`, `player`(생성기가 씬 인스턴스에 연결) | `PlayFlow.LedgeHandler`. `BeginSection`/`Tick`/`Stop`, 이벤트 `Approaching`/`Blocked`/`Resumed`/`Cleared`/`Finished`/`Failed`. 한 구간에 여러 단차가 있으면 도착 시각 순으로 하나씩 |
+| `PlayFlow` | `DomainSingleton` | `player`, `scroller`, `spawner`, `hud`, `bossTimer`, `pausePanel`, `resultPanel`, `cutscene`, `environment`, `ledgeDirector`, `playScene`, `startScene`, 컷신 id 5개 | 상태 전이마다 입력·스크롤·환경·HUD를 켜고 끈다. 구간 시작 → 스포너·단차·고향·힌트, 보스 → `BossHandler`. `Running` 중 `LedgeHandler.Tick` → `WorldSpeedScale`(스크롤 루트·배경·거리·구간 시간·스포너 dt에 같이 적용)/스폰 중단. `LedgeHandler.Failed` → `ReportImpact()` |
+| `LedgeSet` | `LedgeDirector`[QteModule] + `Ledge1`/`Ledge2`/`Ledge3`(`LedgeThing`[LedgeScroll, LedgeGate, LedgeHint]) | `data`(Design/Ledge/LedgeData, `ledgeEntries` 3개 + `qteData`), `ledges[3]`, `environment`, `player`(생성기가 씬 인스턴스에 연결), `qtePanel`(비움 → 런타임에 `QtePanel.TryGetCurrent`) | `PlayFlow.LedgeHandler`. `BeginSection`/`Tick`/`Stop`, 이벤트 `Approaching`/`QteStarted`/`Resumed`/`Cleared`/`Finished`/`Failed`. 한 구간에 여러 단차가 있으면 도착 시각 순으로 하나씩. QTE 중 `WorldSpeedScale` 0.12 |
 | `Environment` | `EnvironmentThing`[Parallax×3, WaterFlow, Homeland, WaterSplash] | 프리팹(`Assets/GameAssets/Environment/Environment.prefab`) | `SetScrolling(Running\|Boss)`, `SetHomeland(구간 4)` |
 | `Player` | `LanePlayer`[LaneMove, Jump, Hurtbox, HitReaction, SpriteAnimator, WaterInteractor] | 클립 4개(swim/laneUp/laneDown/jump), `BoxCollider2D`(히트박스) | `InputEnabled`가 이동·점프·애니메이터를 함께 멈춤. `Hit` → `PlayFlow.OnHit`. 레인 이동 시작(`LaneMoveModule.MoveStarted`)에 방향 클립 0.2초, 끝(`MoveFinished`)에 수영 루프. 점프 중이면 점프 클립이 이긴다 |
 | `ObstacleSpawner` | `ObstacleSpawner`[SpawnModule] | `settings`, `scrollRoot` | `Initialize`(첫 구간) / `BeginSectionByDuration` / `Advance`(Running) / `Stop`(Hit·Failed) |
-| `ScrollRoot` | `StageScroller`[ScrollModule] | — | `SetScrolling(Running)` |
+| `ScrollRoot` | `StageScroller`[ScrollModule] | — | `SetScrolling(Running)`, `SetSpeedScale(WorldSpeedScale)`(단차 QTE 감속) |
 | `BossSet` | `BossDirector` + `FishingLineBoss`/`WalrusBoss`/`WaterfallBoss`[StateMachineModule], 자식 `Telegraph`[LaneTelegraphModule], `LaneHazard/Band0..2`(`Hazard` + trigger), 공격체 스프라이트(+ `WaterInteractor`) | `bosses[3]`, 각 보스 `data`(Design/Boss) | `BossDirector.Start`가 `PlayFlow.BossHandler`를 채움. 예고 → 띠+`boss_telegraph`, 공격 → 밴드 활성화+`boss_attack` |
 | `CutscenePlayer` | `CutscenePlayer`[CutscenePlaybackModule] | `stageCamera`, `dialogueView`, `actors[4]`(player/boss/landmark/child), `clips[4]` | `PlayFlow.PlayCutsceneAsync` → `Cutscene` 상태. Enter/클릭 = `Cutscene/Advance` |
 | `CutsceneDialogue` | `CutsceneDialogueView`(MonoBehaviour, Canvas 100) | 프리팹 | 대사·화면 페이드 |
-| `HudCanvas` | `PlayHud`, `JumpCooldownView`, `BossTimerView`, `PausePanel`, `ResultPanel`, `SettingsPanel`(→`ConfigPanel`) | `Banner`(중앙 Text, 기본 비활성) | `Cutscene`이면 Canvas 비활성. 힌트는 `ShowControlHint`, 보스 배너는 `ShowBannerAsync` |
-| `Main Camera` | `GameCamera`[AspectModule] | — | 16:9 레터박스. 컷신이 위치·orthoSize를 빌렸다 돌려준다 |
+| `HudCanvas` | `PlayHud`, `JumpCooldownView`, `BossTimerView`, `QtePanel`, `PausePanel`, `ResultPanel`, `SettingsPanel`(→`ConfigPanel`) | `Banner`(중앙 Text, 기본 비활성), `QtePanel`(`PlayHud.qtePanel`) | `Cutscene`이면 Canvas 비활성. 힌트는 `ShowControlHint`, 보스 배너는 `ShowBannerAsync`, 단차 QTE는 `LedgeDirector`가 직접 `QtePanel`을 갱신 |
+| `Main Camera` | `GameCamera`[AspectModule, CameraShakeModule, CameraZoomModule, CameraPanModule, CameraRig] + `CameraFxDirector` | `fxSettings`(Design/Camera/CameraFxSettings), `cues[17]` | 16:9 레터박스. 매 LateUpdate에 `base + 팬 + 흔들림`, `baseSize × 줌`을 한 번만 쓴다. 컷신은 리그의 base를 빌렸다 돌려준다. `Docs/Camera.md` |
+| `CameraCues` | `CameraCueBinder` | 큐 프리셋 17개(`Design/Camera/`) | 플레이어·보스·단차·PlayFlow 이벤트를 카메라 프리셋에 잇는 유일한 지점. `bossDirector`가 비어 있으면 `Start`에서 한 번 찾는다 |
 
 Bootstrap 씬: `GameBootstrap`(`inputActions`, `audioManifest`, `configAsset`, `dialogueCsv`, `firstScene`) + Manager 5개.
 
@@ -424,7 +454,7 @@ Bootstrap 씬: `GameBootstrap`(`inputActions`, `audioManifest`, `configAsset`, `
 3. **구간 1 시작**: 화면 아래쪽에 조작 힌트가 약 2.5초 나왔다 사라지는지. 배경 층(하늘·원경·중경·바닥·물결·수면)이 왼쪽으로 흐르고 레인 가이드 선이 읽히는지. 연어가 가운데 레인에 레인 간격 안에 들어오는 크기인지.
 4. **이동·점프**: ↑↓로 레인 이동, 상단에서 ↑로 점프. **레인 이동 중 올라가기/내려가기 2프레임이 0.2초에 넘어가고 도착하면 수영 루프로 돌아오는지**, 클립이 바뀔 때 연어가 위아래로 튀지 않는지(공유 pivot). 점프 중 5프레임 애니메이션이 **1.6초**에 걸쳐 넘어가고 착수 후 수영 포즈로 돌아오는지. 점프 최고점이 **상단 레인에서 2레인(2.2 unit) 위**로 수면을 확실히 뚫는지. **수면이 점프 때 솟고 착수 때 눌리는지**(세기는 `WaterSettings.asset`). 좌측 하단 쿨타임 원이 차오르는지.
 5. **장애물**: 돌·물고기·통나무가 레인에 맞게 오고, 히트박스가 연어 몸보다 살짝 작아 보이는지(스치는 느낌이 과하면 `playerHitboxScale`). 돌 변종 2개가 번갈아 나오는지(지금은 그림이 같아 구분이 안 된다), 장애물 물고기 2프레임이 튀지 않는지.
-5-1. **상류 단차(구간 1 5초·12.5초, 구간 2 15초 — 전부 「작은 폭포」)**: 구간 1은 시작 3초 만에 장애물이 끊기고 오른쪽에서 폭포가 들어와 5초에 닿는지. **첫 단차에만** 배경 `↑`가 보이는지. 1번 레인에서 점프하면 넘어가고 0.7초 동안 위쪽 강바닥이 내려와 평소 강바닥과 이어지는지(화면이 튀지 않는지). **착지 상태로 닿으면 죽지 않고 세계·HUD 남은 초가 멈추고**, 다시 점프하면 이어지는지. **첫 폭포가 완전히 빠져나간 뒤에 두 번째(12.5초)가 들어오는지**(둘이 겹쳐 보이면 안 된다). 막힌 동안 Esc → 전부 멈추는지. 구간 3·4·보스·컷신에는 단차가 없는지. 세부는 `Docs/Ledge.md` 「수동 플레이 체크」.
+5-1. **상류 단차 QTE(구간 1 5초·12.5초, 구간 2 15초 — 전부 「작은 폭포」)**: 구간 1은 시작 3초 만에 장애물이 끊기고 오른쪽에서 폭포가 들어와 5초에 닿는지. **첫 단차에만** 배경 `↑`가 보이는지. 폭포 앞면이 **2.5 unit**(도착 0.625초 전)까지 오면 세계가 멈추지 않고 **아주 느려지고**(배경·물·강바닥·장애물·HUD 남은 초가 **다 같이** 느려져야 한다) 화면 중앙에 큰 `↑`, 점 6개, 줄어드는 시간 막대가 뜨는지. **↑↓를 번갈아 6번** 누르면 점이 차고 화살표가 번쩍이며 방향이 바뀌는지, **같은 키를 두 번 누르면 아무 일도 없는지**, QTE 중 ↑↓로 레인이 움직이거나 점프가 나가지 않는지. 6번째에 연어가 자동으로 1번 레인에서 점프해 넘고 세계가 정상 속도로 돌아오는지. 넘은 뒤 0.7초 동안 위쪽 강바닥이 내려와 이어지는지. **아무것도 안 누르면 폭포에 부딪혀 일반 피격 연출(정지·흔들림·왼쪽 밀림) 뒤 실패**하는지(예전의 「멈추고 재도전」은 없어졌다). QTE 창 전에 미리 점프하면 QTE 없이 그냥 넘어가는지. **첫 폭포가 완전히 빠져나간 뒤에 두 번째(12.5초)가 들어오는지**. QTE 중 Esc → 전부 멈추는지. 구간 3·4·보스·컷신에는 단차가 없는지. 세부는 `Docs/Ledge.md` 「수동 플레이 체크」와 `Docs/Qte.md`.
 6. **컷신 → 보스 1(낚싯줄)**: 컷신 뒤 화면 중앙에 "BOSS 1 — 낚싯줄"이 1초 → 사라진 뒤 상단 중앙에 "낚싯줄 30". 예고 1.2초 동안 레인 띠(30~40%)가 그 레인 **전체 폭**을 덮고, 바늘이 오른쪽에 나타났다가 예고 중반부터 왼쪽으로 훑어 온다. 공격 0.2초 전 띠가 밝아짐 → 공격음과 함께 바늘이 플레이어 x를 지난다(줄이 뒤로 기울고 바늘이 위아래로 살짝 흔들리는지). 바늘이 수면을 뚫을 때 물이 반응하는지. 띠 밖에서는 절대 맞지 않는지. 30초 뒤 "CLEAR" 1초.
 7. **보스 2(바다코끼리)**: 1레인 입/2레인 팔 크기 구분, 돌진 후 복귀. **돌진할 때 레인 띠가 따라 움직이지 않는지**(루트가 아니라 `Body`만 움직여야 한다). 2레인 공격에서 남은 1레인이 진짜 안전한지.
 8. **보스 3(폭포)**: 급류·돌은 연출뿐이고 판정은 띠인지. 3레인 전체 공격 예고가 1.5초로 더 긴지. **30초 뒤 거대한 폭포가 오른쪽에서 3초에 걸쳐 다가오는지. 가만히 있으면(또는 너무 이르거나 늦게 뛰면) 부딪혀 실패하는지, 알맞게 뛰면 넘어가는지.** 폭포 앞면이 연어에 닿는 순간과 판정 순간이 눈으로 맞는지.
@@ -434,6 +464,7 @@ Bootstrap 씬: `GameBootstrap`(`inputActions`, `audioManifest`, `configAsset`, `
 10. **구간 4 → 엔딩**: 고향 소품 층이 켜지는지, 70% 지점부터 장애물이 없는지. 엔딩 컷신에서 도착 직후 연어가 한 번 점프하는지(컷신 애니메이션). "처음 품은 뜻을, 끝까지."
 11. **타이틀 복귀**: "클리어 1회". 다시 시작하면 처음부터.
 12. **일시정지**: Esc/버튼 → 물·애니메이션·보스·타자가 전부 멈추는지. 설정 열린 채 Esc는 설정만 닫는지.
+13. **카메라 연출**(`Docs/Camera.md`): 레인 이동에 아주 살짝 튀기는지, 점프에 살짝 당겨졌다 돌아오고 지부리에 흔들리는지. 피격 흔들림과 히트스톱이 같은 순간인지. 보스 배너에서 살짝 멀어졌다 타이머가 돌기 시작하면 돌아오는지. 예고 직전 미세한 떨림, 공격 순간 보스별 반응. 최종 폭포 3초 접근에서 천천히 멀어지며 럼블이 깔리는지. **줌아웃(보스 배너 1.06, 최종 폭포 1.08)에서 화면 위쪽 하늘이 끊기거나 오른쪽에서 장애물이 튀어나오지 않는지**(하늘 범위를 넓혔다). 단차 통과 뒤 카메라가 위로 따라올라갔다 내려올 때 지형 하강과 겹쳐 두 번 움직이지 않는지. 일시정지 중 흔들림이 그 자리에 멈추는지. 컷신이 끝나면 카메라가 정확히 원위치로 돌아오는지.
 
 ## 디버그 플래그
 
@@ -594,3 +625,8 @@ YAML 점검(생성 뒤):
 정리한 것: `Assets/GameAssets/Placeholder/HitboxFrame.png`(+meta) 삭제, `GameConfigValues.bossHitboxAlpha`·`GameConfig.asset`의 값 삭제(참조 0건 확인). `Requests.md`의 9-slice 히트박스 프레임 아트 요청은 철회로 표시했다.
 
 사람이 볼 것: 「수동 플레이 체크리스트」 전부, 특히 2(인간 아이·Enter 넘기기), 5-1(단차 두 개의 모양·타이밍·막힘 체감), 6~8(보스 v4 레인 띠 = 판정), 8-1(공중에서 숫자키). 임시 아트(단차 바위·`↑`, 아이 사각형)는 `Requests.md`의 아트 요청이 처리되면 교체한다.
+
+## 생성기 동결 가드 (2026-09-06)
+
+`Assets/Scripts/Tools/Editor/GeneratorFreeze.cs`(`Game.Tools.Editor`)가 코어루프·환경·단차·보스·스포너·컷신 생성기의 모든 진입점을 막는다. 메뉴에서 누르면 「생성기 동결」 대화상자만 뜨고 아무것도 만들지 않으며, 배치에서는 오류 로그 후 종료한다. 씬과 프리팹은 YAML 직접 편집이 정본이다. 정말 되돌려야 하면 `EditorPrefs` 키 `Team1004.GeneratorsUnfrozen`을 true로 두고 실행하되, 수작업 변경(개발자 옵션 폼, 단차 3개, 물 폴리곤, 곰 보스 등)이 사라지므로 먼저 백업 브랜치를 만든다. 애니메이션 생성기(`AnimationAssetGenerator`)는 클립·피벗만 다루므로 가드하지 않았다.
+
