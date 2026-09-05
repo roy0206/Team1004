@@ -1,0 +1,12 @@
+{
+    "name": "Game.Animation.Editor",
+    "rootNamespace": "Game.Animation.Editor",
+    "references": [
+        "Game.Animation",
+        "Game.Config",
+        "Core.Modules"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

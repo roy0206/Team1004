@@ -1,0 +1,7 @@
+{
+    "name": "Game.Animation",
+    "rootNamespace": "Game.Animation",
+    "references": [
+        "Core.Modules"
+    ]
+}
