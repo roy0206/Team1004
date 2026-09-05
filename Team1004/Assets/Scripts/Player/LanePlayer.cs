@@ -17,6 +17,7 @@ namespace Game.Player
         [SerializeField] private CustomAnimation laneUpClip;
         [SerializeField] private CustomAnimation laneDownClip;
         [SerializeField] private CustomAnimation jumpClip;
+        [SerializeField] private CustomAnimation hitClip;
 
         private LaneMoveModule laneMove;
         private HurtboxModule hurtbox;
@@ -37,6 +38,7 @@ namespace Game.Player
         public CustomAnimation LaneUpClip => laneUpClip;
         public CustomAnimation LaneDownClip => laneDownClip;
         public CustomAnimation JumpClip => jumpClip;
+        public CustomAnimation HitClip => hitClip;
         public int CurrentLane => laneMove != null ? laneMove.CurrentLane : StartLane;
         public bool IsMoving => laneMove != null && laneMove.IsMoving;
         public bool IsAirborne => jump != null && jump.IsAirborne;
@@ -181,9 +183,18 @@ namespace Game.Player
             animator.Play(swimClip);
         }
 
+        public void PlayHit()
+        {
+            if (animator == null || hitClip == null || hitClip.FrameCount <= 0)
+                return;
+
+            animator.SetFrame(hitClip, hitClip.FrameCount - 1);
+        }
+
         public void ResetHit()
         {
             hurtbox?.ResetHit();
+            PlaySwim();
         }
 
         public void ResetJumpCooldown()
@@ -191,8 +202,20 @@ namespace Game.Player
             jump?.ResetCooldown();
         }
 
+        public void CancelJump()
+        {
+            if (jump == null || !jump.IsAirborne)
+                return;
+
+            jump.CancelJump();
+            water?.ResetVelocity();
+            PlaySwim();
+        }
+
         public Awaitable PlayHitReactionAsync(float stopDuration, float pushDistance)
         {
+            PlayHit();
+
             if (hitReaction == null)
             {
                 var source = new AwaitableCompletionSource();
@@ -274,6 +297,7 @@ namespace Game.Player
 
         private void OnModuleHit(Hazard hazard)
         {
+            PlayHit();
             Hit?.Invoke(hazard);
         }
     }

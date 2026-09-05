@@ -73,6 +73,16 @@ namespace Game.Player
             CooldownRemaining = 0f;
         }
 
+        public void CancelJump()
+        {
+            if (!IsAirborne)
+                return;
+
+            IsAirborne = false;
+            elapsed = 0f;
+            SetY(baseY);
+        }
+
         public bool TryJump()
         {
             if (!CanJump)

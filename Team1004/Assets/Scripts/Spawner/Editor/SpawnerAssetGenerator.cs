@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Game.Animation;
+using Game.Animation.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,6 +10,17 @@ namespace Game.Spawner.Editor
 {
     public static class SpawnerAssetGenerator
     {
+        private static readonly string[] RockArtPaths =
+        {
+            ObjectArtPostprocessor.ArtFolder + "/돌1.png",
+            ObjectArtPostprocessor.ArtFolder + "/돌 2.png"
+        };
+
+        private static readonly string[] LogArtPaths =
+        {
+            ObjectArtPostprocessor.ArtFolder + "/통나무.png"
+        };
+
         private const string PlaceholderFolder = "Assets/GameAssets/Placeholder";
         private const string ObstacleFolder = "Assets/GameAssets/Obstacles";
         private const string DesignFolder = "Assets/GameAssets/Design/Spawner";
@@ -52,6 +65,9 @@ namespace Game.Spawner.Editor
             EnsureFolder(ObstacleDefinitionFolder);
             EnsureFolder(PatternFolder);
 
+            EnsureObjectArt();
+            EnsureObstacleClips();
+
             var square = EnsureSprite("Square");
             var obstacleSpecs = SpawnerDefaults.CreateObstacles();
             var definitions = new Dictionary<string, ObstacleDefinition>(StringComparer.Ordinal);
@@ -63,7 +79,7 @@ namespace Game.Spawner.Editor
             for (var i = 0; i < obstacleSpecs.Count; i++)
             {
                 var spec = obstacleSpecs[i];
-                var prefab = EnsurePrefab(spec, square, ColorFor(spec.Id), overwrite);
+                var prefab = EnsurePrefab(spec, square, overwrite);
                 var definition = EnsureAsset<ObstacleDefinition>(
                     ObstacleDefinitionFolder + "/" + spec.Id + ".asset",
                     overwrite,
@@ -181,7 +197,7 @@ namespace Game.Spawner.Editor
             return asset;
         }
 
-        private static GameObject EnsurePrefab(ObstacleSpec spec, Sprite sprite, Color color, bool overwrite)
+        private static GameObject EnsurePrefab(ObstacleSpec spec, Sprite square, bool overwrite)
         {
             var path = ObstacleFolder + "/" + spec.Id + ".prefab";
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -196,32 +212,84 @@ namespace Game.Spawner.Editor
                 var height = spec.LaneSpan * LaneWidth;
                 var visualHeight = Mathf.Max(0.2f, height - VisualHeightInset);
                 var colliderHeight = Mathf.Max(0.1f, height - ColliderHeightInset);
-                var spriteSize = sprite != null ? (Vector2)sprite.bounds.size : Vector2.one;
-
-                if (spriteSize.x <= 0f)
-                    spriteSize.x = 1f;
-
-                if (spriteSize.y <= 0f)
-                    spriteSize.y = 1f;
 
                 var renderer = root.AddComponent<SpriteRenderer>();
-                renderer.sprite = sprite;
-                renderer.color = color;
                 renderer.sortingOrder = 5;
-
-                root.transform.localScale = new Vector3(spec.BodyLength / spriteSize.x, visualHeight / spriteSize.y, 1f);
 
                 var collider = root.AddComponent<BoxCollider2D>();
                 collider.isTrigger = true;
-                collider.size = new Vector2(
-                    spec.CollisionLength / spec.BodyLength * spriteSize.x,
-                    colliderHeight / visualHeight * spriteSize.y);
+                collider.offset = Vector2.zero;
+
+                var artPaths = ArtPathsFor(spec.Id);
+                var artSprites = LoadSprites(artPaths);
+                var variants = LoadSprites(VariantPathsFor(spec.Id));
+
+                if (artSprites.Length > 0 && TryArtSizePixels(spec.Id, out var alphaSize))
+                {
+                    var scale = ObstacleVisual.UniformScale(spec, alphaSize.x, alphaSize.y);
+                    var artSize = ObstacleVisual.VisualWorldSize(spec, alphaSize.x, alphaSize.y);
+                    var artHeight = artSize.y;
+                    var heightBudget = spec.FitAxis == ObstacleFitAxis.Height ? height : visualHeight;
+
+                    renderer.sprite = artSprites[0];
+                    renderer.color = Color.white;
+                    root.transform.localScale = new Vector3(scale, scale, 1f);
+                    var artCollisionHeight = artHeight * ObstacleVisual.HitboxScale;
+                    collider.size = ObstacleVisual.LocalSize(scale, spec.CollisionLength, spec.CollisionHeight);
+
+                    if (Mathf.Abs(artCollisionHeight - spec.CollisionHeight) > 0.02f)
+                        Debug.LogWarning("[SpawnerAssetGenerator] " + spec.Id + " 충돌 높이 " + spec.CollisionHeight.ToString("0.000") +
+                                         "가 아트 높이 × " + ObstacleVisual.HitboxScale.ToString("0.00") + " = " +
+                                         artCollisionHeight.ToString("0.000") + "와 다르다.");
+
+                    if (Mathf.Abs(artSize.x - spec.BodyLength) > 0.02f)
+                        Debug.LogWarning("[SpawnerAssetGenerator] " + spec.Id + " 몸길이 " + spec.BodyLength.ToString("0.000") +
+                                         "가 아트에서 나온 가로 " + artSize.x.ToString("0.000") + "와 다르다.");
+
+                    if (artHeight > heightBudget + 0.001f)
+                        Debug.LogWarning("[SpawnerAssetGenerator] " + spec.Id + " 아트 높이 " + artHeight.ToString("0.000") +
+                                         "가 레인 표시 높이 " + heightBudget.ToString("0.000") + "를 넘는다. 아트나 몸길이를 조정해야 한다.");
+                }
+                else
+                {
+                    var spriteSize = square != null ? (Vector2)square.bounds.size : Vector2.one;
+
+                    if (spriteSize.x <= 0f)
+                        spriteSize.x = 1f;
+
+                    if (spriteSize.y <= 0f)
+                        spriteSize.y = 1f;
+
+                    renderer.sprite = square;
+                    renderer.color = ColorFor(spec.Id);
+                    root.transform.localScale = new Vector3(spec.BodyLength / spriteSize.x, visualHeight / spriteSize.y, 1f);
+                    collider.size = new Vector2(
+                        spec.CollisionLength / spec.BodyLength * spriteSize.x,
+                        colliderHeight / visualHeight * spriteSize.y);
+                }
 
                 var thing = root.AddComponent<ObstacleThing>();
                 var serialized = new SerializedObject(thing);
                 var kind = serialized.FindProperty("kind");
                 if (kind != null)
                     kind.stringValue = spec.Id;
+
+                var visual = serialized.FindProperty("visual");
+                if (visual != null)
+                    visual.objectReferenceValue = renderer;
+
+                var variantsProperty = serialized.FindProperty("variants");
+                if (variantsProperty != null)
+                {
+                    variantsProperty.arraySize = variants.Length;
+
+                    for (var i = 0; i < variants.Length; i++)
+                        variantsProperty.GetArrayElementAtIndex(i).objectReferenceValue = variants[i];
+                }
+
+                var swimClip = serialized.FindProperty("swimClip");
+                if (swimClip != null)
+                    swimClip.objectReferenceValue = ClipFor(spec.Id);
 
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
@@ -231,6 +299,121 @@ namespace Game.Spawner.Editor
             {
                 UnityEngine.Object.DestroyImmediate(root);
             }
+        }
+
+        private static void EnsureObjectArt()
+        {
+            var groups = new[] { RockArtPaths, LogArtPaths, FishArtPaths() };
+
+            for (var group = 0; group < groups.Length; group++)
+            {
+                var paths = groups[group];
+
+                for (var i = 0; i < paths.Length; i++)
+                {
+                    if (AssetDatabase.LoadAssetAtPath<Texture2D>(paths[i]) == null)
+                    {
+                        Debug.LogWarning("[SpawnerAssetGenerator] 오브젝트 아트가 없다: " + paths[i] +
+                                         ". 해당 장애물은 Placeholder 사각형으로 만든다.");
+                        continue;
+                    }
+
+                    if (AssetDatabase.LoadAssetAtPath<Sprite>(paths[i]) != null)
+                        continue;
+
+                    ObjectArtPostprocessor.Reimport(paths[i]);
+                }
+            }
+        }
+
+        private static void EnsureObstacleClips()
+        {
+            var definitions = ObstacleClipTable.All;
+
+            for (var i = 0; i < definitions.Count; i++)
+            {
+                if (AssetDatabase.LoadAssetAtPath<CustomAnimation>(definitions[i].AssetPath) != null)
+                    continue;
+
+                AnimationAssetGenerator.Generate();
+                return;
+            }
+        }
+
+        private static string[] FishArtPaths()
+        {
+            var frames = AnimationAssetGenerator.GetFramePaths(ObstacleClipTable.Fish);
+            var paths = new string[frames.Count];
+
+            for (var i = 0; i < frames.Count; i++)
+                paths[i] = frames[i];
+
+            return paths;
+        }
+
+        private static string[] ArtPathsFor(string obstacleId)
+        {
+            switch (obstacleId)
+            {
+                case SpawnerDefaults.RockId: return RockArtPaths;
+                case SpawnerDefaults.LogId: return LogArtPaths;
+                case SpawnerDefaults.FishId: return FishArtPaths();
+                default: return Array.Empty<string>();
+            }
+        }
+
+        private static string[] VariantPathsFor(string obstacleId)
+        {
+            switch (obstacleId)
+            {
+                case SpawnerDefaults.RockId: return RockArtPaths;
+                case SpawnerDefaults.LogId: return LogArtPaths;
+                default: return Array.Empty<string>();
+            }
+        }
+
+        private static CustomAnimation ClipFor(string obstacleId)
+        {
+            if (obstacleId != SpawnerDefaults.FishId)
+                return null;
+
+            var path = ObstacleClipTable.Fish.AssetPath;
+            var clip = AssetDatabase.LoadAssetAtPath<CustomAnimation>(path);
+
+            if (clip == null)
+                Debug.LogWarning("[SpawnerAssetGenerator] 장애물 클립이 없다: " + path +
+                                 ". 'Team1004/Generate Animation Assets'를 먼저 돌린다.");
+
+            return clip;
+        }
+
+        private static Sprite[] LoadSprites(string[] paths)
+        {
+            var sprites = new List<Sprite>(paths.Length);
+
+            for (var i = 0; i < paths.Length; i++)
+            {
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(paths[i]);
+
+                if (sprite != null)
+                    sprites.Add(sprite);
+                else
+                    Debug.LogWarning("[SpawnerAssetGenerator] 오브젝트 아트 스프라이트를 찾지 못했다: " + paths[i]);
+            }
+
+            return sprites.ToArray();
+        }
+
+        private static bool TryArtSizePixels(string obstacleId, out Vector2 sizePixels)
+        {
+            var paths = ArtPathsFor(obstacleId);
+
+            for (var i = 0; i < paths.Length; i++)
+                if (ObjectArtPostprocessor.TryGetAlphaSizePixels(paths[i], out sizePixels))
+                    return true;
+
+            sizePixels = Vector2.zero;
+            return false;
         }
 
         private static Sprite EnsureSprite(string name)

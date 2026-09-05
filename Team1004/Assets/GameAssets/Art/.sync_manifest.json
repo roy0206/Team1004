@@ -1,11 +1,11 @@
 {
   "물고기 애니메이팅/기본/물고기 기본-1.png": {
     "id": "1BQ0SsMxTaFG_2j-sOqoVN7mXkdbIYXVb",
-    "sha256": "133b130f7f50b3d2660da48df50de2c44c0fc67a223204448dbd4527f7e840cc"
+    "sha256": "3151ea8c67c235a6e0f4f6a80626ba33f9b61e65f1101723afbd5477e6eb758e"
   },
   "물고기 애니메이팅/기본/물고기 기본-2.png": {
     "id": "1ywtPYlfXLmX3X7ViXFNmbcqdis_FuUBs",
-    "sha256": "4d9f33842fb7862e50fc34504ce9ad40168a13eed90c14eb9d230c5918b44c3b"
+    "sha256": "810076d5d2e6c53ff3c240d6bf6e7f48270656aa495791fda171dedc42807af2"
   },
   "물고기 애니메이팅/내려가기/물고기 내려가기 -1.png": {
     "id": "1M0ATIaJVyxLLzVFbia8ijemsKd3WPflX",
@@ -42,5 +42,29 @@
   "물고기 애니메이팅/점프/물고기 점프-5.png": {
     "id": "16yzZxcZGc1SDaBV7ycOLTkZr2MCjgjie",
     "sha256": "af8d9cf317036e9550664d40487b91b96270673b85ea4d3c3a19709c499cbae6"
+  },
+  "물고기 애니메이팅/충돌/충돌.png": {
+    "id": "1hls93vtxJlyz4mbFbUCvlJkjdjDQFiAp",
+    "sha256": "d5eef87e4c8eca6312700507667fdbad185c5ae2a84390534b0400b59f7aea90"
+  },
+  "오브젝트/장애물 물고기/장애물 물고기1.png": {
+    "id": "1LhJTLnQehhZaW0C6N6_L-Sh6Wkjg2GuO",
+    "sha256": "76f1af8c97125f3bec1f6cbb742625fb03e9e89b3a74db16ec845cd8be313f38"
+  },
+  "오브젝트/장애물 물고기/장애물 물고기2.png": {
+    "id": "1xsfObzVdDnsSEsss6zzxsf7sBQY9mDyS",
+    "sha256": "d9e62cabab311651f99960faeb8032e769b169aa5d23847de5f72fdc3120cf6f"
+  },
+  "오브젝트/돌 2.png": {
+    "id": "1haqk0qDk2nsOKdEi0f-r-BofVnrJhWYF",
+    "sha256": "28d22b4321ab858412262f26a336fc6bfa53e7de095f1cb7161a84b82efd60f2"
+  },
+  "오브젝트/돌1.png": {
+    "id": "1ihvn0BuFwwDZE3VK4Jpb_lnihZiFfNBU",
+    "sha256": "28d22b4321ab858412262f26a336fc6bfa53e7de095f1cb7161a84b82efd60f2"
+  },
+  "오브젝트/통나무.png": {
+    "id": "1ZUiALgSV6EdToQpLRDTYFBmlqQM7bNFD",
+    "sha256": "5ede6d82a975f81ac78443e0e99ab043f2067eb55cc28be7ee49a796042af529"
   }
 }

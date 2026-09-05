@@ -56,6 +56,43 @@ namespace Game.Animation.Tests
         }
 
         [Test]
+        public void MatchesNameWithoutDash()
+        {
+            Assert.IsTrue(SalmonFrameMatcher.TryGetFrameIndex("장애물 물고기", "장애물 물고기1.png", out var first));
+            Assert.AreEqual(1, first);
+
+            Assert.IsTrue(SalmonFrameMatcher.TryGetFrameIndex("장애물 물고기", "장애물 물고기2.png", out var second));
+            Assert.AreEqual(2, second);
+        }
+
+        [Test]
+        public void MatchesNameWithSpaceButNoDash()
+        {
+            Assert.IsTrue(SalmonFrameMatcher.TryGetFrameIndex("장애물 물고기", "장애물 물고기 3.png", out var index));
+            Assert.AreEqual(3, index);
+        }
+
+        [Test]
+        public void RejectsLongerPrefixWordWithoutDash()
+        {
+            Assert.IsFalse(SalmonFrameMatcher.TryGetFrameIndex("장애물 물고기", "장애물 물고기알1.png", out _));
+        }
+
+        [Test]
+        public void FindFramePicksDashlessNames()
+        {
+            var names = new List<string>
+            {
+                "장애물 물고기2.png",
+                "장애물 물고기1.png"
+            };
+
+            Assert.AreEqual("장애물 물고기1.png", SalmonFrameMatcher.FindFrame(names, "장애물 물고기", 1));
+            Assert.AreEqual("장애물 물고기2.png", SalmonFrameMatcher.FindFrame(names, "장애물 물고기", 2));
+            Assert.IsNull(SalmonFrameMatcher.FindFrame(names, "장애물 물고기", 3));
+        }
+
+        [Test]
         public void RejectsMissingIndex()
         {
             Assert.IsFalse(SalmonFrameMatcher.TryGetFrameIndex("물고기 점프", "물고기 점프.png", out _));
@@ -90,6 +127,20 @@ namespace Game.Animation.Tests
         }
 
         [Test]
+        public void FindSingleFrameTakesTheExactName()
+        {
+            var names = new List<string> { "충돌.png" };
+
+            Assert.IsTrue(SalmonFrameMatcher.IsSingleFrame("충돌", "충돌.png"));
+            Assert.IsTrue(SalmonFrameMatcher.IsSingleFrame("충돌", "충돌"));
+            Assert.IsFalse(SalmonFrameMatcher.IsSingleFrame("충돌", "충돌-1.png"));
+            Assert.IsFalse(SalmonFrameMatcher.IsSingleFrame("충돌", "충돌하기.png"));
+            Assert.AreEqual("충돌.png", SalmonFrameMatcher.FindSingleFrame(names, "충돌"));
+            Assert.IsNull(SalmonFrameMatcher.FindSingleFrame(names, "물고기 기본"));
+            Assert.IsNull(SalmonFrameMatcher.FindSingleFrame(null, "충돌"));
+        }
+
+        [Test]
         public void FindFrameHandlesEmptyInput()
         {
             Assert.IsNull(SalmonFrameMatcher.FindFrame(null, "물고기 기본", 1));
@@ -101,10 +152,34 @@ namespace Game.Animation.Tests
     public sealed class SalmonClipTableTests
     {
         [Test]
-        public void TableHasFourClips()
+        public void TableHasFiveClips()
         {
-            Assert.AreEqual(4, SalmonClipTable.All.Count);
-            Assert.AreEqual(11, SalmonClipTable.TotalFrameCount);
+            Assert.AreEqual(5, SalmonClipTable.All.Count);
+            Assert.AreEqual(12, SalmonClipTable.TotalFrameCount);
+        }
+
+        [Test]
+        public void HitIsOneHeldFrame()
+        {
+            Assert.AreEqual("Player_Hit", SalmonClipTable.Hit.AssetName);
+            Assert.AreEqual("충돌", SalmonClipTable.Hit.FolderName);
+            Assert.AreEqual("충돌", SalmonClipTable.Hit.FramePrefix);
+            Assert.AreEqual(1, SalmonClipTable.Hit.FrameCount);
+            Assert.IsFalse(SalmonClipTable.Hit.Loop);
+            Assert.AreEqual(FlipbookClipDuration.FromFrames, SalmonClipTable.Hit.DurationSource);
+            Assert.AreEqual(
+                0f,
+                AnimationAssetGenerator.ResolveDuration(SalmonClipTable.Hit, AnimationAssetGenerator.LoadConfigValues()),
+                1e-4f);
+        }
+
+        [Test]
+        public void HitFramePathIsTheDashlessSingleFile()
+        {
+            var paths = AnimationAssetGenerator.GetFramePaths(SalmonClipTable.Hit);
+
+            Assert.AreEqual(1, paths.Count);
+            Assert.AreEqual(AnimationAssetGenerator.ArtFolder + "/충돌/충돌.png", paths[0]);
         }
 
         [Test]
@@ -131,27 +206,31 @@ namespace Game.Animation.Tests
             Assert.IsFalse(SalmonClipTable.LaneUp.Loop);
             Assert.IsFalse(SalmonClipTable.LaneDown.Loop);
             Assert.IsFalse(SalmonClipTable.Jump.Loop);
+            Assert.IsFalse(SalmonClipTable.Hit.Loop);
         }
 
         [Test]
         public void DurationSourcesMatchConfig()
         {
-            Assert.AreEqual(SalmonClipDuration.FromFrames, SalmonClipTable.Swim.DurationSource);
-            Assert.AreEqual(SalmonClipDuration.LaneMove, SalmonClipTable.LaneUp.DurationSource);
-            Assert.AreEqual(SalmonClipDuration.LaneMove, SalmonClipTable.LaneDown.DurationSource);
-            Assert.AreEqual(SalmonClipDuration.Jump, SalmonClipTable.Jump.DurationSource);
+            Assert.AreEqual(FlipbookClipDuration.FromFrames, SalmonClipTable.Swim.DurationSource);
+            Assert.AreEqual(FlipbookClipDuration.LaneMove, SalmonClipTable.LaneUp.DurationSource);
+            Assert.AreEqual(FlipbookClipDuration.LaneMove, SalmonClipTable.LaneDown.DurationSource);
+            Assert.AreEqual(FlipbookClipDuration.Jump, SalmonClipTable.Jump.DurationSource);
+            Assert.AreEqual(FlipbookClipDuration.FromFrames, SalmonClipTable.Hit.DurationSource);
 
             var config = AnimationAssetGenerator.LoadConfigValues();
             Assert.AreEqual(0f, AnimationAssetGenerator.ResolveDuration(SalmonClipTable.Swim, config), 1e-4f);
             Assert.AreEqual(config.LaneMoveDuration, AnimationAssetGenerator.ResolveDuration(SalmonClipTable.LaneUp, config), 1e-4f);
             Assert.AreEqual(config.LaneMoveDuration, AnimationAssetGenerator.ResolveDuration(SalmonClipTable.LaneDown, config), 1e-4f);
             Assert.AreEqual(config.JumpDuration, AnimationAssetGenerator.ResolveDuration(SalmonClipTable.Jump, config), 1e-4f);
+            Assert.AreEqual(0f, AnimationAssetGenerator.ResolveDuration(SalmonClipTable.Hit, config), 1e-4f);
         }
 
         [Test]
         public void FindReturnsDefinitionByName()
         {
             Assert.AreSame(SalmonClipTable.Jump, SalmonClipTable.Find("Player_Jump"));
+            Assert.AreSame(SalmonClipTable.Hit, SalmonClipTable.Find("Player_Hit"));
             Assert.IsNull(SalmonClipTable.Find("Player_Idle"));
         }
     }

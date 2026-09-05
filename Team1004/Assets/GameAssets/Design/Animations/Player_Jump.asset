@@ -20,5 +20,5 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 1969c00c98776dd4d8d9de57f506b6a9, type: 3}
   framesPerSecond: 12
   loop: 0
-  duration: 0.8
+  duration: 1.6
   events: []

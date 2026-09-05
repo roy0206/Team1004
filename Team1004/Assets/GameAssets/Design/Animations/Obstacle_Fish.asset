@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce727e03ab8bca64fa100ad2642f4312, type: 3}
+  m_Name: Obstacle_Fish
+  m_EditorClassIdentifier: Game.Animation::Game.Animation.CustomAnimation
+  frames:
+  - {fileID: 21300000, guid: 84f698fbc4a714c43a45ffe2dd28d624, type: 3}
+  - {fileID: 21300000, guid: 4ea421259240d72488f6bb313aa7317f, type: 3}
+  framesPerSecond: 6
+  loop: 1
+  duration: 0
+  events: []

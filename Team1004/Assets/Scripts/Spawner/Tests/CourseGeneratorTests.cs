@@ -186,6 +186,90 @@ namespace Game.Spawner.Tests
         }
 
         [Test]
+        public void DefaultProfile_HasNoSectionSpeedMultiplier()
+        {
+            for (var section = 0; section < profile.SectionCount; section++)
+            {
+                var sectionProfile = profile.GetSection(section);
+
+                for (var i = 0; i <= 10; i++)
+                    Assert.AreEqual(1f, sectionProfile.Sample(i / 10f).SpeedMultiplier, 0.0001f,
+                        "Section " + section + " must not scale the obstacle approach speed (기획자 답변 4).");
+            }
+        }
+
+        [Test]
+        public void DefaultProfile_UsesTheDesignReactionMargins()
+        {
+            var expected = new[] { 1.3f, 1.0f, 0.8f, 1.3f };
+
+            for (var section = 0; section < expected.Length; section++)
+            {
+                var sectionProfile = profile.GetSection(section);
+
+                for (var i = 0; i <= 10; i++)
+                    Assert.AreEqual(expected[section], sectionProfile.Sample(i / 10f).MinReactionMargin, 0.0001f,
+                        "Section " + section + " reaction margin target (기획자 답변 5).");
+            }
+        }
+
+        [Test]
+        public void GeneratedCourses_ApproachTheDesignObstacleRatio()
+        {
+            var ids = new[] { SpawnerDefaults.RockId, SpawnerDefaults.FishId, SpawnerDefaults.LogId };
+            var targets = new[] { 0.5f, 0.3f, 0.2f };
+            var counts = new int[ids.Length];
+            var total = 0;
+
+            for (var section = 0; section < SpawnerDefaults.SectionCount; section++)
+            {
+                for (var seed = 1; seed <= SeedsPerSection; seed++)
+                {
+                    var result = runner.RunSeconds(section, SpawnerDefaults.GetSectionDuration(section), seed);
+
+                    foreach (var placement in result.Placements)
+                    {
+                        foreach (var obstacle in placement.Obstacles)
+                        {
+                            for (var i = 0; i < ids.Length; i++)
+                            {
+                                if (obstacle.Spec.Id != ids[i])
+                                    continue;
+
+                                counts[i]++;
+                                total++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Assert.Greater(total, 0, "No obstacle was spawned.");
+
+            for (var i = 0; i < ids.Length; i++)
+                Assert.AreEqual(targets[i], counts[i] / (float)total, 0.07f,
+                    ids[i] + " 등장 비율이 돌 5 : 물고기 3 : 통나무 2에서 벗어났다 (" + counts[i] + "/" + total + ").");
+        }
+
+        [Test]
+        public void GeneratedCourses_OnlyPutRocksInTheBottomLane()
+        {
+            for (var section = 0; section < SpawnerDefaults.SectionCount; section++)
+            {
+                for (var seed = 1; seed <= SeedsPerSection; seed++)
+                {
+                    var result = runner.RunSeconds(section, SpawnerDefaults.GetSectionDuration(section), seed);
+
+                    foreach (var placement in result.Placements)
+                        foreach (var obstacle in placement.Obstacles)
+                            if (obstacle.Spec.Id == SpawnerDefaults.RockId)
+                                Assert.AreEqual((int)Lane.Bottom, obstacle.StartLane,
+                                    "Section " + section + " seed " + seed + ": 돌이 맨 아랫줄이 아닌 곳에 나왔다.");
+                }
+            }
+        }
+
+        [Test]
         public void DefaultGapCurves_StayInsideDesignCandidateRanges()
         {
             var ranges = new[] { new[] { 2.0f, 2.5f }, new[] { 1.6f, 2.0f }, new[] { 1.3f, 1.7f }, new[] { 2.5f, 3.0f } };

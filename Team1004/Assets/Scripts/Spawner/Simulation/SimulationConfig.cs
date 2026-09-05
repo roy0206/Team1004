@@ -6,12 +6,12 @@ namespace Game.Spawner
     {
         public int LaneCount { get; set; } = 3;
         public float PlayerX { get; set; } = -4.2f;
-        public float PlayerHalfWidth { get; set; } = 0.35f;
+        public float PlayerHalfWidth { get; set; } = SpawnerDefaults.PlayerHalfWidth;
         public float ScreenRightX { get; set; } = 6.4f;
         public float ScreenLeftX { get; set; } = -6.4f;
         public float ScrollSpeed { get; set; } = 4f;
         public float LaneMoveDuration { get; set; } = 0.2f;
-        public float JumpDuration { get; set; } = 0.8f;
+        public float JumpDuration { get; set; } = SpawnerDefaults.JumpDurationSeconds;
         public float JumpCooldown { get; set; } = 1.2f;
         public float TickSeconds { get; set; } = 0.05f;
         public float SafetyPadding { get; set; } = 0.1f;

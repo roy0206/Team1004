@@ -17,6 +17,7 @@ namespace Game.Spawner
         private readonly List<int> candidateBuffer = new List<int>();
         private readonly List<float> weightBuffer = new List<float>();
         private readonly StateSet scratch;
+        private readonly ObstacleMix mix;
 
         private DeterministicRandom random;
         private float lastBlockEnd;
@@ -57,6 +58,7 @@ namespace Game.Spawner
             this.seed = seed;
             layout = StateLayout.From(config);
             scratch = new StateSet(layout);
+            mix = ObstacleMix.FromPatterns(this.patterns);
             Stats = new GenerationStats();
             BeginSection(0);
         }
@@ -73,6 +75,7 @@ namespace Game.Spawner
         public IReadOnlyList<PatternPlacement> Placements => placements;
         public IReadOnlyList<PatternSpec> Patterns => patterns;
         public IReadOnlyList<PatternAnalysis> Analyses => analyses;
+        public ObstacleMix Mix => mix;
 
         public void BeginSection(int sectionIndex)
         {
@@ -88,6 +91,7 @@ namespace Game.Spawner
             minArrivalTime = config.SectionStartGrace;
             NextDecisionTime = 0f;
             SpawnStopped = false;
+            mix.Reset();
             Stats = new GenerationStats();
         }
 
@@ -212,6 +216,12 @@ namespace Game.Spawner
                 if (weight <= 0f)
                     continue;
 
+                if (!jumpRequired)
+                    weight *= mix.Multiplier(patterns[i]);
+
+                if (weight <= 0f)
+                    continue;
+
                 candidateBuffer.Add(i);
                 weightBuffer.Add(weight);
             }
@@ -279,6 +289,7 @@ namespace Game.Spawner
                 active.Add(placement.Obstacles[i]);
 
             placements.Add(placement);
+            mix.Record(placement);
 
             lastBlockEnd = hasLastBlockEnd ? Math.Max(lastBlockEnd, placement.LastBlockEnd) : placement.LastBlockEnd;
             hasLastBlockEnd = true;

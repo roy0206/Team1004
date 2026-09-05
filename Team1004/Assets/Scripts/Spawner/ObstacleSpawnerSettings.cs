@@ -10,7 +10,7 @@ namespace Game.Spawner
         [SerializeField] private DifficultyCurve difficulty;
         [SerializeField] private float screenRightX = 6.4f;
         [SerializeField] private float screenLeftX = -6.4f;
-        [SerializeField, Min(0f)] private float playerHalfWidth = 0.35f;
+        [SerializeField, Min(0f)] private float playerHalfWidth = SpawnerDefaults.PlayerHalfWidth;
         [SerializeField, Min(0.01f)] private float tickSeconds = 0.05f;
         [SerializeField, Min(0f)] private float safetyPadding = 0.1f;
         [SerializeField, Min(0f)] private float minJumpPatternGap = 2f;
