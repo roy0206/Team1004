@@ -1,4 +1,84 @@
 {
+  "정리 1번/4번 정리/00_README_전체목차.md": {
+    "id": "1dEXxGgqm_TDJtyqxbDPrnT-T0kxMwbq2",
+    "sha256": "bc0e508b23230ec60fdec5b6838e5a752823d7028c5d52c05750565004f4cebb"
+  },
+  "정리 1번/4번 정리/01_게임개요_핵심주제.md": {
+    "id": "1XxhR9pGr0rFXMlLow-dq7q_eJWSgj_-4",
+    "sha256": "def1cbcbde3ddd7d592061eb43c1cee22d306aea4142b1a01131e82b112a9a6e"
+  },
+  "정리 1번/4번 정리/03_플레이어조작_레인이동_점프.md": {
+    "id": "1pzvBGRrlXw6mSMVwIeQwvqY21NHwrvxN",
+    "sha256": "e815d38ad920f124ea284cf84a719aae486596a0b9ff9f4935e677c61c7d5466"
+  },
+  "정리 1번/4번 정리/04_물흐름_화면진행_카메라.md": {
+    "id": "1kO6ssBF3JhwlqwdToaC8rTPdysBjGOMo",
+    "sha256": "7d93e6d224230cb32af8273a1080841cf6000109419185676207cf50db7ac5dd"
+  },
+  "정리 1번/4번 정리/05_일반장애물.md": {
+    "id": "1w7I1ynnrIkzDurOJtSPGHtaviQHEMf0V",
+    "sha256": "84d17798031cae2afb67e876fd8045c3143d73bfa087697eff145e6bc81ae168"
+  },
+  "정리 1번/4번 정리/06_일반구간_난이도_스폰.md": {
+    "id": "1Lxw1o2iMw34UkYbp00wQIlG9EB9AB7h5",
+    "sha256": "f57f3d5089b956b36a7e7ac952324f7d58fb3090edc3c7731344760178e37f40"
+  },
+  "정리 1번/4번 정리/07_보스전_공통규칙.md": {
+    "id": "1vJzWWjZjGMLZneamQJtJys10hPrGU-OM",
+    "sha256": "f68f1b4fe14292cac3361606dfc06bd1a428be23ea5c6a402c561f4d2da4f854"
+  },
+  "정리 1번/4번 정리/08_보스1_낚싯줄.md": {
+    "id": "1LbrzzQCLWLGyOtNdUtAjf0nktTOOoXwm",
+    "sha256": "be728fce76c0b570e1d2db3d15bdf2b965a05eb6ebf32b7a9a6544acc9ec70ee"
+  },
+  "정리 1번/4번 정리/09_보스2_바다코끼리.md": {
+    "id": "1vEah9jVHxBL4F5ThE1o5WAmOOcoJ3vrF",
+    "sha256": "eca1935b97e7eb947a2877e462fc5fd75bb297723c3e2d1b33582a200e73b08b"
+  },
+  "정리 1번/4번 정리/10_보스3_폭포.md": {
+    "id": "1h5MQX53SUO_Vt0yvPzUon7CKD87RlGFS",
+    "sha256": "9efd78650e4bad900e2b9563fdfa88882c091912fdfac21781cb2bc194306faf"
+  },
+  "정리 1번/4번 정리/11_UI_UX_히트박스_조작안내.md": {
+    "id": "1r0F177H8dxxlGlLH5Q_IznIjY_iTPa1F",
+    "sha256": "2995556ba8cd186f1fd7d056eb6d8542c4ca29a866443c5ca2e05eb097d7258e"
+  },
+  "정리 1번/4번 정리/12_실패_재시작_체크포인트.md": {
+    "id": "1ivYq60eMDIOuQICOeOcpJdg4L6CcBTwD",
+    "sha256": "b2d2cb349d5584c889b5f6e24530f946f07fd3ace329d24955f94b29365bc606"
+  },
+  "정리 1번/4번 정리/13_스토리_컷신_테마_현재상태.md": {
+    "id": "17AEutGw-E1XIfbfas9sQRFl2rKF9ZWjl",
+    "sha256": "1e700a5667659175d686aa37dc468f8fa8ca1ecb426d3341523f9dc69902fa98"
+  },
+  "정리 1번/4번 정리/14_그래픽_사운드_연출.md": {
+    "id": "1zx8Ipvwvx1-8UrVuqMMr2-MUeUgegita",
+    "sha256": "cf8ba282b3b13ce049d4fe01a87f9a4a350a8fd757c8da5f25f5c6520fdcda23"
+  },
+  "정리 1번/4번 정리/15_Claude_구현규칙_데이터구조.md": {
+    "id": "1QDs7-yAdEVE150LWXXnV4V8X5Ud3_CD2",
+    "sha256": "5bd332ef4fd24537c422470f54c6bab486920f8cd392dfe2205eb371510e5ab2"
+  },
+  "정리 1번/4번 정리/16_미확정_검토중_아이디어.md": {
+    "id": "17imlINOUFWe4ZIJSTbcQ6vI-UN3MwzkC",
+    "sha256": "dcda57deb971c7dc1e7b1461c68bcc40f69df069c2df319dca95f4c59699549f"
+  },
+  "정리 1번/4번 정리/17_현재_남은기획_체크리스트.md": {
+    "id": "1cLV6oj6c7TqDHE_y9oa1c5nbli1T_i3Q",
+    "sha256": "912748718f0358ce11a62c76283483029feaaa2967085240b726212b407bba75"
+  },
+  "정리 1번/1번 정리.pdf": {
+    "id": "1uhdoYwfBE4f1UwHYloUWe1W5oUM280G5",
+    "sha256": "4efce656fac7f7394e0e49959992bdb99faabb42c743bac6070d369f4ac62b25"
+  },
+  "정리 1번/2번 정리.md": {
+    "id": "18RpX8szMAlbv8ooMs-gH4iAcTNM4mL1C",
+    "sha256": "6e13fbbc80afd2412ecefb7341be4d11fab029349d242f7bd965efd455c6624a"
+  },
+  "정리 1번/3번 정리.md": {
+    "id": "1yrETQ4kpwLspRW328OdF7v6zL5jT7xkC",
+    "sha256": "7116fd7fef022ea03b86e413d4e6b388d0e52b0a0b89d937d8b8c3ac898f8fe5"
+  },
   "Test.txt": {
     "id": "1owZD3tk-xPJNsONbXDRhTBm_OqYhva6v",
     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
