@@ -48,7 +48,8 @@ namespace Game.Bootstrap.Editor
         private const string SquareSpritePath = PlaceholderFolder + "/Square.png";
         private const string CircleSpritePath = PlaceholderFolder + "/Circle.png";
         private const string FontFolder = PlaceholderFolder + "/Fonts";
-        private const string FontPath = FontFolder + "/MonaS12.ttf";
+        private const string FontPath = "Assets/GameAssets/Font/KOTRA HOPE.otf";
+        private const string FallbackFontPath = FontFolder + "/MonaS12.ttf";
         private const string SettingsPanelPrefabPath = UiFolder + "/SettingsPanel.prefab";
         private const string CutsceneDialoguePrefabPath = UiFolder + "/CutsceneDialogue.prefab";
         private const string SpawnerSettingsPath = DesignFolder + "/Spawner/ObstacleSpawnerSettings.asset";
@@ -333,23 +334,28 @@ namespace Game.Bootstrap.Editor
 
         private static Font EnsureFont()
         {
-            if (File.Exists(FontPath))
-            {
-                AssetDatabase.ImportAsset(FontPath);
-                var font = AssetDatabase.LoadAssetAtPath<Font>(FontPath);
-                if (font != null)
-                    return font;
+            var font = LoadFont(FontPath) ?? LoadFont(FallbackFontPath);
+            if (font != null)
+                return font;
 
-                Debug.LogError($"[CoreLoopSetup] Font asset could not be loaded: {FontPath}");
-            }
-            else
-            {
-                Debug.LogError($"[CoreLoopSetup] Font file is missing: {FontPath}. See Assets/GameAssets/Placeholder/Fonts/README.md");
-            }
+            Debug.LogError($"[CoreLoopSetup] Font file is missing: {FontPath} / {FallbackFontPath}. See Assets/GameAssets/Placeholder/Fonts/README.md");
 
             Debug.LogWarning(
                 $"[CoreLoopSetup] Falling back to the builtin font '{BuiltinFontName}'. Korean text will not render.");
             return Resources.GetBuiltinResource<Font>(BuiltinFontName);
+        }
+
+        private static Font LoadFont(string path)
+        {
+            if (!File.Exists(path))
+                return null;
+
+            AssetDatabase.ImportAsset(path);
+            var font = AssetDatabase.LoadAssetAtPath<Font>(path);
+            if (font == null)
+                Debug.LogWarning($"[CoreLoopSetup] Font asset could not be loaded: {path}");
+
+            return font;
         }
 
         private static GameConfigAsset EnsureGameConfig()

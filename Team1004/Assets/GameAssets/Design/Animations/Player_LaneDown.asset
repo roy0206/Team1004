@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce727e03ab8bca64fa100ad2642f4312, type: 3}
-  m_Name: Player_Swim
+  m_Name: Player_LaneDown
   m_EditorClassIdentifier: Game.Animation::Game.Animation.CustomAnimation
   frames:
-  - {fileID: 21300000, guid: 0c496a740abef5943b21725f246c34aa, type: 3}
-  - {fileID: 21300000, guid: d9ff10ae0e4729b4e8a518d70f3ce306, type: 3}
-  framesPerSecond: 6
-  loop: 1
-  duration: 0
+  - {fileID: 21300000, guid: 163a0b5d5ea0e124d924b91c869dba5b, type: 3}
+  - {fileID: 21300000, guid: 1ca5a00f0e8f8fb40897673090982dfa, type: 3}
+  framesPerSecond: 10
+  loop: 0
+  duration: 0.2
   events: []
