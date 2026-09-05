@@ -73,12 +73,36 @@ def fetch(sess, file, source):
     if file.type.startswith("application/vnd.google-apps."):
         return None, None
     extensions = set(e.lower() for e in source.get("extensions", []))
-    if extensions and Path(file.name).suffix.lower() not in extensions:
+    suffix = Path(file.name).suffix.lower()
+    if extensions and suffix and suffix not in extensions:
         return None, None
     resp = sess.get(f"https://drive.google.com/uc?id={file.id}&export=download", timeout=300)
     if resp.status_code != 200 or resp.headers.get("content-type", "").startswith("text/html"):
         raise RuntimeError(f"다운로드 실패 {file.name}")
-    return resp.content, ""
+    if suffix:
+        return resp.content, ""
+    guessed = guess_suffix(resp.content)
+    if extensions and guessed not in extensions:
+        return None, None
+    return resp.content, guessed
+
+
+def guess_suffix(content):
+    if content.startswith(b"%PDF"):
+        return ".pdf"
+    if content[:2] == b"PK":
+        return ".docx"
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        return ""
+    stripped = text.lstrip(chr(0xFEFF) + " " + chr(13) + chr(10) + chr(9))
+    if stripped.startswith("{") or stripped.startswith("["):
+        return ".json"
+    newline = chr(10)
+    if stripped.startswith("#") or (newline + "#") in text or (newline + "- ") in text:
+        return ".md"
+    return ".txt"
 
 
 def move(target, old_key, new_key):
@@ -88,6 +112,7 @@ def move(target, old_key, new_key):
             dst = target / (new_key + suffix)
             dst.parent.mkdir(parents=True, exist_ok=True)
             src.rename(dst)
+    prune_empty_dirs(target, (target / old_key).parent)
 
 
 def remove(target, key):
@@ -95,6 +120,26 @@ def remove(target, key):
         path = target / (key + suffix)
         if path.exists():
             path.unlink()
+    prune_empty_dirs(target, (target / key).parent)
+
+
+def prune_empty_dirs(target, folder):
+    target = target.resolve()
+    try:
+        folder = folder.resolve()
+    except OSError:
+        return
+    while folder != target and target in folder.parents:
+        if not folder.is_dir() or any(folder.iterdir()):
+            return
+        meta = folder.parent / (folder.name + ".meta")
+        try:
+            folder.rmdir()
+        except OSError:
+            return
+        if meta.exists():
+            meta.unlink()
+        folder = folder.parent
 
 
 def sync(source, sess):
