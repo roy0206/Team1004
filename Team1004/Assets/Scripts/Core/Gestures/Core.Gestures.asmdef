@@ -1,0 +1,8 @@
+{
+    "name": "Core.Gestures",
+    "rootNamespace": "",
+    "references": [
+        "Core.Foundation",
+        "Unity.InputSystem"
+    ]
+}

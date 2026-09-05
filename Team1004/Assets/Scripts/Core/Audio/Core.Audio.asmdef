@@ -1,0 +1,12 @@
+{
+    "name": "Core.Audio",
+    "rootNamespace": "",
+    "references": [
+        "Core.Foundation",
+        "Core.Scene"
+    ],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ]
+}

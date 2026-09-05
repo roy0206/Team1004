@@ -1,0 +1,7 @@
+{
+    "name": "Core.Save.PlayerPrefs",
+    "rootNamespace": "",
+    "references": [
+        "Core.Save"
+    ]
+}

@@ -1,0 +1,9 @@
+{
+    "name": "Core.Save",
+    "rootNamespace": "",
+    "references": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ]
+}

@@ -1,0 +1,7 @@
+{
+    "name": "Core.Scene",
+    "rootNamespace": "",
+    "references": [
+        "Core.Foundation"
+    ]
+}

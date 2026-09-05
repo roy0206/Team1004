@@ -1,0 +1,7 @@
+{
+    "name": "Core.Resource",
+    "rootNamespace": "",
+    "references": [
+        "Core.Foundation"
+    ]
+}

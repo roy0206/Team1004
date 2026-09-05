@@ -1,0 +1,19 @@
+{
+  "기획서": {
+    "folder": "https://drive.google.com/drive/folders/1yBEFFhc4zA2d-8_Pkeqinqvmv877cDkw",
+    "subfolder": "Design",
+    "target": "Team1004/Assets/Documents",
+    "extensions": [".md", ".txt", ".pdf", ".docx", ".xlsx", ".csv", ".json"],
+    "google_exports": true,
+    "hook": true,
+    "hint": "변경된 기획서를 읽고 작업을 시작한다. 이전 내용은 git diff로 확인한다."
+  },
+  "아트": {
+    "folder": "https://drive.google.com/drive/folders/1yBEFFhc4zA2d-8_Pkeqinqvmv877cDkw",
+    "subfolder": "Art",
+    "target": "Team1004/Assets/GameAssets/Art",
+    "google_exports": false,
+    "hook": false,
+    "hint": "새 에셋은 에디터에서 임포트 설정을 확인한다."
+  }
+}

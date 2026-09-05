@@ -1,0 +1,7 @@
+{
+    "name": "Core.Audio.Resources",
+    "rootNamespace": "",
+    "references": [
+        "Core.Audio"
+    ]
+}

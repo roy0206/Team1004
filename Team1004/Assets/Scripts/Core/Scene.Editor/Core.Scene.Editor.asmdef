@@ -1,0 +1,10 @@
+{
+    "name": "Core.Scene.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Core.Scene"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

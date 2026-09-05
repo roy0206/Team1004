@@ -1,0 +1,9 @@
+{
+    "name": "Core.Pool",
+    "rootNamespace": "",
+    "references": [
+        "Core.Foundation",
+        "Core.Resource",
+        "Core.Scene"
+    ]
+}

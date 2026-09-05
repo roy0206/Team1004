@@ -1,0 +1,7 @@
+{
+    "name": "Core.Scene.Transition",
+    "rootNamespace": "",
+    "references": [
+        "Core.Scene"
+    ]
+}

@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/Tools/sync_drive.py\" --hook",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/Tools/sync_drive.py\" --hook --min-interval 600 --quiet-if-unchanged",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
