@@ -81,6 +81,38 @@ namespace Game.Cutscene.Tests
             }
         }
 
+        [Test]
+        public void LineCountsMatchTheStory()
+        {
+            AssertLineCount(CutsceneCatalog.Intro, 7);
+            AssertLineCount(CutsceneCatalog.FishingLine, 4);
+            AssertLineCount(CutsceneCatalog.Walrus, 4);
+            AssertLineCount(CutsceneCatalog.Waterfall, 4);
+            AssertLineCount(CutsceneCatalog.Ending, 5);
+        }
+
+        [Test]
+        public void LineIdsAreNumberedInOrder()
+        {
+            var cutscenes = new List<CutsceneBase>();
+            CutsceneCatalog.CreateAll(cutscenes);
+
+            for (var i = 0; i < cutscenes.Count; i++)
+            {
+                var cutscene = cutscenes[i];
+                var lineIds = cutscene.LineIds;
+
+                for (var j = 0; j < lineIds.Count; j++)
+                    Assert.AreEqual($"{cutscene.Id}.{j + 1:00}", lineIds[j]);
+            }
+        }
+
+        private static void AssertLineCount(string cutsceneId, int expected)
+        {
+            Assert.IsTrue(CutsceneCatalog.TryCreate(cutsceneId, out var cutscene), cutsceneId);
+            Assert.AreEqual(expected, cutscene.LineIds.Count, cutsceneId);
+        }
+
         private static bool Contains(IReadOnlyList<string> ids, string id)
         {
             for (var i = 0; i < ids.Count; i++)

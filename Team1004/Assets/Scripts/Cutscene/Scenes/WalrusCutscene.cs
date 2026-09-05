@@ -15,13 +15,16 @@ namespace Game.Cutscene.Scenes
 
         private static readonly Vector2 BossStart = new(CutsceneStageLayout.OffscreenRightX, 0f);
         private static readonly Vector2 BossEnd = new(3.2f, 0f);
-        private static readonly Vector2 StepBack = new(-0.6f, 0f);
-        private static readonly Vector2 StepForward = new(0.6f, 0f);
+        private static readonly Vector2 StepBack = new(-0.9f, 0f);
+        private static readonly Vector2 StepForward = new(0.9f, 0f);
+        private static readonly Vector2 UpstreamOffset = new(1.2f, 0.4f);
 
         private const float ApproachDuration = 2f;
         private const float ShakeDuration = 0.6f;
         private const float ShakeStrength = 0.12f;
         private const float StepBackDuration = 0.6f;
+        private const float HesitationHold = 0.7f;
+        private const float UpstreamPanDuration = 1f;
         private const float StepForwardDuration = 0.5f;
 
         public override string Id => CutsceneCatalog.Walrus;
@@ -38,14 +41,19 @@ namespace Game.Cutscene.Scenes
                 Shake(ShakeDuration, ShakeStrength));
 
             await Say(Line01);
+
             await Move(Player, StepBack, StepBackDuration, Ease.OutQuad, true);
             await Say(Line02);
 
+            await Wait(HesitationHold);
+
             await Together(
-                Move(Player, StepForward, StepForwardDuration, Ease.OutQuad, true),
+                CameraTo(UpstreamOffset, 0f, UpstreamPanDuration, Ease.InOutSine, true),
                 Say(Line03));
 
-            await Say(Line04);
+            await Together(
+                Move(Player, StepForward, StepForwardDuration, Ease.OutQuad, true),
+                Say(Line04));
         }
     }
 }
