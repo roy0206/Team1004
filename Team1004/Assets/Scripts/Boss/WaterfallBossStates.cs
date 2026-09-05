@@ -62,6 +62,7 @@ namespace Game.Boss
 
             KillTweens();
             boss.PlayAttackSfx();
+            boss.ArmLaneHazard();
 
             for (var lane = 0; lane < boss.AttackLaneCount; lane++)
             {
@@ -83,6 +84,7 @@ namespace Game.Boss
 
         protected override void OnAttackEnd(WaterfallBoss boss)
         {
+            boss.DisarmLaneHazard();
             boss.HideTelegraph();
             KillTweens();
             boss.ParkAll();
@@ -112,107 +114,91 @@ namespace Game.Boss
 
     public sealed class WaterfallBreakthroughState : State<WaterfallBoss>
     {
-        private WaterfallBoss boss;
         private Tween tween;
-        private float elapsed;
-        private bool jumped;
-        private bool cueShown;
-        private bool listening;
+        private bool resolved;
 
-        public bool HasJumped => jumped;
+        public bool IsResolved => resolved;
 
         public override void OnEnter(WaterfallBoss boss)
         {
             if (boss.Player != null)
                 boss.Player.ResetJumpCooldown();
 
-            this.boss = boss;
-            elapsed = 0f;
-            jumped = false;
-            cueShown = false;
+            resolved = false;
             boss.HideTelegraph();
             boss.ParkAll();
-            EnterWaterfall(boss);
-
-            if (boss.Player != null)
-            {
-                boss.Player.Jumped += OnPlayerJumped;
-                listening = true;
-            }
+            boss.BeginFinalApproach();
+            StartApproach(boss);
         }
 
         public override void OnUpdate(WaterfallBoss boss, float deltaTime)
         {
-            if (jumped)
+            if (resolved)
                 return;
 
-            elapsed += deltaTime;
+            boss.AdvanceFinalApproach(deltaTime);
 
-            if (elapsed < boss.Data.SafeWindowDuration)
-                return;
-
-            if (boss.Player == null)
+            if (boss.FinalApproachRemaining > 0f)
             {
-                Breakthrough(boss);
+                if (boss.Player != null && !boss.Player.IsAirborne)
+                    boss.Player.ResetJumpCooldown();
+
                 return;
             }
 
-            if (!cueShown && boss.CanPlayerJumpWithin(0f))
-            {
-                cueShown = true;
-                boss.ShowJumpCue();
-            }
+            if (boss.ClearsFinalWaterfall())
+                Pass(boss);
+            else
+                Crash(boss);
         }
 
         public override void OnExit(WaterfallBoss boss)
         {
-            StopListening();
+            boss.EndFinalApproach();
             KillTween();
-            boss.HideJumpCue();
-            this.boss = null;
         }
 
-        private void EnterWaterfall(WaterfallBoss target)
+        private void StartApproach(WaterfallBoss boss)
         {
             KillTween();
-            target.HideWaterfall();
-            target.ShowWaterfall();
+            boss.PlaceWaterfall(boss.Data.FinalWaterfallEnterX);
+            boss.ShowWaterfall();
 
-            if (target.Waterfall == null)
+            if (boss.Waterfall == null)
                 return;
 
-            tween = target.Waterfall.DOMoveX(target.Data.WaterfallX, target.Data.FinalWaterfallEnterDuration)
-                .SetEase(Ease.OutCubic);
+            tween = boss.Waterfall.DOMoveX(boss.FinalContactX, boss.Data.FinalApproachDuration)
+                .SetEase(Ease.Linear);
         }
 
-        private void OnPlayerJumped()
+        private void Pass(WaterfallBoss boss)
         {
-            if (boss == null || jumped)
-                return;
-
-            Breakthrough(boss);
-        }
-
-        private void Breakthrough(WaterfallBoss target)
-        {
-            jumped = true;
-            StopListening();
-            target.HideJumpCue();
+            resolved = true;
+            boss.EndFinalApproach();
             KillTween();
 
-            if (target.Waterfall == null)
+            if (boss.Waterfall == null)
             {
-                target.Complete(BossOutcome.Passed);
+                boss.Complete(BossOutcome.Passed);
                 return;
             }
 
-            tween = target.Waterfall.DOMoveX(target.Data.ExitX, target.Config.JumpDuration)
-                .SetEase(Ease.InOutSine)
+            tween = boss.Waterfall.DOMoveX(boss.Data.ExitX, boss.Data.FinalPassDuration)
+                .SetEase(Ease.Linear)
                 .OnComplete(() =>
                 {
                     tween = null;
-                    target.Complete(BossOutcome.Passed);
+                    boss.Complete(BossOutcome.Passed);
                 });
+        }
+
+        private void Crash(WaterfallBoss boss)
+        {
+            resolved = true;
+            boss.EndFinalApproach();
+            KillTween();
+            boss.ReportFinalWaterfallImpact();
+            boss.Complete(BossOutcome.Failed);
         }
 
         private void KillTween()
@@ -221,17 +207,6 @@ namespace Game.Boss
                 tween.Kill();
 
             tween = null;
-        }
-
-        private void StopListening()
-        {
-            if (!listening)
-                return;
-
-            listening = false;
-
-            if (boss != null && boss.Player != null)
-                boss.Player.Jumped -= OnPlayerJumped;
         }
     }
 }

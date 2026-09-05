@@ -15,14 +15,15 @@ MonoBehaviour:
   displayName: 
   useGameConfigTiming: 1
   duration: 30
-  telegraphDuration: 0.8
-  attackDuration: 0.7
-  recoveryDuration: 0.5
-  fullLaneTelegraphDuration: 1
+  telegraphDuration: 1.2
+  attackDuration: 0.6
+  recoveryDuration: 0.6
+  fullLaneTelegraphDuration: 1.5
   telegraphImminentLead: 0.2
   introDuration: 1
   outroDuration: 0.8
   allowRepeatPattern: 0
+  holdsWorld: 0
   seed: 0
   patterns:
   - label: Top
@@ -38,4 +39,11 @@ MonoBehaviour:
     weight: 1
     requiresJump: 0
   hookParkOffset: 1.5
-  hookDescendRatio: 0.4
+  hookEnterX: 6
+  hookExitX: -7.5
+  hookSweepDuration: 1.5
+  hookBobAmplitude: 0.12
+  hookBobFrequency: 1.8
+  lineAnchorOffset: 1.2
+  lineDragOffset: 0.9
+  lineWidth: 0.06

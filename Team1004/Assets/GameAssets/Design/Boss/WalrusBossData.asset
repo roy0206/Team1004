@@ -15,14 +15,15 @@ MonoBehaviour:
   displayName: 
   useGameConfigTiming: 1
   duration: 30
-  telegraphDuration: 0.8
-  attackDuration: 0.7
-  recoveryDuration: 0.5
-  fullLaneTelegraphDuration: 1
+  telegraphDuration: 1.2
+  attackDuration: 0.6
+  recoveryDuration: 0.6
+  fullLaneTelegraphDuration: 1.5
   telegraphImminentLead: 0.2
   introDuration: 1
   outroDuration: 0.8
   allowRepeatPattern: 0
+  holdsWorld: 1
   seed: 0
   patterns:
   - label: MouthTop

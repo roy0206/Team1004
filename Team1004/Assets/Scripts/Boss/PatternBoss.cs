@@ -12,6 +12,7 @@ namespace Game.Boss
 
         [SerializeField] private TData data;
         [SerializeField] private LaneTelegraph telegraph;
+        [SerializeField] private LaneHazard laneHazard;
 
         private readonly BossTimer timer = new(BossData.DefaultDuration);
         private BossPatternSelector selector;
@@ -19,10 +20,14 @@ namespace Game.Boss
         public TData Data => data;
         public bool HasData => data != null;
         public LaneTelegraph Telegraph => telegraph;
+        public LaneHazard LaneHazard => laneHazard;
+        public int DangerMask => laneHazard != null ? laneHazard.Mask : 0;
+        public bool IsHazardArmed => laneHazard != null && laneHazard.IsArmed;
         public BossPatternSelector Patterns => selector;
         public BossAttackTiming Timing => data != null ? data.Timing : BossAttackTiming.Default;
         public override BossTimer Timer => timer;
         public override string DisplayName => data != null ? data.DisplayName : name;
+        public override bool HoldsWorld => data != null && data.HoldsWorld;
         public float TelegraphImminentLead => data != null ? data.TelegraphImminentLead : 0.2f;
 
         public float LaneSpacing
@@ -50,7 +55,22 @@ namespace Game.Boss
                     Debug.LogWarning($"[Boss] {name}: {data.name} has no patterns.", this);
             }
 
+            ApplyLaneBandLayout();
             HideTelegraph();
+        }
+
+        public void ApplyLaneBandLayout()
+        {
+            var config = Config;
+            var laneY = config.LaneY;
+            var width = config.BossLaneBandWidth;
+            var height = config.BossLaneBandHeight;
+
+            if (telegraph != null)
+                telegraph.ApplyLayout(laneY, width, height);
+
+            if (laneHazard != null)
+                laneHazard.ApplyLayout(laneY, width, height);
         }
 
         protected override void OnBegin()
@@ -93,7 +113,22 @@ namespace Game.Boss
             if (telegraph != null)
                 telegraph.ShowMask(laneMask);
 
+            if (laneHazard != null)
+                laneHazard.Prepare(laneMask);
+
             PlaySfx(TelegraphSfxId);
+        }
+
+        public void ArmLaneHazard()
+        {
+            if (laneHazard != null)
+                laneHazard.Arm();
+        }
+
+        public void DisarmLaneHazard()
+        {
+            if (laneHazard != null)
+                laneHazard.Disarm();
         }
 
         public void PlayAttackSfx()
@@ -117,6 +152,9 @@ namespace Game.Boss
         {
             if (telegraph != null)
                 telegraph.Hide();
+
+            if (laneHazard != null)
+                laneHazard.Clear();
         }
 
         public float GetLaneCenterY(int laneMask)

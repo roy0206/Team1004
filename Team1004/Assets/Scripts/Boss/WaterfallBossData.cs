@@ -8,21 +8,23 @@ namespace Game.Boss
     {
         [SerializeField] private float waterfallX = 5.5f;
         [SerializeField] private float finalWaterfallEnterX = 9.5f;
-        [SerializeField] private float finalWaterfallEnterDuration = 1f;
+        [SerializeField] private float finalApproachDuration = 3f;
+        [SerializeField] private float finalClearHeight = 2.2f;
+        [SerializeField] private float finalContactHalfWidth = 0.75f;
+        [SerializeField] private float finalPassDuration = 0.8f;
         [SerializeField] private float spawnX = 7.5f;
         [SerializeField] private float exitX = -8f;
         [SerializeField] private float rockTrail = 1f;
-        [SerializeField] private float safeWindowDuration = 2f;
-        [SerializeField] private float jumpCuePulseDuration = 0.35f;
 
         public float WaterfallX => waterfallX;
         public float FinalWaterfallEnterX => finalWaterfallEnterX;
-        public float FinalWaterfallEnterDuration => finalWaterfallEnterDuration;
+        public float FinalApproachDuration => Mathf.Max(0.1f, finalApproachDuration);
+        public float FinalClearHeight => finalClearHeight;
+        public float FinalContactHalfWidth => Mathf.Max(0f, finalContactHalfWidth);
+        public float FinalPassDuration => Mathf.Max(0.1f, finalPassDuration);
         public float SpawnX => spawnX;
         public float ExitX => exitX;
         public float RockTrail => rockTrail;
-        public float SafeWindowDuration => safeWindowDuration;
-        public float JumpCuePulseDuration => jumpCuePulseDuration;
 
         protected override string DefaultDisplayName => "폭포";
 

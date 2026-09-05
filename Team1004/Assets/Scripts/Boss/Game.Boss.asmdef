@@ -7,6 +7,7 @@
         "Core.Audio",
         "Game.StateMachine",
         "Game.Player",
-        "Game.Config"
+        "Game.Config",
+        "Game.Water"
     ]
 }

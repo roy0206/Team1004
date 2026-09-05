@@ -1,5 +1,5 @@
-using Game.Player;
 using Game.StateMachine;
+using Game.Water;
 using UnityEngine;
 
 namespace Game.Boss
@@ -8,7 +8,6 @@ namespace Game.Boss
     {
         [SerializeField] private Transform body;
         [SerializeField] private SpriteRenderer bodyRenderer;
-        [SerializeField] private Hazard bodyHazard;
         [SerializeField] private Color mouthColor = new(0.95f, 0.55f, 0.35f, 1f);
         [SerializeField] private Color armsColor = new(0.85f, 0.25f, 0.2f, 1f);
 
@@ -16,7 +15,6 @@ namespace Game.Boss
         private bool restColorCached;
 
         public Transform Body => body;
-        public bool IsBodyHazardEnabled => bodyHazard != null && bodyHazard.enabled;
 
         protected override WalrusBossState InitialKey => WalrusBossState.Intro;
 
@@ -66,8 +64,7 @@ namespace Game.Boss
 
         public void ResetStance()
         {
-            SetBodyHazard(false);
-            SetBodyHitboxVisible(false);
+            DisarmLaneHazard();
 
             if (Data != null)
                 SetBodySize(Data.BodyWidth, Data.SingleBodyHeight);
@@ -78,26 +75,22 @@ namespace Game.Boss
 
         public void ResetPosition()
         {
-            var position = transform.position;
+            if (body == null)
+                return;
+
+            var position = body.position;
             var x = Data != null ? Data.RestX : position.x;
-            transform.position = new Vector3(x, GetLaneY(MiddleLane), position.z);
+            body.position = new Vector3(x, GetLaneY(MiddleLane), position.z);
+            WaterInteractor.NotifyTeleport(body);
         }
 
         public void PlaceAtX(float x)
         {
-            var position = transform.position;
-            transform.position = new Vector3(x, position.y, position.z);
-        }
+            if (body == null)
+                return;
 
-        public void SetBodyHazard(bool enabled)
-        {
-            if (bodyHazard != null)
-                bodyHazard.enabled = enabled;
-        }
-
-        public void SetBodyHitboxVisible(bool visible)
-        {
-            HazardHitbox.SetVisible(bodyHazard, visible);
+            var position = body.position;
+            body.position = new Vector3(x, position.y, position.z);
         }
 
         private void SetBodySize(float width, float height)
