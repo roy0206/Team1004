@@ -15,8 +15,8 @@
 | `Assets/Scripts/Spawner/Editor/` | `Game.Spawner.Editor` | `SpawnerAssetGenerator`(메뉴 `Team1004/Generate Spawner Assets`, `Regenerate Spawner Assets (Overwrite)`), `SpawnerBalanceReport`(메뉴 `Team1004/Spawner Balance Report`). **현재 얼려 둠 — 돌리지 않는다** |
 | `Assets/Scripts/Spawner/Tests/` | `Game.Spawner.Tests` | EditMode 테스트 `PatternAnalyzerTests`, `CourseGeneratorTests`, `ObstacleVisualTests`(돌·통나무·물고기 스케일 계산과 변종 추출) |
 | `Assets/GameAssets/Design/Spawner/` | 데이터 | 생성기가 만드는 Design 에셋 |
-| `Assets/GameAssets/Obstacles/` | 프리팹 | `Rock.prefab`, `Log.prefab`, `Fish.prefab`(전부 오브젝트 아트). 구판의 `Shark`/`Whale`은 Overwrite 생성 시 삭제된다 |
-| `Assets/GameAssets/Art/오브젝트/` | 아트 미러 | `돌1.png`, `돌 2.png`, `통나무.png`, 하위 폴더 `장애물 물고기/`의 `장애물 물고기1.png`·`장애물 물고기2.png`. 읽기 전용 — `.meta`는 `ObjectArtPostprocessor`가 만든다(하위 폴더까지 본다) |
+| `Assets/GameAssets/Obstacles/` | 프리팹 | `Rock.prefab`, `Log.prefab`, `Fish.prefab`, `LongRock.prefab`(전부 오브젝트 아트). 구판의 `Shark`/`Whale`은 Overwrite 생성 시 삭제된다 |
+| `Assets/GameAssets/Art/오브젝트/` | 아트 미러 | `돌1.png`, `돌 2.png`, `통나무.png`, `긴돌.png`(상류 단차와 공용), 하위 폴더 `이빨물고기/`의 `이빨.png`·`이빨 2.png`(2026-09-06 아트 교체 전에는 `장애물 물고기/`였다. 옛 2장은 Drive에도 저장소에도 남아 있지만 아무 데서도 참조하지 않는다). 읽기 전용 — `.meta`는 `ObjectArtPostprocessor`가 만든다(하위 폴더까지 본다) |
 
 asmdef 참조: `Game.Spawner` → `Core.Foundation`, `Core.Modules`, `Core.Pool`, `Game.Animation`, `Game.Config`, `Game.Player`. `Game.Play`는 참조하지 않는다(PlayFlow가 스포너를 참조하는 방향만 허용해 순환을 막는다).
 
@@ -102,8 +102,9 @@ SpawnerDefaults.CreateConfig() / CreateObstacles() / CreatePatterns(obstacles) /
 | id | 3판 이름 | 레인 수 | 시작 레인 | 몸길이 | 충돌 길이 | 충돌 높이 | 속도 배율 | 등장 비중 | 의도 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Rock | 돌(바위) | 1 | **하단만** | 2.44 | 2.13 | 0.96 | 1.0 (물살과 같이 흐름) | 5 | 기본 회피. **강바닥에 얹힌 바위**라 맨 아랫줄을 높이까지 꽉 채운다 |
-| Fish | 다른 물고기 | 1 | 상/중/하 | 0.9 | 0.78 | 0.39 | 1.25 (자체 속도로 연어 반대 방향으로 지나감) | 3 | 반응 시간이 짧음 |
+| Fish | 다른 물고기(이빨물고기) | 1 | 상/중/하 | 0.9 | 0.78 | 0.36 | 1.25 (자체 속도로 연어 반대 방향으로 지나감) | 3 | 반응 시간이 짧음 |
 | Log | 통나무 | 1 | 상/중/하 | 1.8 | 1.566 | 0.85 | 0.8 (느리게 떠내려옴) | 2 | 레인을 오래(약 0.78초) 막음 |
+| **LongRock** | 긴 바위(v8 05절) | **3** | 상단만(세 레인을 덮는다) | 3.35 | 2.91 | 2.9 | 1.0 | 1 (추첨에 쓰이지 않음) | **점프 기믹.** 강바닥에서 수면 위까지 솟아 세 레인을 한꺼번에 막는다. 1번 레인에서 점프로만 넘는다 |
 
 기획 4판이 세 장애물의 상대값을 돌 기준으로 확정했다(돌 속도 1.0, 물고기 속도 1.25·길이 0.9, 통나무 속도 0.8·길이 1.8). 3판의 임시값(물고기 1.4/1.2/x1.8, 통나무 3.0/2.6/x1.0)은 이 표로 대체되었다.
 
@@ -136,12 +137,46 @@ SpawnerDefaults.CreateConfig() / CreateObstacles() / CreatePatterns(obstacles) /
 **히트박스(2026-09-06 기획자 답변 1·3 반영).** 4번 기획서 17절 G가 "히트박스는 스프라이트보다 10~15% 작게"이므로 가로세로 모두 **아트 실측치 × 0.87**(`ObstacleVisual.HitboxScale`)이다.
 
 - 가로(`collisionLength`) = 보이는 가로 × 0.87 (돌 2.13, 물고기 0.78 = 0.867배, 통나무 1.566). 테스트가 0.85~0.90 범위를 지킨다.
-- 세로(`collisionHeight`) = **화면에 보이는 아트 높이 × 0.87**. 예전처럼 레인 폭에서 0.3을 빼던 고정값 0.8이 아니다. 물고기는 보이는 높이가 0.45라 0.3915 ≈ **0.39**, 통나무는 0.976이라 0.849 ≈ **0.85**, 돌은 레인 높이 1.1을 채우므로 0.957 ≈ **0.96**이다. `ObstacleVisual.VisualWorldSize(spec, 알파 가로, 알파 세로)`에 0.87을 곱한 값이고, `ObstacleDefinition.collisionHeight`가 정본이며, 프리팹 생성기는 데이터를 쓰되 아트에서 나온 값과 0.02 이상 어긋나면 경고를 남긴다.
+- 세로(`collisionHeight`) = **화면에 보이는 아트 높이 × 0.87**. 예전처럼 레인 폭에서 0.3을 빼던 고정값 0.8이 아니다. 물고기는 보이는 높이가 0.409라 0.3562 ≈ **0.36**(2026-09-06 아트 교체 전에는 0.45 → 0.39였다), 통나무는 0.976이라 0.849 ≈ **0.85**, 돌은 레인 높이 1.1을 채우므로 0.957 ≈ **0.96**이다. `ObstacleVisual.VisualWorldSize(spec, 알파 가로, 알파 세로)`에 0.87을 곱한 값이고, `ObstacleDefinition.collisionHeight`가 정본이며, 프리팹 생성기는 데이터를 쓰되 아트에서 나온 값과 0.02 이상 어긋나면 경고를 남긴다.
 - 이웃 레인 오염은 고정값 대신 계산으로 막는다. 레인 간격 1.1, 플레이어 히트박스 세로 0.71이므로 장애물 세로가 1.49 미만이면 이웃 레인의 플레이어에 닿을 수 없다(`ObstacleSpec.ReachesNeighbourLane`, 테스트가 세 장애물 모두 확인). **레인을 꽉 채우는 돌(0.96)도 여유가 0.53 남는다**((0.96 + 0.71)/2 = 0.835 < 1.1).
 
 **등장 레인 제한.** 돌은 `allowedStartLanes = Bottom`(마스크 4)이라 맨 아랫줄에만 나온다. 물고기와 통나무는 세 줄 모두 쓴다. `PatternSpec.Validate`가 규칙을 어긴 패턴을 해결 불가로 판정하므로 라이브러리에 잘못된 배치가 들어가면 스폰되지 않고 경고가 남는다.
 
 4번 기획서 05절에서 미확정이던 세 항목(장애물별 등장 확률, 조합 패턴, 등장 레인 제한)은 2026-09-06 기획자 답변으로 확정되어 위 표와 아래 「등장 비율」·패턴 목록에 반영했다. 앞으로 바뀌면 코드가 아니라 `ObstacleDefinition`·`SpawnPattern`·`DifficultyCurve` 에셋만 고친다.
+
+### 긴 바위 (LongRock, 2026-09-06 사용자 결정 · v8 05절 Variant B)
+
+v8 기획서 `05_긴바위_단차_일반기믹.md`의 **Variant B**다. Variant A(단차)는 `Docs/Ledge.md`가 맡고, 여기는 일반 구간을 오른쪽에서 왼쪽으로 흘러오는 **점프 장애물**이다. 둘은 같은 아트(`Art/오브젝트/긴돌.png`)를 같은 크기로 쓰고 동작만 다르다.
+
+**아트에서 나오는 수치.** 알파 박스 692 × 779 px, pivot은 박스 중심이다. 아랫변을 강바닥(−1.65)에 조금 묻고(−1.72) 윗변을 수면(2.0) 위로 조금 내면(2.05) 높이가 **3.77**이다.
+
+```text
+균등 스케일 = 3.77 / (779/100)        = 0.4839538
+화면 크기   = (692/100) × 0.4839538   = 3.34896 × 3.77   → bodyLength 3.35 (반올림)
+콜라이더 가로 = 3.34896 × 0.87        = 2.9136           → collisionLength 2.91
+그림 중심 y  = (2.05 + (−1.72)) / 2   = 0.165
+```
+
+**세로는 아트가 아니라 점프 궤적이 정한다.** 돌·물고기·통나무는 `collisionHeight = 아트 높이 × 0.87`이지만 긴 바위는 그 규칙을 따르지 않는다. 3.77 × 0.87 = 3.28이면 상자 윗변이 너무 높아 점프로 넘을 창이 좁아진다. 대신 **레인 대역 3.3(−1.65 ~ 1.65)에서 0.4를 뺀 2.9**를 중간 레인(y 0) 중심에 둔다.
+
+```text
+콜라이더        y −1.45 ~ 1.45 (세 레인의 연어에 전부 닿는다: 상단 아랫변 0.745 < 1.45)
+연어 아랫변     y(t) = 1.1 + 4 × 2.2 × t(1−t) − 0.355        (t = 경과/1.6, 히트박스 세로 0.71)
+넘는 조건       y(t) > 1.45  →  t ∈ (0.0878, 0.9122)  →  0.140s ~ 1.459s  = 창 1.319초
+봉쇄 시간       (2.91 + 0.92) / 4 = 0.958초                  (충돌 길이 + 연어 히트박스 가로)
+여유            1.319 − 0.958 = 0.361초 → 점프 시작 허용 창 0.36초
+정점            1.1 + 2.2 − 0.355 = 2.945 > 1.45 (그림 윗변 2.05보다도 높다)
+```
+
+즉 **바위가 지나가는 0.96초 동안 연어 아랫변이 계속 콜라이더 위에 있는 점프 시작 시각이 0.36초 폭으로 존재한다**. 실제로는 공중이면 무적이라(`LanePlayer.IsVulnerable`) 판정이 나지 않지만, 그림과 판정이 어긋나지 않게 이 여유를 남겼다. 테스트 `LongRock_ColliderTopStaysUnderTheJumpArc`가 이 계산을 그대로 돌린다.
+
+**`ReachesNeighbourLane`은 false다.** (2.9 + 0.71) / 2 = 1.805 < 1.1 × (3+1) / 2 = 2.2이므로 세 레인 바깥으로 새지 않는다. 이산 레인 가정이 유지된다.
+
+**등장 규칙.** `usableInNormalPatterns = false`, `usableInJumpPatterns = true`다. 유일한 패턴은 `LongRock_Solo`(긴 바위 하나)이며 시뮬레이터가 **점프 필수**로 판정한다(반응 여유 2.00초, 도달 2.59초, 봉쇄 0.96초, 티어 3). `spawnWeight` 1은 인스펙터 표시용이고 실제 추첨에 쓰이지 않는다 — 점프 필수 풀은 티어 가중치도 `ObstacleMix` 보정도 걸지 않는다. `ObstacleMix.FromPatterns`가 **`usableInNormalPatterns`인 장애물만** 모으므로 긴 바위는 5 : 3 : 2 비율 계산에 들어가지 않는다(목표 점유율 0.5/0.3/0.2가 그대로 유지된다).
+
+**옛 `Jump_*` 패턴 3개는 뽑히지 않는다.** 점프 강제가 다시 켜졌으므로, 「물고기+통나무+돌로 세 레인을 막는」 옛 패턴이 같이 살아나지 않도록 **돌·물고기·통나무의 `usableInJumpPatterns`를 false로 내렸다**(`PatternSpec.IsUsableAs(true)`가 세 패턴을 후보에서 뺀다). 패턴 에셋과 분석은 그대로 남아 있어(테스트 자료로 쓴다) 되돌리려면 세 장애물의 플래그만 다시 켜면 된다. 테스트 `LongRockSolo_IsTheOnlyDrawableJumpPattern`이 이 상태를 지킨다.
+
+**단차 QTE와 겹치지 않게 한다.** 긴 바위는 결정 시각에서 최소 2.59초 뒤에 도착하고, 점프는 1.6초 체공이다. 단차가 다가올 때 스폰이 멈추는 리드(`LedgeData.spawnSafeLead`)가 3.5초면 마지막 긴 바위가 단차 도착 0.91초 전에 도착해 QTE 창(도착 0.625초 전)과 겹친다. 그래서 **리드를 5.5초로 올렸다**(`Docs/Ledge.md` 「단차 앞 스폰 정지」). 5.5초면 마지막 도착이 단차 도착 2.91초 전이고, 그때 뛰어도 1.31초 전에 착지한다.
 
 ### 등장 비율 5 : 3 : 2 (`ObstacleMix`)
 
@@ -155,13 +190,24 @@ SpawnerDefaults.CreateConfig() / CreateObstacles() / CreatePatterns(obstacles) /
 
 오프라인 20시드 결과는 돌 47.8% / 물고기 31.9% / 통나무 20.3%다(구간별 표는 `Docs/SpawnerBalance.md`). 구간 4는 패턴이 4개뿐이라 표본이 작아 43.2 / 34.8 / 22.0으로 흔들린다. 테스트는 네 구간 13시드 합계에 ±0.07 허용치를 둔다.
 
-### 점프 필수 패턴 (일반 구간에서 쓰지 않는다)
+### 점프 필수 패턴 = 긴 바위 (2026-09-06 사용자 결정으로 부활)
 
-기획 4판은 점프 강제를 보스 3(폭포)만의 것으로 정했다. 그래서 네 구간 전부 `jumpRequiredRatio = 0`이다(`SpawnerDefaults.NormalSectionJumpRatio`). 손잡이 자체는 남겨 두어 기획이 되돌리면 값만 올리면 된다. `Jump_*` 패턴 3개도 라이브러리에 남아 있지만 비율이 0이라 뽑히지 않는다(`Docs/SpawnerBalance.md`의 사용 횟수 표가 전부 0인 것으로 확인된다). 일반 패턴은 세 레인을 동시에 막지 않으며 `PatternAnalyzerTests.DefaultNormalPatterns_NeverBlockEveryLaneAtOnce`가 이를 지킨다.
+기획 4판은 점프 강제를 보스 3(폭포)만의 것으로 정했고 네 구간 전부 `jumpRequiredRatio = 0`이었다. **v8 05절 Variant B와 사용자 결정으로 일반 구간에도 점프 기믹이 들어온다.** 다만 들어오는 것은 긴 바위 하나뿐이다.
+
+| 구간 | `jumpRequiredRatio` | 뜻 |
+| --- | --- | --- |
+| 1 (25초) | **0.05** | 결정마다 5% 확률로 점프 필수 후보를 먼저 본다. 20시드 평균 패턴 8.2개 중 0.6개 |
+| 2 (30초) | **0.10** | 10.8개 중 1.3개 |
+| 3 (35초) | **0.15** | 13.4개 중 1.7개 |
+| 4 (15초) | **0** | 마무리 구간에는 넣지 않는다 |
+
+값은 `SpawnerDefaults.GetSectionJumpRatio(i)`와 `DifficultyCurve.asset`의 `jumpRequiredRatio` 곡선(구간 내 상수)에 같이 들어 있다. 비율은 「결정 시각마다 뽑는 확률」이라 실제 등장 수는 패턴 간격에 따라 달라진다. 규칙 1~3(쿨타임 중 금지, 연속 금지, 점프 필수끼리 2초 간격)은 그대로다.
+
+일반 패턴은 여전히 세 레인을 동시에 막지 않으며 `PatternAnalyzerTests.DefaultNormalPatterns_NeverBlockEveryLaneAtOnce`가 이를 지킨다. 세 레인을 막는 것은 `LongRock_Solo` 하나뿐이다.
 
 점프 체공 시간도 4판에서 0.8 → **1.6초**(점프 높이 1.6 → 2.2, 약 두 레인)로 바뀌었다. 도달 가능성 시뮬레이터는 `SimulationConfig.JumpDuration`으로 이 값을 쓰고, 기본값은 `SpawnerDefaults.JumpDurationSeconds = 1.6f`다. 런타임은 `GameConfig`의 `jumpDuration`을 그대로 쓴다. 둘이 어긋나면 `SpawnerBalanceReport`가 경고를 남기고 리포트에도 한 줄을 적은 뒤 기획값 1.6으로 돌린다.
 
-기본 패턴 33개(전부 1레인 장애물 조합, 돌은 언제나 하단). 티어는 최악 입력 수와 반응 여유로 자동 결정되며 아래 값은 오프라인 판정 결과다.
+기본 패턴 34개. 티어는 최악 입력 수와 반응 여유로 자동 결정되며 아래 값은 오프라인 판정 결과다.
 
 | 묶음 | 패턴 | 티어 |
 | --- | --- | --- |
@@ -176,11 +222,12 @@ SpawnerDefaults.CreateConfig() / CreateObstacles() / CreatePatterns(obstacles) /
 | | `RockBottom_ThenFishMiddle`(0.6초) | 3 |
 | 위빙(나갔다 돌아옴) | `Weave_RockBottom_ThenFishTopLogMiddle`(하단 돌, 0.9초 뒤 상단 물고기 + 중단 통나무 → 하단으로 복귀) | 3 |
 | | `Weave_LogMiddle_ThenFishTopRockBottom`(중단 통나무, 1.2초 뒤 상단 물고기 + 하단 돌 → 중단으로 복귀) | 3 |
-| 점프 필수 (비율 0) | `Jump_FishTop_FishMiddle_RockBottom`, `Jump_LogTop_FishMiddle_RockBottom`, `Jump_FishTop_LogMiddle_RockBottom`(0.2초 시차) | 3 |
+| **점프 필수 (실제로 뽑히는 유일한 것)** | **`LongRock_Solo`**(긴 바위 하나가 세 레인을 0.96초 막는다) | 3 |
+| 점프 필수 (후보에서 제외됨) | `Jump_FishTop_FishMiddle_RockBottom`, `Jump_LogTop_FishMiddle_RockBottom`, `Jump_FishTop_LogMiddle_RockBottom`(0.2초 시차) | 3 |
 
 구판 패턴 중 돌을 상단·중단에 두던 17개(`Rock_Top`, `Rock_Middle`, `Rocks_TopBottom/TopMiddle/MiddleBottom`, `RockTop_FishBottom`, `RockMiddle_LogBottom`, `LogTop_RockMiddle`, `Rocks_TopThenBottom/BottomThenTop`, `LogBottom_ThenRockMiddle`, `LogTop_ThenRockMiddle`, `Weave_MiddleThenTopBottom`, `Jump_*` 4개)는 에셋까지 지웠다.
 
-점프 필수 패턴은 세 레인이 동시에 막히는 구간이 이동 잠금(0.2초)보다 길고 점프(1.6초)보다 짧아야 한다. 돌이 하단 전용이 되어 세 레인 봉쇄는 반드시 「상단·중단 = 물고기/통나무 + 하단 = 돌」 꼴이다. 세 패턴 모두 반응 여유 1.50초로 판정되며 시뮬레이터가 점프 필수로 분류한다.
+점프 필수 패턴은 세 레인이 동시에 막히는 구간이 이동 잠금(0.2초)보다 길고 점프(1.6초)보다 짧아야 한다. `LongRock_Solo`는 0.96초(입력 허용 오차를 앞뒤로 더하면 1.16초)라 이 조건을 지킨다. 옛 `Jump_*` 세 패턴은 「상단·중단 = 물고기/통나무 + 하단 = 돌」 꼴로 같은 조건을 만족하고 반응 여유 1.50초로 판정되지만, 장애물 플래그 때문에 후보에 들어가지 않는다.
 
 ## 알고리즘
 
@@ -251,11 +298,11 @@ SpawnerDefaults.CreateConfig() / CreateObstacles() / CreatePatterns(obstacles) /
 | `speedMultiplier` | 장애물 접근 속도 배율. **2026-09-06 기획자 답변 4로 구간 속도 증가는 없앴다.** 네 구간 전부 1.0 고정이다. 장애물별 배율(물고기 1.25, 통나무 0.8)은 그대로 남아 종류 간 속도 차이만 만든다 | 1.0, 1.0, 1.0, 1.0 |
 | `patternGap` | 이전 패턴이 지나간 뒤 다음 패턴 도착까지의 여유(초). 등장 빈도이자 **이번 판의 주 난이도 손잡이**. 4번 기획서 06절 추천 후보 범위(1: 2.0~2.5, 2: 1.6~2.0, 3: 1.3~1.7, 4: 2.5~3초) 안이다 | 2.5→2.0, 2.0→1.6, 1.7→1.3, 2.5→3.0 |
 | `minReactionMargin` | 패턴이 다 보인 뒤 무입력으로 버텨야 하는 최소 시간(초). 검증 문턱이다. **기획자 답변 5** | 1.3, 1.0, 0.8, 1.3 |
-| `jumpRequiredRatio` | 점프 필수 패턴 비율. 4판에서 점프 강제는 보스 3만의 것으로 확정되어 네 구간 전부 0이다. 스위치는 남겨 두었다(테스트 `ZeroJumpChance_NeverSpawnsJumpRequiredPatterns`, `DefaultProfile_NeverRequestsJumpPatterns`) | 0, 0, 0, 0 |
+| `jumpRequiredRatio` | 점프 필수(= 긴 바위) 패턴 비율. **2026-09-06 사용자 결정으로 일반 구간에 다시 켰다**(위 「점프 필수 패턴 = 긴 바위」). 0으로 두면 완전히 사라진다(테스트 `ZeroJumpChance_NeverSpawnsJumpRequiredPatterns`) | **0.05, 0.10, 0.15, 0** |
 | `tier1/2/3Weight` | 일반 패턴 티어별 추출 가중치. 속도가 고정되었으므로 **두 레인 동시·시간차·위빙 비율이 두 번째 난이도 손잡이**다 | 1: (1.0, 0.2→0.5, 0→0.15) 단순 회피 위주 · 2: (0.6→0.4, 1.0, 0.3→0.6) 조합·연속 레인 변경 증가 · 3: (0.3→0.2, 1.0, 0.8→1.2) 위빙까지 · 4: (1.0, 0.3→0.1, 0) |
 | `spawnStopProgress` | 이 진행도부터 스폰 중단 | 1, 1, 1, 0.7 (구간 4는 15초 중 10.5초 이후 장애물 없음) |
 
-3판 11절대로 조작 속도는 건드리지 않는다. 이번 판부터 접근 속도도 건드리지 않으므로 난이도는 **간격**과 **패턴 종류 비중** 둘로만 만든다. 구간 1은 간격이 넓고 티어 1(단순 1레인 회피) 위주, 2는 간격이 줄고 티어 2 비중이 오르며, 3은 간격이 더 줄고 티어 3(위빙·3항목 시간차)까지 올라오고, 4는 장애물이 매우 적다가 70% 지점부터 없어진다. 점프 필수 비율은 네 구간 모두 0이다. 물살 세기 변화는 없다.
+3판 11절대로 조작 속도는 건드리지 않는다. 이번 판부터 접근 속도도 건드리지 않으므로 난이도는 **간격**, **패턴 종류 비중**, **긴 바위 비율** 셋으로 만든다. 구간 1은 간격이 넓고 티어 1(단순 1레인 회피) 위주, 2는 간격이 줄고 티어 2 비중이 오르며, 3은 간격이 더 줄고 티어 3(위빙·3항목 시간차)까지 올라오고, 4는 장애물이 매우 적다가 70% 지점부터 없어진다. 긴 바위는 5 → 10 → 15% → 없음으로 오른다. 물살 세기 변화는 없다.
 
 **반응 여유가 난이도 필터로도 작동한다.** 구간별 `minReactionMargin`이 검증 문턱이라, 자체 반응 여유가 문턱보다 짧은 패턴은 그 구간에서 사실상 뽑히지 않는다. 구간 1·4(1.3초)에서는 `Rocks_BottomThrice`(0.80), `RockBottom_ThenFishTop`(1.20), `Rocks_BottomTwice_FishTopBetween`(1.00), 위빙 2개(1.00 / 0.70)가 빠지고, 구간 3(0.8초)에서는 `Weave_LogMiddle_ThenFishTopRockBottom`만 빠진다. 남는 일반 패턴은 어느 구간에서도 25개 이상이라 단조로워지지 않는다(테스트 `EverySection_HasPatternsThatMeetItsReactionMarginTarget`).
 
@@ -270,12 +317,32 @@ SpawnerDefaults.CreateConfig() / CreateObstacles() / CreatePatterns(obstacles) /
 | 장애물 | 아트 | 알파 박스(px) | 균등 스케일 | 화면 크기(월드) | 콜라이더 로컬 | 콜라이더 월드 |
 | --- | --- | --- | --- | --- | --- | --- |
 | Rock | `돌1.png`(기본), `돌 2.png` | 560 × 252 | 0.4365079 (**높이 맞춤**) | 2.4444 × 1.10 | 4.8796363 × 2.1992726 | 2.13 × 0.96 |
-| Fish | `장애물 물고기1.png`(기본), `장애물 물고기2.png` | 410 × 205 (두 장 합집합) | 0.219512 | 0.90 × 0.45 | 3.5533333 × 1.7766666 | 0.78 × 0.39 |
+| Fish | `이빨물고기/이빨.png`(기본), `이빨 2.png` | 699 × 318 (두 장 합집합) | 0.1287554 | 0.90 × 0.409442 | 6.058 × 2.796 | 0.78 × 0.36 |
 | Log | `통나무.png` | 531 × 288 | 0.338983 | 1.80 × 0.976 | 4.6197 × 2.5075 | 1.566 × 0.85 |
+| LongRock | `긴돌.png` | 692 × 779 | 0.4839538 (**높이 맞춤**) | 3.34896 × 3.77 | **2.91 × 2.9** (루트 스케일 1) | 2.91 × 2.9 |
 
-세 프리팹의 `BoxCollider2D.m_Size`는 위 「콜라이더 로컬」 값으로 **YAML을 직접 고쳤다**(생성기를 돌리지 않았다). `m_Offset`은 pivot이 알파 박스 중심이라 (0, 0)이다.
+돌·물고기·통나무 프리팹의 `BoxCollider2D.m_Size`는 위 「콜라이더 로컬」 값으로 **YAML을 직접 고쳤다**(생성기를 돌리지 않았다). `m_Offset`은 pivot이 알파 박스 중심이라 (0, 0)이다.
 
-물고기는 두 프레임이 pivot 하나를 쓰므로 스케일 계산에 쓰는 알파 박스도 **두 장 합집합**이다(`ObjectArtPostprocessor.TryGetAlphaSizePixels`가 폴더 묶음이면 합집합을 돌려준다). 프레임별로는 `장애물 물고기1`이 410 × 202, `장애물 물고기2`가 410 × 205라 가로는 같고 세로만 3 px 다르다. 가로가 같으니 어느 쪽을 써도 균등 스케일은 0.219512로 같고, 합집합을 쓰면 pivot과 스케일이 같은 박스에서 나와 어긋나지 않는다.
+**`LongRock.prefab`만 트리가 다르다.** 다른 셋은 루트에 `SpriteRenderer`가 붙고 루트가 균등 스케일을 갖지만, 긴 바위는 그림 중심(y 0.165)과 콜라이더 중심(y 0, 중간 레인)이 서로 다르다. 스포너는 `laneSpan` 3짜리를 세 레인 y의 평균인 **y 0**에 놓으므로(`SpawnModule.LaneCenterY`), 그림만 0.165 올려야 한다. `SpriteRenderer`에는 오프셋이 없어 자식으로 뺐다.
+
+```text
+LongRock (루트, 스케일 1)
+  BoxCollider2D  isTrigger, m_Offset (0,0), m_Size (2.91, 2.9)   ← 루트 스케일이 1이라 로컬 = 월드
+  ObstacleThing  kind=LongRock, visual=자식 SpriteRenderer, variants 없음, swimClip 없음, trail 없음
+  WaterInteractor size (3.34896, 3.77), offset (0, 0.165), ignoreColliderShape 1,
+                  surfaceInfluence 1, wakeOnly 1, wakeScale 1
+  Visual (자식)  localPosition (0, 0.165, 0), localScale 0.4839538
+    SpriteRenderer  긴돌.png, 정렬 5
+```
+
+- `WaterInteractor`는 **항적만**(`wakeOnly`) 낸다. 상자가 수면(2.0)을 세로로 관통하므로 물이 반응하지만, 바위가 물을 위아래로 밀어 올리지는 않는다. `ignoreColliderShape`가 1이라 `BoxCollider2D`(2.91 × 2.9)가 아니라 **그림 크기**(3.34896 × 3.77, 중심 0.165)를 쓴다. 크기·오프셋은 루트 로컬이고 루트 스케일이 1이라 그대로 월드 값이다.
+- 정렬 5는 다른 장애물과 같다. 모래(7)가 앞에 그려지므로 바위의 아래 0.1이 모래에 묻히고, 연어(10)는 바위 앞을 지난다.
+- 변종이 없다(`variants` 빈 배열). `ApplyVariant`가 아무것도 하지 않는다.
+- **생성기는 이 프리팹을 만들지 못한다.** `SpawnerAssetGenerator`는 루트에 `SpriteRenderer`를 붙이고 `ArtPathsFor`에 `LongRock`이 없어 Placeholder 사각형 경로로 간다. 생성기는 `GeneratorFreeze`로 잠겨 있으므로 지금은 문제가 없지만, 풀려서 `Regenerate Spawner Assets (Overwrite)`를 돌리면 이 프리팹이 사라진다. 되살리려면 자식 `Visual` 구조와 `긴돌.png` 경로를 생성기에 먼저 넣어야 한다.
+
+물고기는 두 프레임이 pivot 하나를 쓰므로 스케일 계산에 쓰는 알파 박스도 **두 장 합집합**이다(`ObjectArtPostprocessor.TryGetAlphaSizePixels`가 폴더 묶음이면 합집합을 돌려준다). 프레임별로는 `이빨`이 699 × 316, `이빨 2`가 699 × 318이라 가로는 같고 세로만 2 px 다르다(입을 벌린 2번 프레임이 아래로 조금 길다). 가로가 같으니 어느 쪽을 써도 균등 스케일은 0.1287554로 같고, 합집합을 쓰면 pivot과 스케일이 같은 박스에서 나와 어긋나지 않는다.
+
+**2026-09-06 물고기 아트 교체.** Drive에 `오브젝트/이빨물고기/`(`이빨.png`, `이빨 2.png`)가 새로 올라와 옛 `장애물 물고기/` 2장을 대체했다. 알파 박스가 410 × 205 → **699 × 318**(가로세로 비 2.00 → 2.20)로 커져 같은 몸길이 0.9에서 **균등 스케일이 0.219512 → 0.1287554**, 보이는 높이가 0.45 → **0.409442**가 되었다. 몸길이·충돌 길이·속도 배율·등장 비중은 그대로이고, 아트에서 나오는 값(콜라이더 세로, 프리팹 스케일, `WaterInteractor.size`, `Trail` 위치)만 다시 계산했다. 옛 PNG 2장과 그 `.meta`는 읽기 전용 미러라 지우지 않고 남겨 두었다.
 
 돌이 보이는 높이 0.45인데 콜라이더 높이가 0.80이던 문제(그림보다 위아래로 0.175씩 넓어 스치는 판정이 났다)는 **2026-09-06 기획자 답변 1로 (b) 안이 채택되어** 해결했다. 세로는 아트 높이 × 0.87이다. 그 뒤 **같은 날 사용자 결정으로 돌 자체가 「강바닥 바위」가 되어 몸길이 1.0 → 2.44, 세로 0.45 → 1.10으로 커졌다**(위 「돌은 높이 기준으로 맞춘다」). 히트박스는 여전히 그림보다 13% 작고((1.1 − (0.96 + 0.71)/2) = 0.265의 여유가 남는다) 실제 판정은 가로가 지배한다.
 
@@ -283,7 +350,7 @@ SpawnerDefaults.CreateConfig() / CreateObstacles() / CreatePatterns(obstacles) /
 
 **아트가 없을 때(지금은 해당 없음).** `Assets/GameAssets/Placeholder/Square.png`(64px, PPU 100 → 0.64 unit)를 비균등 스케일로 늘리고 `ColorFor`의 임시색을 칠한다. 예전 세 장애물 전부가 이 경로였다. 세 장애물 모두 아트가 왔으므로 지금은 아무도 이 경로를 타지 않는다. 새 장애물이 늘면 `SpawnerAssetGenerator.ArtPathsFor`에 경로를 추가하는 것만으로 아트 경로로 넘어간다.
 
-**물고기 방향.** 장애물 물고기는 아트가 이미 **왼쪽을 보고 있다**. 장애물은 오른쪽에서 왼쪽으로 오므로 진행 방향과 그림 방향이 맞고, 스케일 x를 음수로 두거나 `SpriteRenderer.flipX`를 켜지 않는다(균등 스케일이 깨지면 콜라이더 계산도 어긋난다).
+**물고기 방향.** 이빨물고기 아트도 옛 아트와 마찬가지로 이미 **왼쪽(머리·이빨이 왼쪽, 꼬리지느러미가 오른쪽)을 보고 있다**. 장애물은 오른쪽에서 왼쪽으로 오므로 진행 방향과 그림 방향이 맞고, 스케일 x를 음수로 두거나 `SpriteRenderer.flipX`를 켜지 않는다(균등 스케일이 깨지면 콜라이더 계산도 어긋난다).
 
 **장애물 애니메이션.** `ObstacleThing`에 `[SerializeField] private CustomAnimation swimClip`이 있다. 클립이 있으면 `OnSpawned`가 `SpriteAnimatorModule`을 만들어 루프 재생하고, `OnReleased`가 `Stop()` 뒤 `ClearModules`로 뗀다. 클립이 없으면(돌·통나무) 모듈 자체를 만들지 않아 비용이 0이다. 클립이 있는 장애물은 `variants`를 비워 둔다 — `ApplyVariant`가 `SpriteRenderer.sprite`를 덮으면 애니메이션과 싸우기 때문이다(생성기의 `VariantPathsFor`가 돌·통나무만 돌려준다).
 
@@ -291,13 +358,13 @@ SpawnerDefaults.CreateConfig() / CreateObstacles() / CreatePatterns(obstacles) /
 | --- | --- | --- | --- | --- | --- |
 | Rock | 없음 | — | — | — | `돌1`, `돌 2` |
 | Log | 없음 | — | — | — | `통나무` |
-| Fish | `Design/Animations/Obstacle_Fish.asset` | 2 (`장애물 물고기1/2.png`) | 6 | true | 없음 |
+| Fish | `Design/Animations/Obstacle_Fish.asset` | 2 (`이빨물고기/이빨.png`, `이빨 2.png` — 1번은 입을 다물고 2번은 벌린다) | 6 | true | 없음 |
 
 클립은 `Game.Animation.Editor`의 `ObstacleClipTable`이 정본이고 `AnimationAssetGenerator`가 굽는다(`Docs/Animation.md` 「생성되는 클립」). `SpawnerAssetGenerator.Generate`는 프리팹을 만들기 전에 클립 에셋이 없으면 `AnimationAssetGenerator.Generate()`를 한 번 부르므로 메뉴 순서를 신경 쓰지 않아도 된다.
 
 **돌 변종.** `ObstacleThing`에 `[SerializeField] private Sprite[] variants`가 있고 생성기가 `돌1`, `돌 2`를 순서대로 넣는다(`variants[0]`이 기본 스프라이트). `SpawnModule`은 시드(`Initialize(…, seed)`)와 구간 번호로 만든 `DeterministicRandom`을 따로 하나 들고, 스폰마다 `thing.ApplyVariant(random.NextUInt())`를 부른다. `ObstacleVisual.PickVariant(seed, count)`가 인덱스를 고른다. `UnityEngine.Random`을 쓰지 않으므로 같은 시드는 같은 변종 배열을 만든다. 변종 배열이 비면(`Fish`) `ApplyVariant`는 아무것도 하지 않는다. 지금 `돌1.png`와 `돌 2.png`는 바이트가 같아 화면상 차이는 없다(`Docs/Requests.md`에 남겼다). 2026-09-06 아트 갱신으로 온 `오브젝트/긴돌.png`은 **이 변종이 아니다** — 사용자 결정으로 상류 단차 앞면에 쓴다(`Docs/Ledge.md` 「단차 모양 (긴 돌)」). 알파 박스가 692 × 779 px(0.89:1)이라 돌1(560 × 252, 2.22:1) 자리에 끼우면 프리팹의 균등 스케일 0.4365가 그대로 곱해져 3.02 × 3.40 unit, 레인 3칸 높이로 나온다. `ObstacleThing.ApplyVariant`는 `SpriteRenderer.sprite`만 갈아끼우고 `localScale`은 건드리지 않으므로 **변종끼리는 알파 박스 비가 같아야 한다.**
 
-**임포트 설정.** `Assets/GameAssets/Art/오브젝트/`는 아트 미러라 `.meta`를 손으로 고치지 않는다. `Game.Animation.Editor`의 `ObjectArtPostprocessor`가 하위 폴더까지 훑어 임포트마다 Sprite / Single / PPU 100 / Tight / 밉맵 없음 / 무압축 / pivot을 다시 건다. pivot 규칙은 **폴더 단위**다: 루트에 바로 놓인 `돌1`·`돌 2`·`통나무`는 **파일별** 알파 박스 중심, 하위 폴더 `장애물 물고기/`의 2장은 **폴더 합집합** 알파 박스 중심 하나를 공유한다(프레임마다 pivot이 다르면 2프레임 애니메이션이 튄다). 자세한 것은 `Docs/Animation.md`의 「후처리기 범위」에 있다.
+**임포트 설정.** `Assets/GameAssets/Art/오브젝트/`는 아트 미러라 `.meta`를 손으로 고치지 않는다. `Game.Animation.Editor`의 `ObjectArtPostprocessor`가 하위 폴더까지 훑어 임포트마다 Sprite / Single / PPU 100 / Tight / 밉맵 없음 / 무압축 / pivot을 다시 건다. pivot 규칙은 **폴더 단위**다: 루트에 바로 놓인 `돌1`·`돌 2`·`통나무`는 **파일별** 알파 박스 중심, 하위 폴더 `이빨물고기/`의 2장은 **폴더 합집합** 알파 박스 중심 하나를 공유한다(pivot `(0.4945312, 0.5518519)`)(프레임마다 pivot이 다르면 2프레임 애니메이션이 튄다). 자세한 것은 `Docs/Animation.md`의 「후처리기 범위」에 있다.
 
 ## 플레이어 히트박스
 
@@ -364,17 +431,19 @@ private SpawnPlayerState BuildSpawnPlayerState()
 - `Team1004 > Generate Spawner Assets`: 없는 것만 만든다. `Regenerate Spawner Assets (Overwrite)`: 확인 후 프리팹과 Design 에셋을 기본값으로 다시 쓰고(GUID 유지), 기본값에 없는 장애물 정의·프리팹·패턴 에셋(구판 Shark/Whale과 그 패턴)은 삭제한다.
 - `Team1004 > Spawner Balance Report`: `Docs/SpawnerBalance.md`를 쓴다. 이번 판의 리포트는 같은 시뮬레이터 코드를 `Simulation/*.cs`만 모아 컴파일한 오프라인 .NET 콘솔로 돌려 적었고, 표에 「요구 반응 여유」·「여유 미달 패턴 수」·「장애물 등장 비율」 세 항목이 더 있다. 패턴 표(종류·티어·최악 입력 수·반응 여유·도착·막는 시간), 구간별 코스 표(구간당 시드 20개, 3판 구간 시간 25/30/35/15초: 평균 패턴 수, 점프 필수 비율, 평균 도착 간격, 검증 거절 수, 빈 결정 수, 해결 가능 코스 수), 구간별 패턴 사용 횟수. Design 에셋이 없으면 `SpawnerDefaults`로 돈다.
 - 테스트(Test Runner > EditMode > Game.Spawner.Tests): 기본 일반 패턴이 모든 레인에서 점프 없이 해결됨, 점프 패턴이 점프 필수로 판정됨, 반응 여유 ≥ 0.3초, 구간마다 문턱을 넘는 일반 패턴이 8개 이상, 최대 속도에서도 해결 가능, 세 레인을 점프보다 길게 막는 패턴 거절, 기본 장애물 전부 1레인, 쿨타임 중 전 레인 봉쇄는 생존 불가, 4구간(25/30/35/15초) × 13시드 코스 전부 해결 가능, 구간 시작 첫 패턴이 세 레인 × {잠금 없음, 이동 잠금 중} 어느 시작 상태에서도 채택되고 유예 시간 뒤에 도착하며 반응 여유 동결로도 생존 가능, 점프 필수 규칙 준수, 같은 시드 같은 코스, 다른 시드 다른 코스, 구간 4 끝에 스폰 없음, 쿨타임 중 점프 필수 미출현.
+- 2026-09-06 긴 바위 패스에서 늘어난 테스트: `LongRock_BlocksEveryLaneAndOnlyStartsAtTheTop`(레인 3칸·상단 시작·일반 풀 제외), `LongRock_SizesComeFromTheArtAndTheJumpArc`(스케일·몸길이·충돌 길이·세로 2.9), `LongRock_ColliderTopStaysUnderTheJumpArc`(점프 궤적을 실제로 적분해 넘는 창 1.32초 > 봉쇄 0.96초, 시작 창 0.36초), `LongRockSolo_IsTheOnlyDrawableJumpPattern`(점프 풀에 긴 바위만), `DefaultProfile_UsesTheLongRockJumpRatios`(0.05/0.10/0.15/0), `ObstacleVisualTests.LongRock_ReachesFromTheRiverbedToTheWaterSurface`(−1.72 ~ 2.05), `LongRockCollider_CoversEveryLaneBandAndStaysUnderTheJumpArc`. `DefaultObstacles_AreAllSingleLane`·`EveryObstacle_FitsInsideItsLaneBand`·`DefaultObstacles_CollisionHeightComesFromTheArtHeight`·`ObstacleColliders_MatchTheSpecInWorldUnits`는 긴 바위를 예외로 두고 그 예외를 따로 검증한다.
 - 2026-09-06에 늘어난 테스트: 돌이 하단에서만 시작함(`Rock_StartsOnlyInTheBottomLane`, `RockAboveTheBottomLane_IsReportedNotThrown`, `GeneratedCourses_OnlyPutRocksInTheBottomLane`), 물고기·통나무는 세 레인 전부, 모든 기본 패턴이 레인 규칙을 지킴, 충돌 높이가 아트 높이 × 0.87임, 장애물이 이웃 레인에 닿지 않음, `spawnWeight`가 5/3/2이고 `ObstacleMix`의 목표 점유율이 0.5/0.3/0.2임, 모자란 종류의 가중치가 실제로 올라감, 생성 코스의 종류 비율이 5:3:2에서 ±0.07 안(`GeneratedCourses_ApproachTheDesignObstacleRatio`), 구간 속도 배율이 전부 1.0(`DefaultProfile_HasNoSectionSpeedMultiplier`), 구간 반응 여유가 1.3/1.0/0.8/1.3(`DefaultProfile_UsesTheDesignReactionMargins`), 연어 히트박스가 60% × 87%이고 `playerHalfWidth`와 맞음(`ObstacleVisualTests.PlayerHitbox_*`).
 
 ## 임시값 목록
 
 - 확정된 것(2026-09-06 기획자 답변): 등장 레인 제한(돌 하단 전용), 등장 비율 5:3:2, 히트박스 세로 = 아트 높이 × 0.87, 연어 히트박스 가로 60%, 구간 속도 배율 없음(전부 1.0), 구간별 반응 여유 1.3/1.0/0.8/1.3. 몸길이·충돌 길이·속도 배율은 4판에서 확정.
-- 아직 임시값: 레인 폭 1.1, 패턴 간격 곡선(4번 06절 추천 후보 범위 안), 티어 가중치 곡선, `ObstacleMix.Strength` 1.0과 배율 상하한 0.02~24, 구간 4의 반응 여유 1.3(기획자가 「개발 기본값」으로 넘김). 점프 필수 패턴은 4판에서 일반 구간 사용 금지로 확정되어 `jumpRequiredRatio`가 네 구간 모두 0이다.
+- 아직 임시값: 레인 폭 1.1, 패턴 간격 곡선(4번 06절 추천 후보 범위 안), 티어 가중치 곡선, `ObstacleMix.Strength` 1.0과 배율 상하한 0.02~24, 구간 4의 반응 여유 1.3(기획자가 「개발 기본값」으로 넘김).
+- **긴 바위 임시값**: 구간별 비율 0.05 / 0.10 / 0.15 / 0(v8 기획서에 숫자가 없다 — `Docs/DesignQuestions.md`), 콜라이더 세로 2.9(레인 대역 3.3 − 0.4), 아랫변 −1.72·윗변 2.05(강바닥 −1.65에 0.07 묻고 수면 2.0 위로 0.05), `spawnWeight` 1(쓰이지 않음).
 - 화면 오른쪽 6.4, 왼쪽 -6.4, 회수 여유 1 unit.
 - 격자 0.05초, 입력 허용 오차 0.1초, 점프 필수 최소 간격 2초, 구간 시작 유예 2.0초(`sectionStartGrace`, 요구 하한 1.5초), 재시도 0.2초, 후보 시도 4개, 프리웜 4개, 기본 시드 12345.
 - 난이도 곡선 전부(위 표), 패턴 간격 정의, 점프 필수 비율 정의, 반응 여유 정의(`Docs/DesignQuestions.md`에 질문 등록).
 - 패턴 시간차 0.5/0.6/0.7/0.8/0.9/1.2/1.4초, 점프 필수 패턴의 0.2초 오프셋, 티어 승급 기준 반응 여유 1.5초.
-- 정렬 순서 5. 장애물 물고기 클립의 fps 6(2프레임 루프 → 한 바퀴 0.333초). 굼떠 보이면 `ObstacleClipTable`의 값을 올린다. 물고기 스프라이트 방향은 아트가 왼쪽을 보고 있어 확정이다(반전 없음).
+- 정렬 순서 5. 이빨물고기 클립의 fps 6(2프레임 루프 → 한 바퀴 0.333초). 굼떠 보이면 `ObstacleClipTable`의 값을 올린다. 물고기 스프라이트 방향은 아트가 왼쪽을 보고 있어 확정이다(반전 없음).
 
 ## 권장 설계에서 바꾼 점
 
@@ -388,6 +457,19 @@ private SpawnPlayerState BuildSpawnPlayerState()
 | 원하는 티어 없으면 낮은 티어로 | 가중치 풀 → 전체 풀 → 일반 풀 → 빈 구간 | 같은 취지 |
 
 MonoBehaviour 대신 `MonoThing` + `Module` 구조를 쓴 것은 프로젝트 규칙이다.
+
+## 2026-09-06 긴 바위 패스 (가장 최근)
+
+에디터가 열려 있어 생성기·Unity 테스트를 돌리지 않았다. 손으로 고친 것과 확인한 것은 아래와 같다.
+
+| 종류 | 내용 |
+| --- | --- |
+| 코드 | `SpawnerDefaults`(LongRock 명세·`LongRock_Solo` 패턴·`GetSectionJumpRatio`, 돌·물고기·통나무 `usableInJumpPatterns` false), `ObstacleMix.FromPatterns`(일반 패턴용 장애물만 모은다) |
+| 새 에셋 | `GameAssets/Obstacles/LongRock.prefab`(GUID `8a2d67f0…`), `Design/Spawner/Obstacles/LongRock.asset`(`3f18b0c4…`), `Design/Spawner/Patterns/LongRock_Solo.asset`(`5c4a9e13…`) + `.meta` 3장 |
+| 고친 에셋 | `PatternLibrary.asset`(34번째 패턴 추가), `DifficultyCurve.asset`(네 구간 `jumpRequiredRatio`), `Obstacles/Rock·Fish·Log.asset`(`usableInJumpPatterns: 0`) |
+| 확인 | 오프라인 Roslyn 컴파일 `assemblies compiled: 44  failed: 0`, 오프라인 밸런스 하네스 `ALL CHECKS PASS`(네 구간 × 20시드 전부 생존, 5 : 3 : 2 유지), 앵커 유일성·GUID 참조·자식 링크 검사 통과 |
+
+`Play.unity`는 건드리지 않았다. 스포너는 `PatternLibrary`를 통해 장애물을 모으고 풀에 등록하므로 씬 변경 없이 새 프리팹이 붙는다.
 
 ## 검증하지 못한 위험 지점
 
@@ -405,7 +487,7 @@ MonoBehaviour 대신 `MonoThing` + `Module` 구조를 쓴 것은 프로젝트 �
 - `Game.Spawner.Editor`가 `Game.Animation.Editor`를 참조한다(알파 박스 계산과 오브젝트 아트 임포트 설정 공유). `Game.Animation.Editor`는 `Game.Spawner*`를 참조하지 않으므로 순환은 없다.
 - 런타임 성능: `Initialize`에서 패턴 15개 × 시작 상태 6개 × 이진 탐색을 돌린다(수십 ms 예상). 프레임 중 결정 한 번은 전파 1~4회(각 수만 연산)라 문제없어야 하지만, 히치가 보이면 `maxCandidateAttempts`를 줄이거나 분석을 에디터 베이크로 옮긴다.
 - 자체 속도 이동은 `ObstacleRuntimeModule.Advance`가 `transform.position`을 직접 옮긴다. `ScrollModule`은 `localPosition`을 옮기므로 둘이 더해진다. `ScrollRoot`가 회전·스케일되어 있으면 어긋난다(현재 없음).
-- 1레인 장애물의 콜라이더 높이는 이제 아트에서 나온다(돌·물고기 0.39, 통나무 0.85). 플레이어 히트박스 세로 0.71과 레인 간격 1.1로 계산하면 이웃 레인까지 0.55(통나무는 0.32) 남는다. `laneSpan` 2 이상은 두 레인 y의 평균에 놓이며 코드 경로는 남아 있지만 3판 데이터에는 없다.
+- 1레인 장애물의 콜라이더 높이는 이제 아트에서 나온다(돌 0.96, 물고기 0.36, 통나무 0.85). 플레이어 히트박스 세로 0.71과 레인 간격 1.1로 계산하면 이웃 레인까지 0.565(통나무는 0.32) 남는다. `laneSpan` 3(긴 바위)은 세 레인 y의 평균인 y 0에 놓인다 — 이 코드 경로(`SpawnModule.LaneCenterY`, `LaneMask.Span`)가 실제로 도는 것은 2026-09-06 긴 바위가 처음이라 에디터에서 확인이 필요하다. `laneSpan` 2는 여전히 쓰는 데이터가 없다.
 - 프리팹·씬·Design 에셋을 YAML로 직접 고쳤다. Unity가 다시 임포트할 때 값이 그대로 읽히는지, Inspector에서 `collisionHeight`·`spawnWeight` 새 필드가 제대로 보이는지는 에디터를 열어 봐야 안다.
 
 ## 가정

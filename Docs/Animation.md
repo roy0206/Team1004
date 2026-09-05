@@ -37,7 +37,7 @@
 | `Editor/SalmonClipTable.cs` | 에디터 | `FlipbookClipDefinition`·`FlipbookClipDuration`(클립 한 줄의 정의)과 연어 클립 표(에셋 이름, 아트 루트·하위 폴더, 프레임 접두사, 프레임 수, fps, loop, duration 출처) |
 | `Editor/ObstacleClipTable.cs` | 에디터 | 장애물 클립 표. 지금은 `Obstacle_Fish` 하나. 루트가 `Art/오브젝트`라 연어 표와 같은 정의 타입을 다른 루트로 쓴다 |
 | `Editor/SalmonFrameMatcher.cs` | 에디터, 순수 C# | 파일명 → 프레임 번호. 인덱스 앞뒤 공백과 **`-` 없음**을 관대하게 읽는다. 1프레임 클립용으로 **번호가 아예 없는 이름**(`충돌.png`)을 고르는 `IsSingleFrame`·`FindSingleFrame`도 있다 |
-| `Editor/SharedPivotFolder.cs` | 에디터 | 「폴더 하나가 pivot 하나를 쓴다」 묶음. 합집합 알파 박스·30초 캐시·경로 판정. `SharedPivotFolders`가 연어 폴더와 `장애물 물고기` 폴더를 등록한다 |
+| `Editor/SharedPivotFolder.cs` | 에디터 | 「폴더 하나가 pivot 하나를 쓴다」 묶음. 합집합 알파 박스·30초 캐시·경로 판정. `SharedPivotFolders`가 연어 폴더와 `이빨물고기` 폴더를 등록한다 |
 | `Editor/SalmonArtPostprocessor.cs` | `AssetPostprocessor` | 연어 아트 폴더 PNG를 임포트할 때마다 임포트 설정을 다시 걸고, **합집합 pivot이 어긋난 형제 프레임을 스스로 재임포트 예약**한다 |
 | `Editor/ObjectArtPostprocessor.cs` | `AssetPostprocessor` | 오브젝트 아트 폴더(`Art/오브젝트/**`, 하위 폴더 포함) PNG에 같은 설정 + 폴더 규칙에 맞는 pivot을 다시 건다 |
 | `Editor/ObstacleClipTable.cs` 옆 `Editor/BossClipTable.cs` | 에디터 | 보스 클립 표. 지금은 `Boss_Rapid` 하나. 루트가 `Art/보스`다 |
@@ -136,7 +136,7 @@ Unity.exe -batchmode -nographics -projectPath "D:/Unity/Team1004/Team1004" -quit
 
 `충돌/`은 **번호가 없는 파일 한 장**이라 `SalmonFrameMatcher.TryGetFrameIndex`가 걸러낸다(접두사만 있고 숫자가 없으면 프레임이 아니다 — 그 판정은 그대로 둔다). 대신 `GetFramePath`가 프레임 수 1짜리 클립에 한해 `FindSingleFrame`으로 **접두사와 파일명이 완전히 같은 한 장**을 받아들인다. 그래서 `충돌/충돌.png`가 `Player_Hit`의 유일한 프레임이 된다.
 
-**파일명이 일정하지 않다.** 인덱스 앞에 공백이 있는 것(`물고기 올라가기 -1.png`)과 없는 것(`물고기 올라가기-2.png`)이 섞여 있고, 장애물 물고기는 `-`가 아예 없다(`장애물 물고기1.png`). 그래서 경로를 문자열로 조립하지 않고 폴더의 `*.png`를 훑어 `SalmonFrameMatcher`로 고른다. 규칙은 「접두사 → 공백 몇 개든 → `-`(**있어도 없어도 된다**) → 공백 몇 개든 → 1 이상의 십진수」이고 이름은 NFC로 정규화해 비교한다. `-`가 선택이라도 접두사 바로 뒤에 숫자가 아닌 글자가 붙은 이름(`물고기 기본자세-1`, `장애물 물고기알1`)은 걸리지 않는다. 못 찾으면 `접두사-번호.png`를 그대로 쓰고 경고를 남긴다.
+**파일명이 일정하지 않다.** 인덱스 앞에 공백이 있는 것(`물고기 올라가기 -1.png`)과 없는 것(`물고기 올라가기-2.png`)이 섞여 있고, 장애물 물고기(이빨물고기)는 `-`가 아예 없고 1번 프레임에는 번호도 없다(`이빨.png`, `이빨 2.png`). 그래서 경로를 문자열로 조립하지 않고 폴더의 `*.png`를 훑어 `SalmonFrameMatcher`로 고른다. 규칙은 「접두사 → 공백 몇 개든 → `-`(**있어도 없어도 된다**) → 공백 몇 개든 → 1 이상의 십진수」이고 이름은 NFC로 정규화해 비교한다. `-`가 선택이라도 접두사 바로 뒤에 숫자가 아닌 글자가 붙은 이름(`물고기 기본자세-1`, `장애물 물고기알1`)은 걸리지 않는다. 못 찾으면 `접두사-번호.png`를 그대로 쓰고 경고를 남긴다. **1번 프레임만은 번호 없는 이름(`접두사.png`)도 받는다** — `GetFramePath`의 단일 프레임 대체 경로를 `FrameCount == 1`에서 `index == 0`으로 넓혔다(2026-09-06 이빨물고기). 번호가 붙은 1번 프레임이 있으면 그쪽이 먼저다.
 
 옛 경로 `Assets/GameAssets/Art/점프/`는 Drive에서 `물고기 애니메이팅/점프/`로 옮겨졌다. 빈 폴더와 그 `.meta`는 지웠고, `Tools/sync_drive.py`는 이제 이동·삭제 뒤 빈 폴더와 `.meta`를 스스로 정리한다(`prune_empty_dirs`).
 
@@ -197,7 +197,7 @@ Unity.exe -batchmode -nographics -projectPath "D:/Unity/Team1004/Team1004" -quit
 | `Player_LaneDown.asset` | `물고기 애니메이팅/내려가기/` | 2 | 10 | false | **`LaneMoveDuration`(0.2)** | 레인 아래로 이동 |
 | `Player_Jump.asset` | `물고기 애니메이팅/점프/` | 5 | 12 | false | **`JumpDuration`(0.8)** | |
 | `Player_Hit.asset` | `물고기 애니메이팅/충돌/` | **1** | 6 | false | 0 | 피격·사망 포즈(눈이 X). 한 장이라 사실상 정지 포즈다. 길이 = 1/6 ≈ 0.167초지만 `SetFrame(hitClip, 0)`으로 쓰면 길이가 무의미하다 |
-| `Obstacle_Fish.asset` | `오브젝트/장애물 물고기/` | 2 | 6 | **true** | 0 | 길이 ≈ 0.333초. 장애물 물고기가 헤엄치는 루프. `Fish.prefab`의 `ObstacleThing.swimClip`에 생성기가 연결한다(`Docs/Spawner.md` 「프리팹 비주얼」) |
+| `Obstacle_Fish.asset` | `오브젝트/이빨물고기/` | 2 | 6 | **true** | 0 | 길이 ≈ 0.333초. 장애물 물고기가 헤엄치는 루프. `Fish.prefab`의 `ObstacleThing.swimClip`에 생성기가 연결한다(`Docs/Spawner.md` 「프리팹 비주얼」) |
 | `Boss_Rapid.asset` | `보스/물결/` | 2 | 6 | **true** | 0 | 길이 ≈ 0.333초. 폭포 보스의 강한 물줄기(급류) 루프. `WaterfallBoss.rapidClip`에 연결하고 `rapidRenderers` 3개가 같은 클립을 돈다(`Docs/Boss.md` 「보스 3」) |
 
 duration은 생성기가 `Assets/GameAssets/Design/GameConfig.asset`의 `GameConfigValues`에서 읽어 굽는다(`SalmonClipDuration.LaneMove`/`Jump`). 에셋이 없으면 `GameConfigValues` 기본값(0.2 / 0.8)을 쓴다. 플레이어는 재생할 때 `Play(clip, GameConfig.Current.XxxDuration)`으로 길이를 다시 넘기므로 런타임 config를 바꿔도 어긋나지 않고, 에셋 값은 컷신·미리보기용 기본값이다.
@@ -261,7 +261,7 @@ duration은 생성기가 `Assets/GameAssets/Design/GameConfig.asset`의 `GameCon
 | 묶음 | 폴더 | 하위 폴더 | 프레임 | 공유 pivot |
 | --- | --- | --- | --- | --- |
 | `SharedPivotFolders.Salmon` | `Art/물고기 애니메이팅` | 본다 | 12장(클립 표에서 받는다 — `충돌/` 포함) | `(0.5307292, 0.37592593)` |
-| `SharedPivotFolders.ObstacleFish` | `Art/오브젝트/장애물 물고기` | 안 본다 | 2장(폴더의 `*.png`) | `(0.5270833, 0.4912037)` |
+| `SharedPivotFolders.ObstacleFish` | `Art/오브젝트/이빨물고기` | 안 본다 | 2장(폴더의 `*.png`) | `(0.4945312, 0.5518519)` |
 | `SharedPivotFolders.BossWave` | `Art/보스/물결` | 안 본다 | 2장(폴더의 `*.png`) | `(0.5085937, 0.36712963)` |
 
 이 표에 없는 PNG는 **파일별** pivot이다(돌 `(0.18125, 0.11667)`, 통나무 `(0.56693, 0.39352)`, 긴돌 `(0.6557292, 0.36064816)`). 새 애니메이션 오브젝트가 오면 하위 폴더를 하나 만들고 `SharedPivotFolders`에 한 줄 더하면 된다.

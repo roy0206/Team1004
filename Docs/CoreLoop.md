@@ -11,7 +11,7 @@
    1. `Team1004 > Generate Spawner Assets` (`Game.Spawner.Editor.SpawnerAssetGenerator.GenerateMissing`)
    2. `Team1004 > Generate Cutscene Dialogue Prefab` (`Game.Cutscene.Editor.CutsceneSetup.Generate`)
    2-1. `Team1004 > Generate Boss Assets` (`Game.Boss.Editor.BossAssetSetup.Generate`). **Overwrite면 `Generate(true)`로 프리팹을 다시 만든다**(히트박스 프레임·띠 알파 갱신)
-   2-2. `Team1004 > Generate Animation Assets` (`Game.Animation.Editor.AnimationAssetGenerator.GenerateMissing`) — `Art/물고기 애니메이팅/` 11장 + `Art/오브젝트/장애물 물고기/` 2장 임포트 설정(폴더별 공유 pivot) + 클립 5개(연어 4 + `Obstacle_Fish`). **Overwrite면 `Generate(true)`로 클립을 다시 쓴다**
+   2-2. `Team1004 > Generate Animation Assets` (`Game.Animation.Editor.AnimationAssetGenerator.GenerateMissing`) — `Art/물고기 애니메이팅/` 11장 + `Art/오브젝트/이빨물고기/` 2장 임포트 설정(폴더별 공유 pivot) + 클립 5개(연어 4 + `Obstacle_Fish`). **Overwrite면 `Generate(true)`로 클립을 다시 쓴다**
    2-3. `Team1004 > Generate Environment Assets` (`Game.Environment.Editor.EnvironmentSetup.Generate`) — 없을 때만. **Overwrite면 `Generate(true)`로 프리팹을 다시 만든다**(텍스처·물 프로필 보존)
    2-4. `Team1004 > Generate Ledge Assets` (`Game.Ledge.Editor.LedgeSetup.Generate`) — 없을 때만. **Overwrite면 `Generate(true)`로 `LedgeSet.prefab`을 다시 만드는데, 생성기가 얼어 있어 단차 3개·작은 폭포가 사라진다**(`LedgeData.asset`은 보존). `Docs/Ledge.md` 「생성기」
    2-5. 컷신 대사 프리팹도 Overwrite면 `CutsceneSetup.Generate(true)`로 다시 만든다(힌트 문구 `Enter / 클릭 ▶`)
@@ -109,7 +109,8 @@ LedgeSet (프리팹 인스턴스, ScrollRoot 밖: LedgeDirector[environment·pla
 PlayFlow (DomainSingleton, environment·ledgeDirector 참조)
 CameraCues (CameraCueBinder 호스트. 큐 프리셋 17개 연결. 레인 이동·점프·피격·구간·보스·단차에 카메라 연출을 붙인다. Docs/Camera.md)
 HudCanvas (Screen Space Camera, PlayHud)
-  ProgressBar/Fill (fillAmount = Progress01)
+  ProgressBar/Fill (fillAmount = Progress01. **비활성.** StageProgressBar로 대체했다. `PlayHud.progressFill` 참조는 그대로 둔다)
+  StageProgressBar (프리팹 인스턴스, moondodo 소유. 상단 중앙 anchoredPosition (0, −26), 1180×56. 런 전체 진행 + 보스 아이콘 + 연어 핸들. 인스펙터 연결 없음. Docs/StageProgress.md)
   Distance "구간 {0} · 남은 {1:0}초"
   PauseButton "일시정지"
   ControlHint "↑↓ : 레인 이동 · 가장 위에서 ↑ : 점프" (구간 1 시작 시 controlHintDuration 초, 기본 비활성)
@@ -308,7 +309,7 @@ Underwater(top lane) ──↑, CanJump──▶ Airborne(JumpDuration) ──t�
 | 위치 | 내용 | 스크립트 |
 | --- | --- | --- |
 | 좌측 상단 | `구간 {Section} · 남은 {SectionRemaining:0}초` | `PlayHud` |
-| 상단 중앙 | 진행 바(구간 시간 진행도 `Progress01`, 3판 19.3절 선택 UI) 아래에 보스 타이머: 보스 이름 한 줄("낚싯줄"·"바다코끼리"·"폭포", `PlayFlow.bossNames`) + 큰 정수 초(30→29…). HP바 없음. `BossDirector`가 `SetBoss(BossThing.DisplayName)`, `SetVisible`, `SetRemaining`으로 갱신한다(`PlayFlow.bossNames`는 핸들러가 없을 때의 대체 이름) | `BossTimerView` |
+| 상단 중앙 | 진행 바(**런 전체 진행**. `StageProgressBar` 프리팹 인스턴스, `Docs/StageProgress.md`. 구간 진행만 그리던 옛 `ProgressBar/Fill`은 바가 둘로 겹쳐 비활성으로 두었다) 아래에 보스 타이머: 보스 이름 한 줄("낚싯줄"·"바다코끼리"·"폭포", `PlayFlow.bossNames`) + 큰 정수 초(30→29…). HP바 없음. `BossDirector`가 `SetBoss(BossThing.DisplayName)`, `SetVisible`, `SetRemaining`으로 갱신한다(`PlayFlow.bossNames`는 핸들러가 없을 때의 대체 이름) | `BossTimerView` |
 | 좌측 하단 | 원형 점프 쿨타임 UI | `JumpCooldownView` |
 | 우측 상단 | 일시정지 버튼 | `PlayHud` |
 | 화면 중앙 | 보스 시작·클리어 배너(`BOSS 1 — 낚싯줄`, `CLEAR`). 기본 비활성. `ShowBanner`/`HideBanner`/`ShowBannerAsync(text, 초)`. 읽기용 `IsBannerVisible`, `BannerText` | `PlayHud` |
@@ -439,7 +440,7 @@ Play 씬에서 무엇이 무엇을 들고 있는지.
 | `BossSet` | `BossDirector` + `FishingLineBoss`/`WalrusBoss`/`WaterfallBoss`[StateMachineModule], 자식 `Telegraph`[LaneTelegraphModule], `LaneHazard/Band0..2`(`Hazard` + trigger), 공격체 스프라이트(+ `WaterInteractor`) | `bosses[3]`, 각 보스 `data`(Design/Boss) | `BossDirector.Start`가 `PlayFlow.BossHandler`를 채움. 예고 → 띠+`boss_telegraph`, 공격 → 밴드 활성화+`boss_attack` |
 | `CutscenePlayer` | `CutscenePlayer`[CutscenePlaybackModule] | `stageCamera`, `dialogueView`, `actors[4]`(player/boss/landmark/child), `clips[4]` | `PlayFlow.PlayCutsceneAsync` → `Cutscene` 상태. Enter/클릭 = `Cutscene/Advance` |
 | `CutsceneDialogue` | `CutsceneDialogueView`(MonoBehaviour, Canvas 100) | 프리팹 | 대사·화면 페이드 |
-| `HudCanvas` | `PlayHud`, `JumpCooldownView`, `BossTimerView`, `QtePanel`, `PausePanel`, `ResultPanel`, `SettingsPanel`(→`ConfigPanel`) | `Banner`(중앙 Text, 기본 비활성), `QtePanel`(`PlayHud.qtePanel`) | `Cutscene`이면 Canvas 비활성. 힌트는 `ShowControlHint`, 보스 배너는 `ShowBannerAsync`, 단차 QTE는 `LedgeDirector`가 직접 `QtePanel`을 갱신 |
+| `HudCanvas` | `PlayHud`, `JumpCooldownView`, `BossTimerView`, `QtePanel`, `PausePanel`, `ResultPanel`, `SettingsPanel`(→`ConfigPanel`), `StageProgressBar`(프리팹 인스턴스) | `Banner`(중앙 Text, 기본 비활성), `QtePanel`(`PlayHud.qtePanel`) | `Cutscene`이면 Canvas 비활성. 힌트는 `ShowControlHint`, 보스 배너는 `ShowBannerAsync`, 단차 QTE는 `LedgeDirector`가 직접 `QtePanel`을 갱신 |
 | `Main Camera` | `GameCamera`[AspectModule, CameraShakeModule, CameraZoomModule, CameraPanModule, CameraRig] + `CameraFxDirector` | `fxSettings`(Design/Camera/CameraFxSettings), `cues[17]` | 16:9 레터박스. 매 LateUpdate에 `base + 팬 + 흔들림`, `baseSize × 줌`을 한 번만 쓴다. 컷신은 리그의 base를 빌렸다 돌려준다. `Docs/Camera.md` |
 | `CameraCues` | `CameraCueBinder` | 큐 프리셋 17개(`Design/Camera/`) | 플레이어·보스·단차·PlayFlow 이벤트를 카메라 프리셋에 잇는 유일한 지점. `bossDirector`가 비어 있으면 `Start`에서 한 번 찾는다 |
 
@@ -453,7 +454,7 @@ Bootstrap 씬: `GameBootstrap`(`inputActions`, `audioManifest`, `configAsset`, `
 2. **시작 → 인트로 컷신**: 암전 → 자갈밭 → 성체 등장 → 인간 아이(`CutsceneChild`, 임시 살구색 사각형). Enter 또는 클릭으로 넘김(Space는 반응 없음). 대사 힌트가 `Enter / 클릭 ▶`인지, 대사 한글이 KOTRA HOPE 폰트로 보이는지.
 3. **구간 1 시작**: 화면 아래쪽에 조작 힌트가 약 2.5초 나왔다 사라지는지. 배경 층(하늘·원경·중경·바닥·물결·수면)이 왼쪽으로 흐르고 레인 가이드 선이 읽히는지. 연어가 가운데 레인에 레인 간격 안에 들어오는 크기인지.
 4. **이동·점프**: ↑↓로 레인 이동, 상단에서 ↑로 점프. **레인 이동 중 올라가기/내려가기 2프레임이 0.2초에 넘어가고 도착하면 수영 루프로 돌아오는지**, 클립이 바뀔 때 연어가 위아래로 튀지 않는지(공유 pivot). 점프 중 5프레임 애니메이션이 **1.6초**에 걸쳐 넘어가고 착수 후 수영 포즈로 돌아오는지. 점프 최고점이 **상단 레인에서 2레인(2.2 unit) 위**로 수면을 확실히 뚫는지. **수면이 점프 때 솟고 착수 때 눌리는지**(세기는 `WaterSettings.asset`). 좌측 하단 쿨타임 원이 차오르는지.
-5. **장애물**: 돌·물고기·통나무가 레인에 맞게 오고, 히트박스가 연어 몸보다 살짝 작아 보이는지(스치는 느낌이 과하면 `playerHitboxScale`). 돌 변종 2개가 번갈아 나오는지(지금은 그림이 같아 구분이 안 된다), 장애물 물고기 2프레임이 튀지 않는지.
+5. **장애물**: 돌·물고기·통나무가 레인에 맞게 오고, 히트박스가 연어 몸보다 살짝 작아 보이는지(스치는 느낌이 과하면 `playerHitboxScale`). 돌 변종 2개가 번갈아 나오는지(지금은 그림이 같아 구분이 안 된다), 이빨물고기 2프레임(입 다뭄 ↔ 벌림)이 튀지 않는지. 긴 바위가 세 레인을 막고 점프로만 넘어가는지.
 5-1. **상류 단차 QTE(구간 1 5초·12.5초, 구간 2 15초 — 전부 「작은 폭포」)**: 구간 1은 시작 3초 만에 장애물이 끊기고 오른쪽에서 폭포가 들어와 5초에 닿는지. **첫 단차에만** 배경 `↑`가 보이는지. 폭포 앞면이 **2.5 unit**(도착 0.625초 전)까지 오면 세계가 멈추지 않고 **아주 느려지고**(배경·물·강바닥·장애물·HUD 남은 초가 **다 같이** 느려져야 한다) 화면 중앙에 큰 `↑`, 점 6개, 줄어드는 시간 막대가 뜨는지. **↑↓를 번갈아 6번** 누르면 점이 차고 화살표가 번쩍이며 방향이 바뀌는지, **같은 키를 두 번 누르면 아무 일도 없는지**, QTE 중 ↑↓로 레인이 움직이거나 점프가 나가지 않는지. 6번째에 연어가 자동으로 1번 레인에서 점프해 넘고 세계가 정상 속도로 돌아오는지. 넘은 뒤 0.7초 동안 위쪽 강바닥이 내려와 이어지는지. **아무것도 안 누르면 폭포에 부딪혀 일반 피격 연출(정지·흔들림·왼쪽 밀림) 뒤 실패**하는지(예전의 「멈추고 재도전」은 없어졌다). QTE 창 전에 미리 점프하면 QTE 없이 그냥 넘어가는지. **첫 폭포가 완전히 빠져나간 뒤에 두 번째(12.5초)가 들어오는지**. QTE 중 Esc → 전부 멈추는지. 구간 3·4·보스·컷신에는 단차가 없는지. 세부는 `Docs/Ledge.md` 「수동 플레이 체크」와 `Docs/Qte.md`.
 6. **컷신 → 보스 1(낚싯줄)**: 컷신 뒤 화면 중앙에 "BOSS 1 — 낚싯줄"이 1초 → 사라진 뒤 상단 중앙에 "낚싯줄 30". 예고 1.2초 동안 레인 띠(30~40%)가 그 레인 **전체 폭**을 덮고, 바늘이 오른쪽에 나타났다가 예고 중반부터 왼쪽으로 훑어 온다. 공격 0.2초 전 띠가 밝아짐 → 공격음과 함께 바늘이 플레이어 x를 지난다(줄이 뒤로 기울고 바늘이 위아래로 살짝 흔들리는지). 바늘이 수면을 뚫을 때 물이 반응하는지. 띠 밖에서는 절대 맞지 않는지. 30초 뒤 "CLEAR" 1초.
 7. **보스 2(바다코끼리)**: 1레인 입/2레인 팔 크기 구분, 돌진 후 복귀. **돌진할 때 레인 띠가 따라 움직이지 않는지**(루트가 아니라 `Body`만 움직여야 한다). 2레인 공격에서 남은 1레인이 진짜 안전한지.
@@ -613,12 +614,13 @@ YAML 점검(생성 뒤):
 | `Play.unity` `PlayFlow` | `player`·`scroller`·`spawner`·`hud`·`bossTimer`·`pausePanel`·`resultPanel`·`cutscene`·`environment`·`ledgeDirector`·`playScene`·`startScene` 전부 non-zero, 컷신 id `intro`/`cutscene1~3`/`ending` |
 | `LanePlayer` | 클립 4개 non-zero, 스프라이트 = `물고기 기본-1`(guid `0c496a74…`) |
 | `PlayHud` | `progressFill`·`distanceText`·`pauseButton`·`controlHint`·`banner` non-zero |
+| `StageProgressBar` 인스턴스 | `HudCanvas` 자식에 프리팹 인스턴스(guid `f3e01b3b…`) 1개, `ProgressBar`는 `m_IsActive: 0`. **`CoreLoopSetup`은 이 인스턴스를 만들지 않고 `ProgressBar`를 다시 켜므로**, Play 씬을 재생성하면 손으로 다시 넣고 옛 바를 끈다 |
 | `CutscenePlayer` | `stageCamera`·`dialogueView` non-zero, `CutsceneActor` 4개(`CutsceneChild` 포함) |
 | `LedgeSet` 인스턴스 | 프리팹 수정값 `player`·`environment` 연결 |
 | `BossSet` 인스턴스 | `stageCamera` = Main Camera |
 | 보스 프리팹 3개 | `LaneHazard` 1 + `Band0..2`, `HitboxView` 0 |
-| `Fish.prefab` | 스프라이트 = `장애물 물고기1`(guid `84f698fb…`), `swimClip` = `Obstacle_Fish`, `m_DrawMode: 0` |
-| 아트 `.meta` | 연어 11장 pivot 전부 `(0.52994794, 0.37592593)`, 장애물 물고기 2장 전부 `(0.52708334, 0.4912037)` |
+| `Fish.prefab` | 스프라이트 = `장애물 물고기1`(guid `84f698fb…`), `swimClip` = `Obstacle_Fish`, `m_DrawMode: 0`. **2026-09-06 아트 교체 뒤에는 `이빨`(guid `2b9f4c81…`)이다** |
+| 아트 `.meta` | 연어 11장 pivot 전부 `(0.52994794, 0.37592593)`, 장애물 물고기 2장 전부 `(0.52708334, 0.4912037)`. **2026-09-06 아트 교체 뒤 물고기는 `이빨물고기` 2장 `(0.4945312, 0.5518519)`다** |
 | 폰트 | `Play.unity`의 `m_Font` 13개 전부 KOTRA HOPE(`743451263bb3aa44b84a9ed9ebc76680`), 다른 폰트 0 |
 | `CutsceneDialogue.prefab` | 힌트 `Enter / 클릭 ▶` |
 

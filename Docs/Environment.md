@@ -239,12 +239,12 @@ limit = max(cap, |이전 속도|)
 | `WaterInteractor.OnEnable` / `OnSpawned` / `OnReleased` | 기존 `ResetVelocity()`가 이제 워밍업까지 건다. 풀 스폰·보스 세트 활성화는 여기서 자동으로 잡힌다 |
 | `WaterInteractorModule.OnAttached` | 부착 즉시 |
 | `LanePlayer.SnapToLane` | 이미 `water?.ResetVelocity()`를 부르고 있었다. 코드 수정 없이 워밍업이 걸린다(`PlayFlow`의 디버그 점프·재시작도 이 경로다) |
-| `FishingLineBoss.ResetHook` / `StageHook` | `WaterInteractor.NotifyTeleport(hook)` |
+| `FishingLineBoss.ResetHooks` | 바늘마다 `WaterInteractor.NotifyTeleport(root)`. 캐스트·릴은 연속 이동이라 넣지 않았다 |
 | `WalrusBoss.ResetPosition` | `WaterInteractor.NotifyTeleport(body)` |
 | `WaterfallBoss.ParkLane` / `HideWaterfall` | `WaterInteractor.NotifyTeleport(rapid/rock/waterfall)` |
 | `LedgeThing.Schedule` | `WaterInteractor.NotifyTeleport(transform)` |
 
-`static WaterInteractor.NotifyTeleport(Transform)`는 자기와 자식의 `WaterInteractor`를 전부(비활성 포함) 찾아 알린다. 순간이동은 드문 사건이라 `GetComponentsInChildren` 비용을 그대로 둔다. 연속 이동 경로(`PlaceHook`·`PlaceAtX`·`PlaceWaterfall`)에는 **넣지 않았다** — 넣으면 매 프레임 워밍업이 걸려 항적이 아예 사라진다.
+`static WaterInteractor.NotifyTeleport(Transform)`는 자기와 자식의 `WaterInteractor`를 전부(비활성 포함) 찾아 알린다. 순간이동은 드문 사건이라 `GetComponentsInChildren` 비용을 그대로 둔다. 연속 이동 경로(낚싯줄 `UpdateCast`·`UpdateReel`, `PlaceAtX`·`PlaceWaterfall`)에는 **넣지 않았다** — 넣으면 매 프레임 워밍업이 걸려 항적이 아예 사라진다.
 
 `Game.Boss`·`Game.Ledge` asmdef에 `Game.Water`를 추가했다(`Game.Water`는 아무것도 참조하지 않으므로 순환 없음).
 
@@ -313,8 +313,9 @@ limit     = max(|기존 속도|, |vx| × wakeVelocityTransfer)
 | 대상 | 붙은 것 | 바운즈 | `SurfaceInfluence` | 관찰 |
 | --- | --- | --- | --- | --- |
 | 플레이어 | `LanePlayer`가 `WaterInteractorModule` 직접 부착 | `BoxCollider2D` | 기본(1.0) | 점프·착수는 세로 전달. x가 고정이라 항적은 없다 |
+| 장애물 LongRock | `LongRock.prefab` `WaterInteractor`(`wakeOnly`) | 3.34896 × 3.77 (루트 스케일 1이라 로컬 = 월드, 중심 y 0.165) | 1.0 | 강바닥 −1.72에서 수면 위 2.05까지 솟아 **수면을 세로로 관통한다**. 항적만 내고 수면을 위아래로 밀지 않는다(`wakeOnly`) |
 | 장애물 Rock | `Rock.prefab` `WaterInteractor` | 2.44 × 1.10 (로컬 5.6 × 2.52 × 스케일 0.43650794) | 1.0 | **강바닥 바위**라 맨 아랫줄 고정이다. 윗변 −0.55, 수면 2.0까지 2.55라 항적이 나지 않는다(`CollideAll` 세로 조기 탈출). 다른 것들과 형태를 맞추려고 컴포넌트는 남겨 뒀고 비용은 0이다 |
-| 장애물 Fish | `Fish.prefab` `WaterInteractor` | 0.90 × 0.45 (로컬 4.1 × 2.05 × 스케일 0.2195122) | 1.0 | 상단 레인에서 윗변 1.325, proximity 0.325 |
+| 장애물 Fish | `Fish.prefab` `WaterInteractor` | 0.90 × 0.409442 (로컬 6.99 × 3.18 × 스케일 0.1287554) | 1.0 | 상단 레인에서 윗변 1.3047, proximity 0.3047. 2026-09-06 이빨물고기 아트 교체로 세로가 0.45 → 0.409442로 줄었다 |
 | 장애물 Log | `Log.prefab` `WaterInteractor` | 1.80 × 0.976 (로컬 5.31 × 2.8792 × 스케일 0.33898306) | 1.0 | 상단 레인에서 윗변 1.588, proximity 0.588. **셋 중 가장 잘 보인다** |
 | 낚싯대 보스 갈고리 | `FishingLineBoss.prefab` `WaterInteractor`(콜라이더 사용) | 콜라이더 | 기본(1.0) | 훑기(가로 이동)에서 항적이 생긴다 |
 | 바다코끼리 | `WalrusBoss.prefab` `WaterInteractor`(콜라이더 사용) | 콜라이더 | 기본(1.0) | 돌진 속도가 커서 항적이 세다 |
