@@ -9,20 +9,35 @@ namespace Game.Water
         private readonly Collider2D shape;
         private readonly Vector2 localSize;
         private readonly Vector2 localOffset;
-        private readonly VerticalVelocitySampler sampler;
+        private readonly VelocitySampler sampler;
 
-        public WaterInteractorModule(Transform target, Vector2 localSize, Vector2 localOffset, float smoothing)
+        private float surfaceInfluence;
+        private bool wakeOnly;
+        private float wakeScale = 1f;
+        private int warmupRemaining;
+
+        public WaterInteractorModule(
+            Transform target, Vector2 localSize, Vector2 localOffset, float smoothing,
+            float surfaceInfluence = 0f, bool wakeOnly = false, float wakeScale = 1f)
         {
             this.target = target ?? throw new ArgumentNullException(nameof(target));
             this.localSize = new Vector2(Mathf.Abs(localSize.x), Mathf.Abs(localSize.y));
             this.localOffset = localOffset;
-            sampler = new VerticalVelocitySampler(smoothing);
+            this.surfaceInfluence = surfaceInfluence;
+            this.wakeOnly = wakeOnly;
+            this.wakeScale = Mathf.Max(0f, wakeScale);
+            sampler = new VelocitySampler(smoothing);
         }
 
-        public WaterInteractorModule(Transform target, Collider2D shape, float smoothing)
+        public WaterInteractorModule(
+            Transform target, Collider2D shape, float smoothing,
+            float surfaceInfluence = 0f, bool wakeOnly = false, float wakeScale = 1f)
         {
             this.target = target ?? throw new ArgumentNullException(nameof(target));
-            sampler = new VerticalVelocitySampler(smoothing);
+            this.surfaceInfluence = surfaceInfluence;
+            this.wakeOnly = wakeOnly;
+            this.wakeScale = Mathf.Max(0f, wakeScale);
+            sampler = new VelocitySampler(smoothing);
 
             if (shape is BoxCollider2D box)
             {
@@ -35,11 +50,41 @@ namespace Game.Water
             localSize = Vector2.one;
         }
 
-        public float VerticalVelocity => sampler.Velocity;
+        public float VerticalVelocity => sampler.Velocity.y;
+        public float HorizontalVelocity => sampler.Velocity.x;
+        public Vector2 Velocity => sampler.Velocity;
         public Vector2 LocalSize => localSize;
         public Vector2 LocalOffset => localOffset;
         public bool UsesColliderShape => shape != null;
         public bool IsTouchingWater { get; private set; }
+        public bool TransfersVerticalVelocity => !wakeOnly;
+        public int WarmupRemaining => warmupRemaining;
+        public bool IsWarmingUp => warmupRemaining > 0;
+
+        public bool WakeOnly
+        {
+            get => wakeOnly;
+            set => wakeOnly = value;
+        }
+
+        public float WakeScale
+        {
+            get => wakeScale;
+            set => wakeScale = Mathf.Max(0f, value);
+        }
+
+        public float SurfaceInfluence
+        {
+            get
+            {
+                if (surfaceInfluence > 0f)
+                    return surfaceInfluence;
+
+                var settings = WaterSettings.currentSettings;
+                return settings != null ? settings.wakeInfluenceDistance : 0f;
+            }
+            set => surfaceInfluence = value;
+        }
 
         public Bounds Bounds
         {
@@ -69,7 +114,50 @@ namespace Game.Water
 
         public void ResetVelocity()
         {
-            sampler.Reset(target != null ? target.position.y : 0f);
+            sampler.Reset(target != null ? (Vector2)target.position : Vector2.zero);
+            BeginWarmup();
+        }
+
+        public void NotifyTeleport()
+        {
+            ResetVelocity();
+        }
+
+        public void BeginWarmup()
+        {
+            var settings = WaterSettings.currentSettings;
+            warmupRemaining = settings != null ? Mathf.Max(0, settings.InjectionWarmupFrames) : 0;
+            IsTouchingWater = false;
+        }
+
+        public bool Step(float deltaTime)
+        {
+            if (target == null)
+                return false;
+
+            var settings = WaterSettings.currentSettings;
+            var teleport = settings != null ? settings.TeleportDistance : 0f;
+            var position = (Vector2)target.position;
+
+            if (teleport > 0f && sampler.HasSample &&
+                (position - sampler.Position).sqrMagnitude > teleport * teleport)
+            {
+                sampler.Reset(position);
+                BeginWarmup();
+                return false;
+            }
+
+            sampler.Sample(position, deltaTime);
+
+            if (warmupRemaining > 0)
+            {
+                warmupRemaining--;
+                IsTouchingWater = false;
+                return false;
+            }
+
+            IsTouchingWater = WaterSystem.CollideAll(this);
+            return true;
         }
 
         protected override void OnAttached()
@@ -85,11 +173,7 @@ namespace Game.Water
 
         protected override void OnUpdate()
         {
-            if (target == null)
-                return;
-
-            sampler.Sample(target.position.y, Time.deltaTime);
-            IsTouchingWater = WaterSystem.CollideAll(this);
+            Step(Time.deltaTime);
         }
     }
 }

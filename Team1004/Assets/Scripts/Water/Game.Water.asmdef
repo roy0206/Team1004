@@ -3,6 +3,7 @@
     "rootNamespace": "Game.Water",
     "references": [
         "Core.Modules",
+        "Core.Pool",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.Burst",

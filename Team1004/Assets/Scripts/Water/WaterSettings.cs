@@ -21,6 +21,32 @@ namespace Game.Water
         [Range(0f, 0.99f)]
         public float velocitySmoothing;
 
+        [SerializeField] private float maxInjectedVelocity = 1.5f;
+        [SerializeField] private int injectionWarmupFrames = 3;
+        [SerializeField] private float teleportDistance = 1f;
+
+        [Header("Wake")]
+        public float wakeVelocityTransfer = 0.15f;
+        public float wakeInfluenceDistance = 1f;
+
+        public float MaxInjectedVelocity
+        {
+            get => maxInjectedVelocity;
+            set => maxInjectedVelocity = Mathf.Max(0f, value);
+        }
+
+        public int InjectionWarmupFrames
+        {
+            get => injectionWarmupFrames;
+            set => injectionWarmupFrames = Mathf.Max(0, value);
+        }
+
+        public float TeleportDistance
+        {
+            get => teleportDistance;
+            set => teleportDistance = Mathf.Max(0f, value);
+        }
+
         [Header("Optimization")]
         public float simulationDistance;
         public float nodePerUnit;
