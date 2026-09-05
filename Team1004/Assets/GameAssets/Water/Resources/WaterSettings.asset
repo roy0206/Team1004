@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: WaterSettings
   m_EditorClassIdentifier: Game.Water::Game.Water.WaterSettings
   tension: 10
-  damping: 0.6
-  spread: 5
+  damping: 1.1
+  spread: 3.5
   iterationsPerFrame: 3
   surfaceCollisionDistance: 1
-  collisionVelocityTransfer: 0.5
+  collisionVelocityTransfer: 0.3
   velocitySmoothing: 0
-  maxInjectedVelocity: 1.5
+  maxInjectedVelocity: 0.9
   injectionWarmupFrames: 3
   teleportDistance: 1
-  wakeVelocityTransfer: 0.15
+  wakeVelocityTransfer: 0.08
   wakeInfluenceDistance: 1
   simulationDistance: 20
   nodePerUnit: 3

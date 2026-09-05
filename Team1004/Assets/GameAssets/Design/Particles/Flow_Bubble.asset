@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fd8628e9bd4842383dd6136d33e3829, type: 3}
+  m_Name: Flow_Bubble
+  m_EditorClassIdentifier: Game.Particles::Game.Particles.ParticleProfile
+  sprite: {fileID: 21300000, guid: 47bd35908cda703600501d6e1b91e969, type: 3}
+  color: {r: 0.88, g: 0.97, b: 1, a: 1}
+  sortingOrder: -4
+  spawnMode: 0
+  rate: 2.5
+  emitCenter: {x: 0, y: -0.4}
+  emitSize: {x: 13, y: 2.2}
+  lifetimeRange: {x: 2.5, y: 4.5}
+  speedRange: {x: 0.16, y: 0.32}
+  directionRange: {x: 78, y: 102}
+  sizeRange: {x: 0.05, y: 0.11}
+  endSizeScale: 1.35
+  alpha: 0.3
+  fadeIn: 0.15
+  fadeOut: 0.3
+  acceleration: {x: 0, y: 0.1}
+  constantVelocity: {x: 0, y: 0}
+  flowFactor: 0.35
+  driftAmplitude: 0.1
+  driftFrequency: 0.8
+  popAtSurface: 1
+  surfaceMargin: 0.04
+  killOutsideBounds: 1
+  boundsMargin: 1.2
+  burstSmall: 0
+  burstLarge: 0

@@ -1,0 +1,9 @@
+{
+    "name": "Game.Particles",
+    "rootNamespace": "Game.Particles",
+    "references": [
+        "Core.Modules",
+        "Core.Foundation",
+        "Game.Config"
+    ]
+}
