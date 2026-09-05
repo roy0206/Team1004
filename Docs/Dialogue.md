@@ -1,6 +1,6 @@
 # 대사
 
-`Game.Dialogue`는 게임의 모든 대사 문장을 CSV 한 장으로 모아 두고 id로 꺼내 쓰는 모듈이다. 기획서 3판 20절이 "정확한 문장은 다음 기획 단계에서 확정한다"고 했으므로, 문장이 바뀔 때 코드를 건드리지 않도록 대사를 데이터로 분리했다. 씬 오브젝트가 없어 `MonoThing`·`Module`·`Singleton`을 쓰지 않고 순수 클래스 3개와 정적 서비스 1개로 되어 있다.
+`Game.Dialogue`는 게임의 모든 대사 문장을 CSV 한 장으로 모아 두고 id로 꺼내 쓰는 모듈이다. 기획이 문장을 계속 다듬으므로(v4 25절 「최종 대사·인간 아이의 세부 설정·엔딩 연출은 추후 더 다듬을 수 있다」) 문장이 바뀔 때 코드를 건드리지 않도록 대사를 데이터로 분리했다. 씬 오브젝트가 없어 `MonoThing`·`Module`·`Singleton`을 쓰지 않고 순수 클래스 3개와 정적 서비스 1개로 되어 있다.
 
 - 경로: `Assets/Scripts/Dialogue/`, 에디터: `Assets/Scripts/Dialogue/Editor/`, 테스트: `Assets/Scripts/Dialogue/Tests/`
 - asmdef: `Game.Dialogue`(참조 없음), `Game.Dialogue.Editor`(참조 `Game.Dialogue`, `Game.Cutscene`, Editor 전용), `Game.Dialogue.Tests`(EditMode)
@@ -27,10 +27,10 @@ UnityEngine 의존은 `DialogueService.cs` 한 파일에만 있다. 파서와 �
 
 ```
 id,speaker,text,auto_advance,cps
-intro.01,연이 (어린 시절),여기는 기억해 둬야겠다.,1,
-intro.03,연이,…여기다.,,
-ending.04,,"처음 품은 뜻을, 끝까지.
-初志一貫",,
+intro.01,,물이 빠진 웅덩이에 어린 연어 한 마리가 남아 있었다.,1.4,
+intro.02,아이,너도 이제 멀리 가는구나.,,
+ending.06,,"初志一貫
+처음 품은 뜻을, 끝까지.",,
 ```
 
 | 열 | 필수 | 뜻 | 비우면 |
@@ -38,7 +38,7 @@ ending.04,,"처음 품은 뜻을, 끝까지.
 | `id` | 필수 | 대사를 가리키는 이름. 컷신이 이 값을 참조한다 | 그 행을 건너뛰고 경고 |
 | `speaker` | 선택 | 화자 이름. 패널 위쪽에 그대로 나온다 | 화자 없음(내레이션·자막) |
 | `text` | 필수 | 본문. 줄바꿈은 큰따옴표로 감싼 실제 줄바꿈 | 빈 대사(경고 없음) |
-| `auto_advance` | 선택 | 타자가 끝난 뒤 몇 초 있다가 자동으로 넘어갈지(초). `0`이면 즉시 | 비면 `-1`, 즉 Space를 누를 때까지 기다린다 |
+| `auto_advance` | 선택 | 타자가 끝난 뒤 몇 초 있다가 자동으로 넘어갈지(초). `0`이면 즉시 | 비면 `-1`, 즉 Enter나 마우스 클릭을 기다린다 |
 | `cps` | 선택 | 초당 글자 수(타자 속도) | 비면 `0`, `CutsceneBase.DefaultCharsPerSecond`(30)를 쓴다 |
 
 작성 규칙:
@@ -56,13 +56,15 @@ ending.04,,"처음 품은 뜻을, 끝까지.
 
 `<컷신 id>.<두 자리 순번>`. 컷신 id는 `CutsceneBase.Id`(= `CutsceneCatalog`의 상수)와 같다.
 
-| 컷신 클래스 | 컷신 id | 대사 id |
-| --- | --- | --- |
-| `IntroCutscene` | `intro` | `intro.01` ~ `intro.06` |
-| `FishingLineCutscene` | `cutscene1` | `cutscene1.01` ~ `cutscene1.04` |
-| `WalrusCutscene` | `cutscene2` | `cutscene2.01` ~ `cutscene2.04` |
-| `WaterfallCutscene` | `cutscene3` | `cutscene3.01` ~ `cutscene3.03` |
-| `EndingCutscene` | `ending` | `ending.01` ~ `ending.04` |
+| 컷신 클래스 | 컷신 id | 대사 id | 줄 수 |
+| --- | --- | --- | --- |
+| `IntroCutscene` | `intro` | `intro.01` ~ `intro.07` | 7 |
+| `FishingLineCutscene` | `cutscene1` | `cutscene1.01` ~ `cutscene1.04` | 4 |
+| `WalrusCutscene` | `cutscene2` | `cutscene2.01` ~ `cutscene2.04` | 4 |
+| `WaterfallCutscene` | `cutscene3` | `cutscene3.01` ~ `cutscene3.04` | 4 |
+| `EndingCutscene` | `ending` | `ending.01` ~ `ending.05` | 5 |
+
+전체 24줄이다. 2026-09-06 기획 답변(인트로 6~7문장·엔딩 5~6문장, 각 20초 이내)으로 인트로 9→7, 엔딩 6→5로 줄였다. **문장은 지우지 않고 합치기만 했다**: `intro.02`가 아이의 두 문장, `intro.07`이 연이의 두 문장, `ending.04`가 내레이션 두 문장(셀 안 줄바꿈)이다. 번호가 밀렸으므로 컷신 클래스의 상수도 함께 바꿨다(`intro.08`·`09`, `ending.06`은 이제 없다). 중간 컷신 1·2·3은 기획 v4 18절 「컷신 길이 원칙」대로 각각 5문장 이하다(`CutsceneCatalogTests`가 검사한다).
 
 중간에 대사를 끼워 넣을 때는 뒤 번호를 밀지 말고 `intro.045`처럼 늘리거나, 컷신 클래스의 `Run()` 순서만 바꾸고 id는 그대로 둔다. id는 컷신 클래스에 문자열 상수로 박혀 있으므로 **이미 쓰이는 id를 바꾸면 그 대사가 화면에서 `[intro.01]`처럼 보인다.** 바꿔야 하면 `Validate Dialogue CSV`를 돌려 끊어진 참조를 먼저 확인한다.
 
@@ -75,7 +77,7 @@ ending.04,,"처음 품은 뜻을, 끝까지.
 3. Unity 메뉴 `Team1004/Import Dialogue CSV`를 누른다. `Assets/Documents/` 아래를 재귀로 뒤져 후보 csv를 찾고, 여러 개면 **가장 최근에 수정된 것**을 골라 `Assets/GameAssets/Design/Dialogue/dialogue.csv`로 복사한다. 고른 경로와 후보 목록을 콘솔에 남기고 이어서 검증까지 돌린다.
 4. 컷신 재생에 반영하려면 그 CSV가 Bootstrap의 `dialogueCsv`에 연결되어 있어야 한다(아래 「Bootstrap 초기화」).
 
-정본은 어디까지나 Drive이고, `Assets/GameAssets/Design/Dialogue/dialogue.csv`는 게임이 읽는 사본이다. 급할 때 사본을 직접 고쳐도 되지만 다음 Import에서 덮어써진다.
+정본은 어디까지나 Drive이고, `Assets/GameAssets/Design/Dialogue/dialogue.csv`는 게임이 읽는 사본이다. 급할 때 사본을 직접 고쳐도 되지만 다음 Import에서 덮어써진다. **2026-09-06 인트로·엔딩 축약은 사본을 직접 고친 것이다. Drive의 CSV에도 같은 내용을 올리기 전에는 `Import Dialogue CSV`를 돌리지 않는다**(돌리면 9줄·6줄 판으로 되돌아가고 `intro.08`·`intro.09`·`ending.06`이 「안 쓰는 id」로, 컷신은 `[intro.07]` 대체 줄로 나온다).
 
 ## 런타임 API
 
@@ -141,7 +143,7 @@ await SettingsService.LoadAsync();
 
 - `Game.Bootstrap.asmdef` 참조에 `Game.Dialogue`를 추가하고 파일 위에 `using Game.Dialogue;`를 넣는다.
 - Bootstrap 씬의 `GameBootstrap` 오브젝트 `dialogueCsv`에 `Assets/GameAssets/Design/Dialogue/dialogue.csv`를 끌어다 넣는다.
-- 위치는 `GameConfig.Load` 근처면 어디든 된다. 비동기가 아니고 파일 I/O도 없다(TextAsset은 이미 메모리에 있다). 대사 21줄짜리 현재 CSV 기준 파싱은 즉시 끝난다.
+- 위치는 `GameConfig.Load` 근처면 어디든 된다. 비동기가 아니고 파일 I/O도 없다(TextAsset은 이미 메모리에 있다). 대사 24줄짜리 현재 CSV 기준 파싱은 즉시 끝난다.
 - 연결을 잊으면 컷신 대사가 전부 `[intro.01]`처럼 보이고 콘솔에 `[DialogueService] Dialogue table is not loaded.` 경고가 뜬다. 컷신 재생 자체는 막히지 않는다.
 
 ## 컷신 연결
@@ -161,20 +163,32 @@ await Together(CameraTo(offset, 0f, 1.2f, Ease.InOutSine, true), Say("intro.04")
 | --- | --- |
 | `speaker` | **항상 테이블**. 테이블이 비어 있으면 화자 없음으로 표시한다 |
 | `text` | **항상 테이블** |
-| `auto_advance` | 테이블 값이 `0` 이상이면 그 초 뒤 자동 진행, 비어 있으면(`-1`) Space 대기 |
+| `auto_advance` | 테이블 값이 `0` 이상이면 그 초 뒤 자동 진행, 비어 있으면(`-1`) Enter·마우스 클릭 대기 |
 | `cps` | 테이블 값이 `0`보다 크면 테이블, 아니면 `CutsceneBase.DefaultCharsPerSecond`(30) |
 
 화자·본문·자동 진행·속도는 전부 기획 소관이므로 CSV가 정본이다. 코드에는 대사 문자열 리터럴이 없다. 대사를 고치면 CSV만 고치면 되고 컴파일도 생성기 실행도 필요 없다(연출 순서를 바꿀 때만 컷신 클래스를 고친다).
 
 ## 검증 도구
 
-메뉴 `Team1004/Validate Dialogue CSV`는 콘솔에 아래 표를 한 덩어리로 찍는다.
+메뉴 `Team1004/Validate Dialogue CSV`는 콘솔에 아래 표를 한 덩어리로 찍는다. 같은 판정을 사람 손 없이 돌리려고 `Game.Cutscene.Tests/CutsceneDialogueCsvTests`가 CSV 파일을 직접 읽어 파싱 경고 0 · 끊어진 참조 0 · 안 쓰는 id 0 · 화자 목록을 EditMode 테스트로 검사한다.
 
 1. **파싱 경고** — 중복 id, 빈 id, 숫자로 못 읽은 값, 없는 열.
 2. **컷신이 참조하지만 CSV에 없는 id** — 어떤 컷신이 쓰는지 함께 표시. 하나라도 있으면 `LogError`(콘솔에 빨간 줄).
 3. **CSV에 있지만 아무도 안 쓰는 id** — 오타이거나, 아직 안 붙였거나, 컷신 밖에서 쓰는 id다.
 
 `CutsceneCatalog.CreateAll`로 등록된 컷신을 전부 만들어 각 인스턴스의 `LineIds`를 모은다(예전에는 `AssetDatabase.FindAssets`로 `CutsceneAsset`을 훑었다). 그래서 **`Say`를 새로 넣으면 그 컷신 클래스의 `LineIds`에도 넣어야** 검증에 잡힌다. `Import Dialogue CSV`도 끝에 이 검증을 한 번 돌린다.
+
+## 화자
+
+v4 스토리(연어의 약속)에서 쓰는 화자는 넷이고, 나머지는 화자 없는 내레이션(빈칸)이다. `Game.Cutscene.Tests`의 `CutsceneDialogueCsvTests`가 이 목록 밖의 화자를 잡는다.
+
+| `speaker` | 누구 |
+| --- | --- |
+| (빈칸) | 내레이션·화면 문구 |
+| `연이` | 성체 연어(주인공) |
+| `연이 (어린 시절)` | 웅덩이에 갇혀 있던 어린 연어 |
+| `아이` | 연어를 강으로 돌려보낸 인간 아이. 컷신 1·엔딩의 기억 플래시에서도 이 이름이다 |
+| `어른이 된 아이` | 몇 해 뒤 같은 장소로 돌아온 그 아이 |
 
 ## 테스트
 
@@ -188,11 +202,14 @@ await Together(CameraTo(offset, 0f, 1.2f, Ease.InOutSine, true), Say("intro.04")
 
 ## 컴파일 검증
 
-컷신 교체 작업에서 배치로 다시 확인했다: `-batchmode -quit` 컴파일 `error CS` 0, `-runTests -testPlatform EditMode` 119/119 통과(`Game.Dialogue.Tests` 포함), PlayMode 스모크 1/1 통과.
+컷신 교체 작업에서 배치로 확인했다: `-batchmode -quit` 컴파일 `error CS` 0, `-runTests -testPlatform EditMode` 119/119 통과(`Game.Dialogue.Tests` 포함), PlayMode 스모크 1/1 통과.
+
+v4 스토리 교체(2026-09-05)는 에디터가 열려 있어 오프라인 Roslyn 컴파일로 확인했다: asmdef 32개 `error CS` 0. CSV는 파서와 같은 RFC 4180 규칙으로 대조해 27줄·경고 0·끊어진 참조 0·안 쓰는 id 0을 확인했다. Unity 테스트는 통합 패스에서 돌린다.
 
 ## 확신이 없는 지점
 
-- `auto_advance`가 비면 Space 대기다. 컷신 쪽에 기본값을 두는 선택지는 없앴다(스텝이 사라져서 담을 곳이 없다). 자동 진행을 원하면 CSV에 초를 적는다.
+- `auto_advance`가 비면 Enter·마우스 클릭 대기다. 컷신 쪽에 기본값을 두는 선택지는 없앴다(스텝이 사라져서 담을 곳이 없다). 자동 진행을 원하면 CSV에 초를 적는다.
 - CSV를 어느 시점에 로드할지는 Bootstrap 담당의 판단에 맡겼다. 컷신 재생 직전에 로드해도 되지만, 대사는 타이틀·설정 화면에서도 쓰일 수 있어 Bootstrap 1회 로드를 권한다.
 - `Import Dialogue CSV`는 파일 이름만 보고 후보를 고른다. Drive에 대사가 아닌 `dialogue_notes.csv` 같은 파일이 올라오면 잘못 고를 수 있다. 콘솔에 후보를 전부 찍으므로 확인할 수 있다.
-- 대사 문장 자체는 기획서 2판의 것 그대로다. 3판 20절이 "다음 기획 단계에서 확정"이라 했으므로 CSV의 문장은 전부 임시값이다.
+- 대사 문장은 기획 v4 18절의 스토리안을 문장으로 옮긴 것이다. 아이의 네 줄(「너도 이제 멀리 가는구나.」/「나도 곧 여기서 떠나.」/「그럼 우리…」/「언젠가 다시 여기로 돌아오자.」), 컷신 3의 「여기까지가 내가 정한 끝은 아니야.」, 엔딩의 두 줄과 「初志一貫 / 처음 품은 뜻을, 끝까지.」는 기획서 원문 그대로다. 나머지 내레이션과 연이의 대사는 원문의 상황 설명을 문장으로 만든 것이라 임시값이다(v4 25절이 최종 대사를 미확정으로 둔다).
+- `auto_advance`가 비면 Enter·클릭 대기다. **인트로·엔딩은 재생 시간을 20초 안으로 묶으려고 모든 줄에 값을 넣었고(0.6~2.0초), 중간 컷신 1·2·3은 내레이션·여운 줄에만 넣었다(1.0~1.2초).** 전체 템포는 플레이로 확인해야 한다.
