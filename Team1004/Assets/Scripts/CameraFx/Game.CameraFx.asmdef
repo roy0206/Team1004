@@ -1,0 +1,14 @@
+{
+    "name": "Game.CameraFx",
+    "rootNamespace": "Game.CameraFx",
+    "references": [
+        "Core.Modules",
+        "Core.Foundation",
+        "Game.View",
+        "Game.Play",
+        "Game.Player",
+        "Game.Boss",
+        "Game.Boss.Integration",
+        "Game.Ledge"
+    ]
+}
