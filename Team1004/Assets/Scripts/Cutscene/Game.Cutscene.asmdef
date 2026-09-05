@@ -1,0 +1,12 @@
+{
+    "name": "Game.Cutscene",
+    "rootNamespace": "Game.Cutscene",
+    "references": [
+        "Core.Foundation",
+        "Core.Modules",
+        "Core.Input",
+        "Game.Dialogue",
+        "Game.Animation",
+        "UnityEngine.UI"
+    ]
+}

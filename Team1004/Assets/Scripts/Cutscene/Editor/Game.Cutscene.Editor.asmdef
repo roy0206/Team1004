@@ -1,0 +1,12 @@
+{
+    "name": "Game.Cutscene.Editor",
+    "rootNamespace": "Game.Cutscene.Editor",
+    "references": [
+        "Game.Cutscene",
+        "Core.Modules",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}
