@@ -1,0 +1,7 @@
+{
+    "name": "Game.StateMachine",
+    "rootNamespace": "Game.StateMachine",
+    "references": [
+        "Core.Modules"
+    ]
+}
