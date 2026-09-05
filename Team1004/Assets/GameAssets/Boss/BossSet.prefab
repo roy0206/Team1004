@@ -1,0 +1,273 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1904686858711183372
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9181599541384123968}
+  - component: {fileID: 1324345329467560607}
+  m_Layer: 0
+  m_Name: BossSet
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9181599541384123968
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1904686858711183372}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4594113531125222721}
+  - {fileID: 7808571276366514805}
+  - {fileID: 3638145815739104851}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1324345329467560607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1904686858711183372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd95e84d38e242a42b05f93900629c34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Boss.Integration::Game.Boss.Integration.BossDirector
+  bosses:
+  - {fileID: 6046760969611462814}
+  - {fileID: 8702237274414927294}
+  - {fileID: 7741731217694003879}
+  stageCamera: {fileID: 0}
+--- !u!1001 &1734336003668865888
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9181599541384123968}
+    m_Modifications:
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5665178560697729962, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+      propertyPath: m_Name
+      value: FishingLineBoss
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+--- !u!4 &4594113531125222721 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2868802319008579105, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+  m_PrefabInstance: {fileID: 1734336003668865888}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6046760969611462814 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5475234172747987966, guid: 43f6b7cca2a98b64f8e7ca888e79613f, type: 3}
+  m_PrefabInstance: {fileID: 1734336003668865888}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cbbc4e1d2f6c5a489a8d58d02008ac2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Boss::Game.Boss.FishingLineBoss
+--- !u!1001 &3429775301192725910
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9181599541384123968}
+    m_Modifications:
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7927516398810400081, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+      propertyPath: m_Name
+      value: WaterfallBoss
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+--- !u!4 &3638145815739104851 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2153925828549004229, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+  m_PrefabInstance: {fileID: 3429775301192725910}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7741731217694003879 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4965541779529279281, guid: c4c41782bdd21d047b305cd81ecb3ece, type: 3}
+  m_PrefabInstance: {fileID: 3429775301192725910}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 646514f20b956bf448e2514cb1e14f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Boss::Game.Boss.WaterfallBoss
+--- !u!1001 &5362869642666120893
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9181599541384123968}
+    m_Modifications:
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6184261736925552263, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+      propertyPath: m_Name
+      value: WalrusBoss
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+--- !u!4 &7808571276366514805 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2752020098753633480, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+  m_PrefabInstance: {fileID: 5362869642666120893}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8702237274414927294 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3650223811170491139, guid: 9c0b9ea53f3e59d478c793af9c68fb89, type: 3}
+  m_PrefabInstance: {fileID: 5362869642666120893}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3111076a729fdf149860e7662680b1f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Boss::Game.Boss.WalrusBoss

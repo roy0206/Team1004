@@ -1,0 +1,15 @@
+{
+    "name": "Game.Boss.Editor",
+    "rootNamespace": "Game.Boss.Editor",
+    "references": [
+        "Game.Boss",
+        "Game.Boss.Integration",
+        "Game.Player",
+        "Game.Config",
+        "Game.Water",
+        "Core.Modules"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

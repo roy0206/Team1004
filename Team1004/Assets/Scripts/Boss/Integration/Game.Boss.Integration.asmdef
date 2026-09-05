@@ -1,0 +1,11 @@
+{
+    "name": "Game.Boss.Integration",
+    "rootNamespace": "Game.Boss.Integration",
+    "references": [
+        "Game.Boss",
+        "Game.Play",
+        "Game.Player",
+        "Core.Foundation",
+        "Core.Modules"
+    ]
+}

@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd915d08a9f04f048b7583a07105ff97, type: 3}
+  m_Name: WaterfallBossData
+  m_EditorClassIdentifier: Game.Boss::Game.Boss.WaterfallBossData
+  displayName: 
+  useGameConfigTiming: 1
+  duration: 30
+  telegraphDuration: 0.8
+  attackDuration: 0.7
+  recoveryDuration: 0.5
+  fullLaneTelegraphDuration: 1
+  telegraphImminentLead: 0.2
+  introDuration: 1
+  outroDuration: 0.8
+  allowRepeatPattern: 0
+  seed: 0
+  patterns:
+  - label: Top
+    laneMask: 1
+    weight: 1
+    requiresJump: 0
+  - label: Middle
+    laneMask: 2
+    weight: 1
+    requiresJump: 0
+  - label: Bottom
+    laneMask: 4
+    weight: 1
+    requiresJump: 0
+  - label: TopMiddle
+    laneMask: 3
+    weight: 1
+    requiresJump: 0
+  - label: MiddleBottom
+    laneMask: 6
+    weight: 1
+    requiresJump: 0
+  - label: All
+    laneMask: 7
+    weight: 1
+    requiresJump: 1
+  waterfallX: 5.5
+  finalWaterfallEnterX: 9.5
+  finalWaterfallEnterDuration: 1
+  spawnX: 7.5
+  exitX: -8
+  rockTrail: 1
+  safeWindowDuration: 2
+  jumpCuePulseDuration: 0.35

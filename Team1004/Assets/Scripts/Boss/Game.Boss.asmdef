@@ -1,0 +1,12 @@
+{
+    "name": "Game.Boss",
+    "rootNamespace": "Game.Boss",
+    "references": [
+        "Core.Modules",
+        "Core.Foundation",
+        "Core.Audio",
+        "Game.StateMachine",
+        "Game.Player",
+        "Game.Config"
+    ]
+}

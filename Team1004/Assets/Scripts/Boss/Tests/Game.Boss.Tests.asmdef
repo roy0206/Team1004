@@ -1,0 +1,28 @@
+{
+    "name": "Game.Boss.Tests",
+    "rootNamespace": "Game.Boss.Tests",
+    "references": [
+        "Game.Boss",
+        "Game.StateMachine",
+        "Game.Player",
+        "Game.Config",
+        "Core.Modules",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
